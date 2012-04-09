@@ -1,0 +1,30 @@
+msgid "IDS_BR_POP_INSTALLATION_FAILED"
+msgstr "Echec de l'installation"
+
+msgid "IDS_BR_BODY_NOTIFYING_ING"
+msgstr "Notification..."
+
+msgid "IDS_BR_BODY_PROCESSING_COMPLETED"
+msgstr "Traitement terminé"
+
+msgid "IDS_BR_SK_RETRY"
+msgstr "Réessayer"
+
+msgid "IDS_BR_HEADER_DOWNLOAD_MANAGER"
+msgstr "Gestionnaire de téléchargement"
+
+msgid "IDS_BR_POP_INVALIDDESCRIPTOR"
+msgstr "Descripteur non valide"
+
+msgid "IDS_DL_BODY_NO_DOWNLOADS"
+msgstr "Aucun téléchargement"
+
+msgid "IDS_EMAIL_BODY_COMPLETE"
+msgstr "OK"
+
+msgid "IDS_BR_POP_UNABLE_TO_OPEN_FILE"
+msgstr "Impossible d'ouvrir le fichier"
+
+msgid "IDS_BR_POP_DOWNLOAD_Q"
+msgstr "Télécharger ?"
+

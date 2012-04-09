@@ -1,0 +1,26 @@
+download-provider (1.0.0-0) unstable; urgency=low
+  * Git: pkgs/d/download-provider
+  * Tag: download-provider_1.0.0-0
+
+  * Tizen release.
+  * Apply changed APIs of EFL elementary.
+  * Apply CAPIs of app service and app manager module
+
+ -- Jungki Kwak <jungki.kwak@samsung.com>  Fri, 16 Mar 2012 14:41:48 +0900
+
+download-provider (0.1.1-0) unstable; urgency=low
+  * Git: pkgs/d/download-provider
+  * Tag: download-provider_0.1.1-0
+
+  * Refactory UI source codes and data structure.
+
+ -- Jungki Kwak <jungki.kwak@samsung.com>  Thu, 16 Feb 2012 15:43:21 +0900
+
+download-provider (0.1.0-0) unstable; urgency=low
+  * Git: pkgs/d/download-provider
+  * Tag: download-provider_0.1.0-0
+
+  * Initial Release.
+
+ -- Jungki Kwak <jungki.kwak@samsung.com>  Wed, 07 Dec 2011 13:27:55 +0900
+
