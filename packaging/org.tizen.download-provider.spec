@@ -7,6 +7,7 @@ Group:		TO_BE_FILLED_IN
 License:    Samsung Proprietary License
 URL:		N/A
 Source0:	%{name}-%{version}.tar.gz
+Source1001: packaging/org.tizen.download-provider.manifest 
 BuildRequires: pkgconfig(capi-system-runtime-info)
 BuildRequires: pkgconfig(capi-appfw-application)
 BuildRequires: pkgconfig(appsvc)
@@ -32,6 +33,7 @@ Application for support of the content download
 %setup -q
 
 %build
+cp %{SOURCE1001} .
 cmake . -DCMAKE_INSTALL_PREFIX="/opt/apps/org.tizen.download-provider"
 
 make %{?jobs:-j%jobs}
@@ -64,6 +66,7 @@ then
 fi
 
 %files 
+%manifest org.tizen.download-provider.manifest
 %defattr(-,root,root,-)
 /opt/apps/org.tizen.download-provider/bin/*
 /opt/apps/org.tizen.download-provider/data
