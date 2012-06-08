@@ -1,0 +1,8 @@
+download-provider (1.0.0-0) unstable; urgency=low
+  * Git: pkgs/d/download-provider
+  * Tag: download-provider_1.0.0-0
+
+  * Tizen release.
+
+ -- Jungki Kwak <jungki.kwak@samsung.com>  Fri, 16 Mar 2012 14:41:48 +0900
+

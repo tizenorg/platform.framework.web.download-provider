@@ -1,0 +1,4 @@
+@PREFIX@/bin/*
+@PREFIX@/data
+@PREFIX@/res/*
+opt/share/applications/*
