@@ -1,6 +1,5 @@
 #
-# Copyright (c) 2012 Samsung Electronics Co., Ltd.
-# All rights reserved.
+# Copyright (c) Samsung Electronics Co., Ltd. All rights reserved.
 #
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
@@ -50,7 +49,6 @@ pkg_check_modules(pkgs REQUIRED
 	libdownload-agent
 	elementary
 	aul
-	drm-service
 	ecore-x
 	vconf
 	bundle

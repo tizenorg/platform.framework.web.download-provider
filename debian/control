@@ -2,7 +2,7 @@ Source: download-provider
 Section: misc
 Priority: extra
 Maintainer: Jungki Kwak <jungki.kwak@samsung.com>, Keunsoon Lee <keunsoon.lee@samsung.com>, InBum Chang <ibchang@samsung.com>
-Build-Depends: debhelper (>= 5), libdownload-agent-dev, libelm-dev, libeina-dev, libaul-1-dev, drm-service-dev, libecore-dev, libvconf-dev, libbundle-dev, libicu-dev, libxdgmime-dev, capi-system-runtime-info-dev, capi-appfw-application-dev, libappsvc-dev
+Build-Depends: debhelper (>= 5), libdownload-agent-dev, libelm-dev, libeina-dev, libaul-1-dev, libecore-dev, libvconf-dev, libbundle-dev, libicu-dev, libxdgmime-dev, capi-system-runtime-info-dev, capi-appfw-application-dev, libappsvc-dev
 Standards-Version: 0.1.0
 
 Package: org.tizen.download-provider
