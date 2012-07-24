@@ -4,7 +4,7 @@ Summary:	Application for support of the content download
 Version:	1.0.0
 Release:	1
 Group:		TO_BE_FILLED_IN
-License:    Samsung Proprietary License
+License:	Flora Software License
 URL:		N/A
 Source0:	%{name}-%{version}.tar.gz
 Source1001: packaging/org.tizen.download-provider.manifest 
