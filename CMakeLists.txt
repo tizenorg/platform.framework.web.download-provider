@@ -1,122 +1,75 @@
-#
-# Copyright (c) Samsung Electronics Co., Ltd. All rights reserved.
-#
+ADD_SUBDIRECTORY(src/agent)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-PROJECT(download-provider C CXX)
 
-SET(SRCS 
-	src/main.cpp
-	src/download-provider-event.cpp
-	src/download-provider-network.cpp
-	src/download-provider-view.cpp
-	src/download-provider-viewItem.cpp
-	src/download-provider-items.cpp
-	src/download-provider-item.cpp
-	src/download-provider-downloadItem.cpp
-	src/download-provider-downloadRequest.cpp
-	src/download-provider-util.cpp
-	src/download-provider-history-db.cpp
-	src/download-provider-dateTime.cpp
-	src/download-provider-network.cpp
-)
-
-SET(VENDOR "tizen")
-SET(PACKAGE ${PROJECT_NAME})
-SET(PKGNAME "org.${VENDOR}.${PACKAGE}")
-SET(PREFIX ${CMAKE_INSTALL_PREFIX})
-SET(BINDIR "${PREFIX}/bin")
-SET(RESDIR "${PREFIX}/res")
-SET(IMAGEDIR "${RESDIR}/images")
-SET(DATADIR "${PREFIX}/data")
-SET(DBDATADIR "${PREFIX}/data/db")
-SET(LOCALEDIR "${RESDIR}/locale")
-SET(ICONDIR "${RESDIR}/icons/default/small")
-SET(HISTORYDB ".download-history.db")
+## PROJECT NAME
+PROJECT(download-provider C)
+SET(VERSION "0.0.1")
 
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
-	SET(CMAKE_BUILD_TYPE "Release")
+	SET(CMAKE_BUILD_TYPE "Debug")
 ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/include)
+SET(DATABASE_DIR "/opt/dbspace")
+SET(DATABASE_NAME ".download-provider.db")
+SET(RES_DIR "/opt/data/download-provider")
+SET(IMAGE_DIR "${RES_DIR}")
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs REQUIRED 
-	capi-system-runtime-info
-	capi-appfw-application
-	appsvc
-	libdownload-agent
-	elementary
-	aul
-	ecore-x
-	vconf
-	bundle
-	evas
-	ecore
-	ecore-input
-	edje
-	icu-i18n
-	xdgmime
-	eina
- )
 
-FIND_LIBRARY(LIB_DL dl)
-
-FIND_PROGRAM(UNAME NAMES uname)
-EXEC_PROGRAM("${UNAME}" ARGS "-m" OUTPUT_VARIABLE "ARCH")
+pkg_check_modules(pkgs REQUIRED glib-2.0
+		gobject-2.0
+		db-util
+		sqlite3
+		capi-appfw-application
+		capi-network-connection
+		dlog)
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
 ENDFOREACH(flag)
-FOREACH(flag ${pkgs_include_CFLAGS})
-	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
-ENDFOREACH(flag)
 
-MESSAGE("ARCH: ${ARCH}")
-MESSAGE("LIB_DL: ${LIB_DL}")
+## INCLUDES
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src/agent/include)
 
-SET(CMAKE_C_FLAGS "${INC_FLAGS}${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} -Wall")
-#SET(CMAKE_C_FLAGS_DEBUG "$[CMAKE_C_FLAGS_DEBUG} -O0 -g")
-#SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
-SET(CMAKE_CXX_FLAGS "${INC_FLAGS} ${CMAKE_CXX_FLAGS} ${EXTRA_CFLAGS} -Wall")
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -Wall")
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+set(LINK_LIBRARIES ${GLIB-2_LIBRARIES}
+		${GOBJECT-2_LIBRARIES}
+		pthread
+		capi-appfw-application
+		downloadagent
+	)
 
-IF("${ARCH}" MATCHES "^arm.*")
-	ADD_DEFINITIONS("-DTARGET")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpie")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mabi=aapcs-linux -mfpu=vfp -mfloat-abi=softfp")
-    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
-ENDIF("${ARCH}" MATCHES "^arm.*")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} -fPIC")
+SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fpie -Wall")
 
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed -Wl,--hash-style=both")
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed -Wl -fpie,--hash-style=both")
 
-ADD_DEFINITIONS("-DVENDOR=\"${VENDOR}\"")
-ADD_DEFINITIONS("-DPACKAGE=\"${PACKAGE}\"")
-ADD_DEFINITIONS("-DPACKAGE_NAME=\"${PKGNAME}\"")
-ADD_DEFINITIONS("-DPREFIX=\"${PREFIX}\"")
-ADD_DEFINITIONS("-DRESDIR=\"${RESDIR}\"")
-ADD_DEFINITIONS("-DIMAGEDIR=\"${IMAGEDIR}\"")
-ADD_DEFINITIONS("-DDATADIR=\"${DATADIR}\"")
-ADD_DEFINITIONS("-DDBDATADIR=\"${DBDATADIR}\"")
-ADD_DEFINITIONS("-DLOCALEDIR=\"${LOCALEDIR}\"")
-ADD_DEFINITIONS("-DICONDIR=\"${ICONDIR}\"")
-ADD_DEFINITIONS("-DHISTORYDB=\"${HISTORYDB}\"")
+ADD_DEFINITIONS(
+	-DDATABASE_DIR=\"${DATABASE_DIR}\"
+	-DDATABASE_NAME=\"${DATABASE_NAME}\"
+	-DIMAGE_DIR=\"${IMAGE_DIR}\"
+	)
 
-ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${LIB_DL})
+ADD_EXECUTABLE(${PROJECT_NAME}
+	${CMAKE_CURRENT_SOURCE_DIR}/src/download-provider-pid.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/download-provider-ipc.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/download-provider-notification.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/download-provider-db.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/download-provider-utils.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/download-provider-receiver.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/download-provider-main.c )
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${LINK_LIBRARIES})
+INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
-INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${BINDIR})
+CONFIGURE_FILE(download-provider.pc.in download-provider.pc @ONLY)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/download-provider.pc DESTINATION lib/pkgconfig)
+INSTALL(FILES include/download-provider.h DESTINATION include/${PROJECT_NAME})
 
-# install desktop file & icon
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/res/${PKGNAME}.desktop.in ${CMAKE_BINARY_DIR}/${PKGNAME}.desktop)
-INSTALL(DIRECTORY DESTINATION ${DATADIR})
-INSTALL(DIRECTORY DESTINATION ${DBDATADIR})
-INSTALL(FILES ${CMAKE_BINARY_DIR}/${PKGNAME}.desktop DESTINATION /opt/share/applications)
-INSTALL(FILES ${CMAKE_SOURCE_DIR}/res/${PKGNAME}.png DESTINATION ${ICONDIR})
-INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/res/images DESTINATION ${RESDIR})
+INSTALL(PROGRAMS download-provider-service DESTINATION /etc/rc.d/init.d)
 
-# i18n
-ADD_SUBDIRECTORY(po)
-
+# install images
+INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/res/images/ DESTINATION /opt/data/download-provider/
+		FILES_MATCHING
+		PATTERN "*.png"
+		)

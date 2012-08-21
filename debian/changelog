@@ -1,8 +1,8 @@
-download-provider (1.0.0-0) unstable; urgency=low
-  * Git: pkgs/d/download-provider
-  * Tag: download-provider_1.0.0-0
+download-provider2 (0.0.1) unstable; urgency=low
 
-  * Tizen release.
+  * Git: 165.213.180.234:/slp/pkgs/d/download-provider2
+  * Tag: download-provider2_0.0.1
 
- -- Jungki Kwak <jungki.kwak@samsung.com>  Fri, 16 Mar 2012 14:41:48 +0900
+  * initial making.
 
+ -- Kwangmin Bang <justine.bang@samsung.com>  Thu, 15 Sep 2011 17:21:13 +0900
