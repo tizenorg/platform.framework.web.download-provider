@@ -37,7 +37,6 @@ typedef enum {
 	HTTPManager,
 	InstallManager,
 	FileManager,
-	DRMManager,
 	DownloadManager,
 	ClientNoti,
 	HTTPMessageHandler,

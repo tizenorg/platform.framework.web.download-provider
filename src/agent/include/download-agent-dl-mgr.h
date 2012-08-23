@@ -42,6 +42,4 @@ da_result_t  handle_after_download(stage_info *stage);
 da_result_t  process_install(stage_info *stage);
 da_result_t  send_user_noti_and_finish_download_flow(int download_id);
 
-da_result_t  process_play_ready_initiator(stage_info *stage);
-
 #endif

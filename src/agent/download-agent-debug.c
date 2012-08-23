@@ -192,8 +192,6 @@ char *__get_channel_name_from_enum(da_log_channel channel_enum) {
 		return STRING_IT(InstallManager);
 	case FileManager:
 		return STRING_IT(FileManager);
-	case DRMManager:
-		return STRING_IT(DRMManager);
 	case DownloadManager:
 		return STRING_IT(DownloadManager);
 	case ClientNoti:

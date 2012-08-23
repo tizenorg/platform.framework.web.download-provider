@@ -33,7 +33,6 @@
 #include "download-agent-dl-mgr.h"
 #include "download-agent-file.h"
 #include "download-agent-installation.h"
-#include "download-agent-plugin-drm.h"
 #include "download-agent-mime-util.h"
 #include "download-agent-http-mgr.h"
 
@@ -279,26 +278,13 @@ da_result_t __tmp_file_open(stage_info *stage)
 	GET_CONTENT_STORE_TMP_FILE_NAME(file_storage) = tmp_file_path;
 	DA_LOG(FileManager, "GET_CONTENT_STORE_TMP_FILE_NAME = %s ",GET_CONTENT_STORE_TMP_FILE_NAME(file_storage));
 
-	if (is_content_drm_dm(GET_CONTENT_STORE_CONTENT_TYPE(file_storage))) {
-		void *hConvert = DA_NULL;
-
-		if (DA_TRUE != EDRM_open_convert(tmp_file_path, &hConvert)) {
-			DA_LOG_ERR(FileManager, "file open for dcf convertion fails ");
-			ret = DA_ERR_DRM_FILE_FAIL;
-			goto ERR;
-		}
-		DA_LOG(FileManager, "file opened for dcf convertion ");
-		GET_CONTENT_STORE_FILE_HANDLE(file_storage) = hConvert;
-
-	} else {
-		fd = fopen(tmp_file_path, "a"); // for resume
-		if (fd == DA_NULL) {
-			DA_LOG_ERR(FileManager, "File open failed");
-			ret = DA_ERR_FAIL_TO_ACCESS_FILE;
-			goto ERR;
-		}
-		GET_CONTENT_STORE_FILE_HANDLE(file_storage) = fd;
+	fd = fopen(tmp_file_path, "a"); // for resume
+	if (fd == DA_NULL) {
+		DA_LOG_ERR(FileManager, "File open failed");
+		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
+		goto ERR;
 	}
+	GET_CONTENT_STORE_FILE_HANDLE(file_storage) = fd;
 
 	DA_LOG(FileManager, "file path for tmp saving = %s", GET_CONTENT_STORE_TMP_FILE_NAME(file_storage));
 
@@ -764,28 +750,18 @@ da_result_t __file_write_buf_flush_buf(stage_info *stage, file_info *file_storag
 		goto ERR;
 	}
 
-	if (is_content_drm_dm(GET_CONTENT_STORE_CONTENT_TYPE(file_storage))) {
-		if (DA_TRUE != EDRM_write_convert(fd, (unsigned char*) buffer,
-				buffer_size)) {
-			DA_LOG_ERR(FileManager, "write convert fails ");
-			ret = DA_ERR_FAIL_TO_ACCESS_FILE;
-			goto ERR;
-		}
-		GET_CONTENT_STORE_CURRENT_FILE_SIZE(GET_STAGE_CONTENT_STORE_INFO(stage))
-				+= buffer_size;
-	} else {
-		write_success_len = fwrite(buffer, sizeof(char), buffer_size,
-				(FILE *) fd);
-		fflush((FILE *) fd);
-		if (write_success_len != buffer_size) {
-			DA_LOG_ERR(FileManager, "write  fails ");
-			ret = DA_ERR_FAIL_TO_ACCESS_FILE;
-			goto ERR;
-		}
-		GET_CONTENT_STORE_CURRENT_FILE_SIZE(GET_STAGE_CONTENT_STORE_INFO(stage))
-				+= write_success_len;
-		DA_LOG(FileManager, "write %d bytes", write_success_len);
+	write_success_len = fwrite(buffer, sizeof(char), buffer_size,
+			(FILE *) fd);
+	fflush((FILE *) fd);
+	if (write_success_len != buffer_size) {
+		DA_LOG_ERR(FileManager, "write  fails ");
+		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
+		goto ERR;
 	}
+	GET_CONTENT_STORE_CURRENT_FILE_SIZE(GET_STAGE_CONTENT_STORE_INFO(stage))
+			+= write_success_len;
+	DA_LOG(FileManager, "write %d bytes", write_success_len);
+
 	IS_CONTENT_STORE_FILE_BYTES_WRITTEN_TO_FILE(file_storage) = DA_TRUE;
 	GET_CONTENT_STORE_FILE_BUFF_LEN(file_storage) = 0;
 
@@ -828,26 +804,17 @@ da_result_t __file_write_buf_directly_write(stage_info *stage,
 		goto ERR;
 	}
 
-	if (is_content_drm_dm(GET_CONTENT_STORE_CONTENT_TYPE(file_storage))) {
-		if (DA_TRUE != EDRM_write_convert(fd, (unsigned char*) body,
-				body_len)) {
-			DA_LOG_ERR(FileManager, "write convert fails ");
-			ret = DA_ERR_FAIL_TO_ACCESS_FILE;
-			goto ERR;
-		}
-	} else {
-		write_success_len = fwrite(body, sizeof(char), body_len,
-				(FILE *) fd);
-		fflush((FILE *) fd);
-		if (write_success_len != body_len) {
-			DA_LOG_ERR(FileManager, "write  fails ");
-			ret = DA_ERR_FAIL_TO_ACCESS_FILE;
-			goto ERR;
-		}
-		GET_CONTENT_STORE_CURRENT_FILE_SIZE(GET_STAGE_CONTENT_STORE_INFO(stage))
-				+= write_success_len;
-		DA_LOG(FileManager, "write %d bytes", write_success_len);
+	write_success_len = fwrite(body, sizeof(char), body_len,
+			(FILE *) fd);
+	fflush((FILE *) fd);
+	if (write_success_len != body_len) {
+		DA_LOG_ERR(FileManager, "write  fails ");
+		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
+		goto ERR;
 	}
+	GET_CONTENT_STORE_CURRENT_FILE_SIZE(GET_STAGE_CONTENT_STORE_INFO(stage))
+			+= write_success_len;
+	DA_LOG(FileManager, "write %d bytes", write_success_len);
 	IS_CONTENT_STORE_FILE_BYTES_WRITTEN_TO_FILE(file_storage) = DA_TRUE;
 
 ERR:
@@ -965,12 +932,7 @@ da_result_t file_write_complete(stage_info *stage)
 	if (fd) {
 		// call sync
 		fsync(fileno(fd));
-		if (is_content_drm_dm(
-				GET_CONTENT_STORE_CONTENT_TYPE(file_storage))) {
-			EDRM_close_convert(&fd);
-		} else {
-			fclose(fd);
-		}
+		fclose(fd);
 		fd = DA_NULL;
 	}
 	GET_CONTENT_STORE_FILE_HANDLE(file_storage) = DA_NULL;
@@ -1038,12 +1000,7 @@ da_result_t discard_download(stage_info *stage)
 
 	f_handle = GET_CONTENT_STORE_FILE_HANDLE(file_storage);
 	if (f_handle) {
-		if (is_content_drm_dm(
-				GET_CONTENT_STORE_CONTENT_TYPE(file_storage))) {
-			EDRM_close_convert((void **)&f_handle);
-		} else {
-			fclose(f_handle);
-		}
+		fclose(f_handle);
 		GET_CONTENT_STORE_FILE_HANDLE(file_storage) = DA_NULL;
 	}
 	temp_file_path = GET_CONTENT_STORE_ACTUAL_FILE_NAME(file_storage);
@@ -1068,12 +1025,7 @@ void clean_paused_file(stage_info *stage)
 
 	fd = GET_CONTENT_STORE_FILE_HANDLE(file_info_data);
 	if (fd) {
-		if (is_content_drm_dm(
-				GET_CONTENT_STORE_CONTENT_TYPE(file_info_data))) {
-			EDRM_close_convert((void **)&fd);
-		} else {
-			fclose(fd);
-		}
+		fclose(fd);
 		GET_CONTENT_STORE_FILE_HANDLE(file_info_data) = DA_NULL;
 	}
 

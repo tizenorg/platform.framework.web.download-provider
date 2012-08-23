@@ -301,17 +301,6 @@ typedef enum {
  * @}
  */
 
-
-/**
- * @{
- */
-// DRM error - not conforming with DRM spec (-700 ~ -799)
-#define DA_ERR_DRM_FAIL			-700
-#define DA_ERR_DRM_FILE_FAIL	-710
-/**
- * @}
- */
-
 /**
  * @{
  */

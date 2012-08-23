@@ -16,8 +16,6 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/incl
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(subpkgs REQUIRED
-	drm-client
-	drm-trusted
 	libsoup-2.4
 	xdgmime
 	vconf
@@ -67,7 +65,6 @@ SET(SRCS_DA_ENGINE
         ${SRCS_PATH}/download-agent-basic.c
         ${SRCS_PATH}/download-agent-installation.c
         ${SRCS_PATH}/download-agent-file.c
-        ${SRCS_PATH}/download-agent-plugin-drm.c
         ${SRCS_PATH}/download-agent-plugin-libsoup.c
         ${SRCS_PATH}/download-agent-plugin-conf.c
         ${SRCS_PATH}/download-agent-plugin-install.c

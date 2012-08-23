@@ -17,8 +17,6 @@ BuildRequires:  pkgconfig(db-util)
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(capi-appfw-application)
 BuildRequires:  pkgconfig(capi-network-connection)
-BuildRequires:  pkgconfig(drm-client)
-BuildRequires:  pkgconfig(drm-trusted)
 
 %description
 Description: download the contents in background

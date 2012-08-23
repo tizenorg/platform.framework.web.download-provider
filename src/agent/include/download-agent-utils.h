@@ -32,13 +32,11 @@
 #include "download-agent-dl-mgr.h"
 
 /* Todo : move these to mime-util.c */
-#define MIME_DRM_MESSAGE	"application/vnd.oma.drm.message"
 #define MIME_ODF 				"application/vnd.oasis.opendocument.formula"
 #define MIME_OMA_DD 			"application/vnd.oma.dd+xml"
 #define MIME_MIDP_JAR		"application/vnd.sun.j2me.java-archive"
 #define MIME_MULTIPART_MESSAGE	"multipart/related"
 #define MIME_TEXT_PLAIN 		"text/plain"
-#define	MIME_PLAYREADY_INIT		"application/vnd.ms-playready.initiator+xml"
 
 #define SAVE_FILE_BUFFERING_SIZE_50KB (50*1024)
 #define SAVE_FILE_BUFFERING_SIZE_5MB (5*1024*1024)
@@ -63,24 +61,15 @@ typedef struct _da_storage_size_t {
 	unsigned long b_size;
 } da_storage_size_t;
 
-typedef enum {
-	DA_MIME_TYPE_NONE,
-	DA_MIME_TYPE_DRM1_MESSATE,
-	DA_MIME_PLAYREADY_INIT,
-	DA_MIME_TYPE_END
-} da_mime_type_id_t;
-
 void get_random_number(int *out_num);
 da_result_t  get_available_dd_id(da_handle_t *available_id);
 
 da_result_t  get_extension_from_mime_type(char *mime_type, char **extension);
-da_mime_type_id_t get_mime_type_id(char* content_type);
 
 da_result_t  get_available_memory(da_storage_type_t storage_type, da_storage_size_t *avail_memory);
 da_result_t check_enough_storage(stage_info *stage);
 
 da_bool_t is_valid_url(const char* url, da_result_t *err_code);
-da_bool_t is_content_drm_dm(char *content_type);
 
 int read_data_from_file(char *file, char**out_buffer);
 

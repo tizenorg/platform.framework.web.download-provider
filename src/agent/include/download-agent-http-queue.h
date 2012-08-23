@@ -38,7 +38,6 @@
 typedef enum
 {
 	Q_EVENT_TYPE_DATA_HTTP,
-	Q_EVENT_TYPE_DATA_DRM,
 	Q_EVENT_TYPE_CONTROL,
 }q_event_type;
 

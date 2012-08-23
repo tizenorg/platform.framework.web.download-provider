@@ -67,11 +67,6 @@ void Q_init_q_event(q_event_t *q_event)
 		case Q_EVENT_TYPE_DATA_HTTP:
 			init_q_event_data_http(q_event);
 			break;
-
-		case Q_EVENT_TYPE_DATA_DRM:
-//			init_q_event_data_drm(q_event);
-			break;
-
 		case Q_EVENT_TYPE_CONTROL:
 			init_q_event_control(q_event);
 			break;
@@ -98,14 +93,6 @@ void Q_destroy_q_event(q_event_t **in_q_event)
 			q_event->next = DA_NULL;
 			free(q_event);
 			break;
-
-		case Q_EVENT_TYPE_DATA_DRM:
-//			init_q_event_data_drm(q_event);
-			q_event->size = 0;
-			q_event->next = DA_NULL;
-			free(q_event);
-			break;
-
 		case Q_EVENT_TYPE_CONTROL:
 			init_q_event_control(q_event);
 			q_event->size = 0;

@@ -30,7 +30,6 @@
 #include "download-agent-http-mgr.h"
 #include "download-agent-installation.h"
 #include "download-agent-file.h"
-#include "download-agent-plugin-drm.h"
 #include "download-agent-plugin-conf.h"
 
 
@@ -82,7 +81,6 @@ ERR:
 da_result_t handle_after_download(stage_info *stage)
 {
 	da_result_t ret = DA_RESULT_OK;
-	da_mime_type_id_t mime_type = DA_MIME_TYPE_NONE;
 
 	DA_LOG_FUNC_START(Default);
 
@@ -92,22 +90,7 @@ da_result_t handle_after_download(stage_info *stage)
 		}
 		return ret;
 	}
-	mime_type = get_mime_type_id(
-	                GET_CONTENT_STORE_CONTENT_TYPE(GET_STAGE_CONTENT_STORE_INFO(stage)));
-
-	switch (mime_type) {
-		case DA_MIME_PLAYREADY_INIT:
-			DA_LOG_VERBOSE(Default, "DA_MIME_PLAYREADY_INIT");
-			ret = process_play_ready_initiator(stage);
-			break;
-		case DA_MIME_TYPE_NONE:
-			DA_LOG(Default, "DA_MIME_TYPE_NONE");
-			ret = DA_ERR_MISMATCH_CONTENT_TYPE;
-			break;
-		default:
-			CHANGE_DOWNLOAD_STATE(DOWNLOAD_STATE_READY_TO_INSTAL,stage);
-			break;
-	} /* end of switch */
+	CHANGE_DOWNLOAD_STATE(DOWNLOAD_STATE_READY_TO_INSTAL,stage);
 
 	return ret;
 }
@@ -544,63 +527,3 @@ da_result_t send_user_noti_and_finish_download_flow(int download_id)
 	return ret;
 }
 
-da_result_t process_play_ready_initiator(stage_info *stage)
-{
-	da_result_t ret = DA_RESULT_OK;
-	int download_id = GET_STAGE_DL_ID(stage);
-	stage_info *next_stage = DA_NULL;
-	source_info_t *source_info = DA_NULL;
-	char *rights_url = DA_NULL;
-	char *content_url = DA_NULL;
-
-	DA_LOG_FUNC_START(Default);
-
-	discard_download(stage);
-
-	rights_url = GET_SOURCE_BASIC(GET_STAGE_SOURCE_INFO(stage))->url;
-	DA_LOG_VERBOSE(Default, "len = %d, rights_url = %s \n", strlen(rights_url), rights_url);
-
-	ret = EDRM_wm_get_license(rights_url, &content_url);
-	if (ret != DA_RESULT_OK) {
-		DA_LOG_ERR(Default, "EDRM_wm_get_license() failed.");
-		goto ERR;
-	}
-
-	if (content_url) {
-		DA_LOG_VERBOSE(Default, "Starting new download with content_url = [%s]", content_url);
-
-		next_stage = Add_new_download_stage(download_id);
-		if (!next_stage) {
-			DA_LOG_ERR(Default, "STAGE ADDITION FAIL!");
-			ret = DA_ERR_FAIL_TO_MEMALLOC;
-			goto ERR;
-		}
-
-		source_info = GET_STAGE_SOURCE_INFO(next_stage);
-		source_info->source_info_type.source_info_basic
-		        = (source_info_basic_t*)calloc(1,
-		                sizeof(source_info_basic_t));
-		if (DA_NULL == source_info->source_info_type.source_info_basic) {
-			DA_LOG_ERR(Default, "DA_ERR_INVALID_ARGUMENT");
-			ret = DA_ERR_INVALID_ARGUMENT;
-			goto ERR;
-		}
-		source_info->source_info_type.source_info_basic->url
-		        = content_url;
-
-		CHANGE_DOWNLOAD_STATE(DOWNLOAD_STATE_NEW_DOWNLOAD, next_stage);
-		remove_download_stage(download_id, stage);
-	} else {
-		DA_LOG_VERBOSE(Default, "content url is null. So, do nothing with normal termination.");
-
-		CHANGE_DOWNLOAD_STATE(DOWNLOAD_STATE_FINISH, stage);
-	}
-
-ERR:
-	if (ret != DA_RESULT_OK) {
-		if (content_url)
-			free(content_url);
-	}
-
-	return ret;
-}

@@ -50,21 +50,6 @@
 // Addition or deletion of entries in this list should be in sync with the
 // enumaration download_content_t defined in download-agent-dl-mgr.h
 
-typedef struct _da_descriptor_mime_table_t {
-	char* content_type;
-	da_mime_type_id_t mime_type;
-} da_descriptor_mime_table_t;
-
-da_descriptor_mime_table_t
-        descriptor_mime_table[] = {
-		{"", DA_MIME_TYPE_NONE},
-		/* DRM1.0 */
-		{"application/vnd.oma.drm.message",
-				DA_MIME_TYPE_DRM1_MESSATE}, /* drm1.0 FL.CD*/
-		{"application/vnd.ms-playready.initiator+xml",
-				DA_MIME_PLAYREADY_INIT}, // 17
-		{"", DA_MIME_TYPE_END}};
-
 void get_random_number(int *out_num)
 {
 	int temp = DA_INVALID_ID;
@@ -72,19 +57,6 @@ void get_random_number(int *out_num)
 
 	temp = (int)(rand_r(&seed) % 100 + 1.0);
 	*out_num = temp;
-}
-
-da_bool_t is_content_drm_dm(char *content_type)
-{
-	if (content_type == DA_NULL)
-		return DA_FALSE;
-
-	if (0 == strcmp(content_type, MIME_DRM_MESSAGE)) {
-		DA_LOG(Default,"DRM_DM content");
-		return DA_TRUE;
-	} else {
-		return DA_FALSE;
-	}
 }
 
 da_result_t get_extension_from_mime_type(char *mime_type, char **extension)
@@ -256,32 +228,6 @@ da_result_t get_available_memory(
 
 	return DA_RESULT_OK;
 }
-
-da_mime_type_id_t get_mime_type_id(char* content_type)
-{
-	int i = 0;
-
-	DA_LOG_FUNC_START(Default);
-
-	DA_LOG(Default,"received content_type = %s", content_type);
-
-	if (content_type == NULL) {
-		DA_LOG_ERR(Default, "No Mime Type\n");
-		return DA_MIME_TYPE_NONE;
-	}
-
-	while(descriptor_mime_table[i].mime_type != DA_MIME_TYPE_END)
-	{
-		if (!strcmp(descriptor_mime_table[i].content_type, content_type)) {
-			break;
-		}
-		i++;
-	}
-	DA_LOG(Default, "dd mime type check: index[%d] type[%d]", i, descriptor_mime_table[i].mime_type);
-	return descriptor_mime_table[i].mime_type;
-}
-
-
 
 da_bool_t is_valid_url(const char* url, da_result_t *err_code)
 {

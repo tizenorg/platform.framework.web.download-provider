@@ -823,9 +823,6 @@ da_result_t handle_any_input(stage_info *stage)
 		ret = handle_event_http(stage, event);
 		break;
 
-	case Q_EVENT_TYPE_DATA_DRM:
-		break;
-
 	default:
 		break;
 	}
@@ -1565,15 +1562,8 @@ da_result_t _check_downloaded_file_size_is_same_with_header_content_size(
 	if (content_size_from_http_header > 0) {
 		real_file_path
 				= GET_CONTENT_STORE_TMP_FILE_NAME(file_info_data);
-		if (is_content_drm_dm(
-				GET_CONTENT_STORE_CONTENT_TYPE(file_info_data))) {
-			/* FIXME Later : How can get the file size of DRM file. */
-			content_size_from_real_file
-					= content_size_from_http_header;
-		} else {
-			get_file_size(real_file_path,
-					&content_size_from_real_file);
-		}
+		get_file_size(real_file_path,
+				&content_size_from_real_file);
 
 		if ((unsigned int) content_size_from_real_file
 				!= content_size_from_http_header) {
