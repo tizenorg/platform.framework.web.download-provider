@@ -72,6 +72,9 @@ void clear_clientinfo(download_clientinfo *clientinfo)
 		if (clientinfo->requestinfo->filename.str)
 			free(clientinfo->requestinfo->filename.str);
 		clientinfo->requestinfo->filename.str = NULL;
+		if (clientinfo->requestinfo->service_data.str)
+			free(clientinfo->requestinfo->service_data.str);
+		clientinfo->requestinfo->service_data.str = NULL;
 		if (clientinfo->requestinfo->headers.rows) {
 			int i = 0;
 			for (i = 0; i < clientinfo->requestinfo->headers.rows;

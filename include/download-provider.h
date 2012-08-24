@@ -98,6 +98,7 @@ extern "C" {
 		download_flexible_string url;
 		download_flexible_string install_path;
 		download_flexible_string filename;
+		download_flexible_string service_data;
 		download_flexible_double_string headers;
 	} download_request_info;
 

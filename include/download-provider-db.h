@@ -42,11 +42,14 @@ int download_provider_db_requestinfo_remove(int uniqueid);
 int download_provider_db_requestinfo_update_column(download_clientinfo *clientinfo,
 							download_db_column_type type);
 download_dbinfo_list *download_provider_db_get_list(int state);
+download_dbinfo *download_provider_db_get_info(int requestid);
 void download_provider_db_list_free(download_dbinfo_list *list);
+void download_provider_db_info_free(download_dbinfo *info);
 int download_provider_db_list_count(int state);
 download_request_info *download_provider_db_get_requestinfo(download_dbinfo *dbinfo);
 int download_provider_db_history_new(download_clientinfo *clientinfo);
 int download_provider_db_history_remove(int uniqueid);
 int download_provider_db_history_limit_rows();
+download_dbinfo *download_provider_db_history_get_info(int requestid);
 
 #endif

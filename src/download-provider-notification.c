@@ -76,17 +76,17 @@ char *__get_string_status(int state)
 {
 	char *message = NULL;
 	switch (state) {
-	case DOWNLOAD_STATE_INSTALLING:
-		message = S_("IDS_COM_POP_INSTALLING_ING");
-		break;
 	case DOWNLOAD_STATE_FINISHED:
-		message = strdup("Completed");
+		//message = S_("IDS_COM_POP_SUCCESS");
+		message = "Completed";
 		break;
 	case DOWNLOAD_STATE_STOPPED:
-		message = S_("IDS_COM_POP_CANCELLED");
+		//message = S_("IDS_COM_POP_CANCELLED");
+		message = "Canclled";
 		break;
 	case DOWNLOAD_STATE_FAILED:
-		message = S_("IDS_COM_POP_FAILED");
+		//message = S_("IDS_COM_POP_FAILED");
+		message = "Failed";
 		break;
 	default:
 		break;
@@ -179,25 +179,34 @@ int destroy_appfw_service(download_clientinfo *clientinfo)
 	return 0;
 }
 
-int create_appfw_service(download_clientinfo *clientinfo)
+int create_appfw_service(download_clientinfo *clientinfo, bool ongoing)
 {
 	if (!clientinfo)
 		return -1;
 
-	if (!clientinfo->service_handle)
-		destroy_appfw_service(clientinfo);
-	if (service_create(&clientinfo->service_handle) < 0) {
-		TRACE_DEBUG_MSG("failed service_create (%s)", strerror(errno));
-		return false;
-	}
-
-	if (clientinfo->requestinfo
-		&& clientinfo->requestinfo->client_packagename.str) {
-		if (service_set_package(clientinfo->service_handle,
-					clientinfo->requestinfo->
-					client_packagename.str) < 0)
-			TRACE_DEBUG_MSG("failed service_set_package (%s)",
-					strerror(errno));
+	if (ongoing) {
+		if (!clientinfo->service_handle) {
+			if (service_create(&clientinfo->service_handle) < 0) {
+				TRACE_DEBUG_MSG("failed service_create (%s)", strerror(errno));
+				return false;
+			}
+			if (clientinfo->requestinfo
+				&& clientinfo->requestinfo->client_packagename.str) {
+				if (service_set_package(clientinfo->service_handle,
+							clientinfo->requestinfo->
+							client_packagename.str) < 0)
+					TRACE_DEBUG_MSG("failed service_set_package (%s)",
+							strerror(errno));
+			}
+		}
+	} else {
+		if (clientinfo->service_handle) {
+			destroy_appfw_service(clientinfo);
+		}
+		if (service_create(&clientinfo->service_handle) < 0) {
+			TRACE_DEBUG_MSG("failed service_create (%s)", strerror(errno));
+			return false;
+		}
 	}
 	return 0;
 }
@@ -237,16 +246,18 @@ int create_appfw_notification(download_clientinfo *clientinfo, bool ongoing)
 	}
 
 	if (clientinfo->downloadinfo) {
-		if (clientinfo->downloadinfo->content_name) {
-			if (ui_notification_set_title
-				(clientinfo->ui_notification_handle,
-				clientinfo->downloadinfo->content_name) < 0) {
-				TRACE_DEBUG_MSG
-					("failed ui_notification_set_title (%s)",
-					strerror(errno));
-				destroy_appfw_notification(clientinfo);
-				return -1;
-			}
+		TRACE_DEBUG_MSG("###content_name[%s]", clientinfo->downloadinfo->content_name);
+		char *title = clientinfo->downloadinfo->content_name;
+		if (!title)
+			//title = S_("IDS_COM_BODY_NO_NAME");
+			title = "No name";
+		if (ui_notification_set_title(
+				clientinfo->ui_notification_handle, title) < 0) {
+			TRACE_DEBUG_MSG
+				("failed ui_notification_set_title (%s)",
+				strerror(errno));
+			destroy_appfw_notification(clientinfo);
+			return -1;
 		}
 	}
 
@@ -259,36 +270,39 @@ int create_appfw_notification(download_clientinfo *clientinfo, bool ongoing)
 		return -1;
 	}
 
-	create_appfw_service(clientinfo);
 
-	if (clientinfo->service_handle) {
-		if (!ongoing) {
-			// view the special viewer by contents
-			if (clientinfo->service_handle
-				&& clientinfo->downloadinginfo
-				&& clientinfo->downloadinginfo->saved_path
-				&& clientinfo->state == DOWNLOAD_STATE_FINISHED) {
-				if (service_set_operation
-					(clientinfo->service_handle,
-					SERVICE_OPERATION_VIEW) < 0) {
-					TRACE_DEBUG_MSG
-						("Fail service_set_operation");
-					destroy_appfw_service(clientinfo);
-				}
-				if (service_set_uri(clientinfo->service_handle,
-							clientinfo->downloadinginfo->saved_path)
-					< 0) {
-					TRACE_DEBUG_MSG("Fail service_set_uri");
-					destroy_appfw_service(clientinfo);
-				}
+	create_appfw_service(clientinfo, ongoing);
+	if (!ongoing) {
+		// view the special viewer by contents
+		if (clientinfo->downloadinginfo
+			&& clientinfo->downloadinginfo->saved_path
+			&& clientinfo->state == DOWNLOAD_STATE_FINISHED) {
+			if (service_set_operation
+				(clientinfo->service_handle,
+				SERVICE_OPERATION_VIEW) < 0) {
+				TRACE_DEBUG_MSG
+					("Fail service_set_operation");
+				destroy_appfw_service(clientinfo);
 			}
+			if (service_set_uri(clientinfo->service_handle,
+						clientinfo->downloadinginfo->saved_path)
+				< 0) {
+				TRACE_DEBUG_MSG("Fail service_set_uri");
+				destroy_appfw_service(clientinfo);
+			}
+		} else {
+			if (service_set_package(clientinfo->service_handle,
+						clientinfo->requestinfo->
+						client_packagename.str) < 0)
+				TRACE_DEBUG_MSG("failed service_set_package (%s)",
+						strerror(errno));
 		}
-		if (ui_notification_set_service
-			(clientinfo->ui_notification_handle,
-			clientinfo->service_handle) < 0) {
-			TRACE_DEBUG_MSG("Fail ui_notification_set_service");
-			destroy_appfw_service(clientinfo);
-		}
+	}
+	if (ui_notification_set_service
+		(clientinfo->ui_notification_handle,
+		clientinfo->service_handle) < 0) {
+		TRACE_DEBUG_MSG("Fail ui_notification_set_service");
+		destroy_appfw_service(clientinfo);
 	}
 
 	if ((ret =
@@ -372,4 +386,10 @@ int set_downloadedinfo_appfw_notification(download_clientinfo *clientinfo)
 
 	destroy_appfw_notification(clientinfo);
 	return 0;
+}
+
+void clear_downloadinginfo_appfw_notification()
+{
+	ui_notification_cancel_all_by_type(true);
+	return;
 }

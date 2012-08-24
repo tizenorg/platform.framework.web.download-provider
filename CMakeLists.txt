@@ -24,6 +24,7 @@ pkg_check_modules(pkgs REQUIRED glib-2.0
 		sqlite3
 		capi-appfw-application
 		capi-network-connection
+		bundle
 		dlog)
 
 FOREACH(flag ${pkgs_CFLAGS})

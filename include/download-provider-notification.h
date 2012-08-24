@@ -6,5 +6,6 @@
 int set_downloadinginfo_appfw_notification(download_clientinfo *clientinfo);
 int set_downloadedinfo_appfw_notification(download_clientinfo *clientinfo);
 int destroy_appfw_notification(download_clientinfo *clientinfo);
+void clear_downloadinginfo_appfw_notification(void);
 
 #endif

@@ -49,7 +49,7 @@ int _download_provider_sql_open()
 int download_provider_db_requestinfo_remove(int uniqueid)
 {
 	int errorcode;
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = NULL;
 
 	if (uniqueid <= 0) {
 		TRACE_DEBUG_MSG("[NULL-CHECK]");
@@ -92,7 +92,7 @@ int download_provider_db_requestinfo_remove(int uniqueid)
 int download_provider_db_requestinfo_new(download_clientinfo *clientinfo)
 {
 	int errorcode;
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = NULL;
 
 	if (!clientinfo || !clientinfo->requestinfo
 		|| clientinfo->requestinfo->requestid <= 0) {
@@ -123,7 +123,7 @@ int download_provider_db_requestinfo_new(download_clientinfo *clientinfo)
 		_download_provider_sql_close(stmt);
 		return -1;
 	}
-	if (clientinfo->requestinfo->client_packagename.length > 0) {
+	if (clientinfo->requestinfo->client_packagename.length > 1) {
 		if (sqlite3_bind_text
 		    (stmt, 2, clientinfo->requestinfo->client_packagename.str,
 		     -1, NULL) != SQLITE_OK) {
@@ -141,7 +141,7 @@ int download_provider_db_requestinfo_new(download_clientinfo *clientinfo)
 		_download_provider_sql_close(stmt);
 		return -1;
 	}
-	if (clientinfo->downloadinfo && clientinfo->downloadinfo->content_name) {
+	if (clientinfo->downloadinfo && sizeof(clientinfo->downloadinfo->content_name) > 1) {
 		if (sqlite3_bind_text
 		    (stmt, 5, clientinfo->downloadinfo->content_name, -1,
 		     NULL) != SQLITE_OK) {
@@ -157,7 +157,7 @@ int download_provider_db_requestinfo_new(download_clientinfo *clientinfo)
 		_download_provider_sql_close(stmt);
 		return -1;
 	}
-	if (clientinfo->requestinfo->url.length > 0) {
+	if (clientinfo->requestinfo->url.length > 1) {
 		if (sqlite3_bind_text
 		    (stmt, 7, clientinfo->requestinfo->url.str, -1,
 		     NULL) != SQLITE_OK) {
@@ -167,7 +167,7 @@ int download_provider_db_requestinfo_new(download_clientinfo *clientinfo)
 			return -1;
 		}
 	}
-	if (clientinfo->downloadinfo && clientinfo->downloadinfo->mime_type) {
+	if (clientinfo->downloadinfo && sizeof(clientinfo->downloadinfo->mime_type) > 1) {
 		if (sqlite3_bind_text
 		    (stmt, 8, clientinfo->downloadinfo->mime_type, -1,
 		     NULL) != SQLITE_OK) {
@@ -202,7 +202,7 @@ int download_provider_db_requestinfo_update_column(download_clientinfo *clientin
 						   download_db_column_type type)
 {
 	int errorcode;
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = NULL;
 
 	if (!clientinfo || !clientinfo->requestinfo
 		|| clientinfo->requestinfo->requestid <= 0) {
@@ -218,7 +218,7 @@ int download_provider_db_requestinfo_update_column(download_clientinfo *clientin
 
 	switch (type) {
 	case DOWNLOAD_DB_PACKAGENAME:
-		if (clientinfo->requestinfo->client_packagename.length <= 0
+		if (clientinfo->requestinfo->client_packagename.length <= 1
 			|| !clientinfo->requestinfo->client_packagename.str) {
 			TRACE_DEBUG_MSG("[NULL-CHECK] type [%d]", type);
 			_download_provider_sql_close(stmt);
@@ -308,7 +308,7 @@ int download_provider_db_requestinfo_update_column(download_clientinfo *clientin
 		break;
 	case DOWNLOAD_DB_FILENAME:
 		if (!clientinfo->downloadinfo
-			|| !clientinfo->downloadinfo->content_name) {
+			|| sizeof(clientinfo->downloadinfo->content_name) < 1) {
 			TRACE_DEBUG_MSG("[NULL-CHECK] type [%d]", type);
 			_download_provider_sql_close(stmt);
 			return -1;
@@ -387,7 +387,7 @@ download_dbinfo_list *download_provider_db_get_list(int state)
 	int listcount;
 	int i = 0;
 	int buffer_length = 0;
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = NULL;
 	char *buffer;
 	download_dbinfo_list *m_list = NULL;
 
@@ -529,7 +529,7 @@ int download_provider_db_list_count(int state)
 {
 	int errorcode;
 	int count = 0;
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = NULL;
 
 	if (_download_provider_sql_open() < 0) {
 		TRACE_DEBUG_MSG("db_util_open is failed [%s]",
@@ -578,6 +578,40 @@ int download_provider_db_list_count(int state)
 	return 0;
 }
 
+void download_provider_db_info_free(download_dbinfo *info)
+{
+	if (!info)
+		return;
+
+	info->requestid = 0;
+	if (info->packagename)
+		free(info->packagename);
+	info->packagename = NULL;
+	if (info->installpath)
+		free(info->installpath);
+	info->installpath = NULL;
+	if (info->filename)
+		free(info->filename);
+	info->filename = NULL;
+	if (info->createdate)
+		free(info->createdate);
+	info->createdate = NULL;
+	if (info->url)
+		free(info->url);
+	info->url = NULL;
+	if (info->mimetype)
+		free(info->mimetype);
+	info->mimetype = NULL;
+	if (info->etag)
+		free(info->etag);
+	info->etag = NULL;
+	if (info->saved_path)
+		free(info->saved_path);
+	info->saved_path = NULL;
+	free(info);
+	info = NULL;
+}
+
 void download_provider_db_list_free(download_dbinfo_list *list)
 {
 	TRACE_DEBUG_MSG("");
@@ -587,38 +621,134 @@ void download_provider_db_list_free(download_dbinfo_list *list)
 		return;
 
 	if (list->count > 0 && list->item) {
-		for (i = 0; i < list->count; i++) {
-			list->item[i].requestid = 0;
-			if (list->item[i].packagename)
-				free(list->item[i].packagename);
-			list->item[i].packagename = NULL;
-			if (list->item[i].installpath)
-				free(list->item[i].installpath);
-			list->item[i].installpath = NULL;
-			if (list->item[i].filename)
-				free(list->item[i].filename);
-			list->item[i].filename = NULL;
-			if (list->item[i].createdate)
-				free(list->item[i].createdate);
-			list->item[i].createdate = NULL;
-			if (list->item[i].url)
-				free(list->item[i].url);
-			list->item[i].url = NULL;
-			if (list->item[i].mimetype)
-				free(list->item[i].mimetype);
-			list->item[i].mimetype = NULL;
-			if (list->item[i].etag)
-				free(list->item[i].etag);
-			list->item[i].etag = NULL;
-			if (list->item[i].saved_path)
-				free(list->item[i].saved_path);
-			list->item[i].saved_path = NULL;
-		}
+		for (i = 0; i < list->count; i++)
+			download_provider_db_info_free(&list->item[i]);
+		list->count = 0;
 		free(list->item);
 		list->item = NULL;
 	}
 	free(list);
 	list = NULL;
+}
+
+download_dbinfo *download_provider_db_get_info(int requestid)
+{
+	if (requestid <= 0)
+		return NULL;
+
+	int errorcode;
+	int buffer_length = 0;
+	sqlite3_stmt *stmt = NULL;
+	char *buffer = NULL;
+	download_dbinfo *dbinfo = NULL;
+
+	if (_download_provider_sql_open() < 0) {
+		TRACE_DEBUG_MSG("db_util_open is failed [%s]",
+				sqlite3_errmsg(g_download_provider_db));
+		return NULL;
+	}
+
+	errorcode =
+		sqlite3_prepare_v2(g_download_provider_db,
+			"SELECT uniqueid, packagename, notification, installpath, filename, creationdate, state, url, mimetype, savedpath FROM downloading WHERE uniqueid = ?",
+			-1, &stmt, NULL);
+	if (errorcode != SQLITE_OK) {
+		TRACE_DEBUG_MSG("sqlite3_prepare_v2 is failed. [%s]",
+				sqlite3_errmsg(g_download_provider_db));
+		_download_provider_sql_close(stmt);
+		return NULL;
+	}
+	if (sqlite3_bind_int(stmt, 1, requestid) != SQLITE_OK) {
+		TRACE_DEBUG_MSG("sqlite3_bind_int is failed. [%s]",
+				sqlite3_errmsg(g_download_provider_db));
+		_download_provider_sql_close(stmt);
+		return NULL;
+	}
+
+	if ((errorcode = sqlite3_step(stmt)) == SQLITE_ROW) {
+		dbinfo = (download_dbinfo *) calloc(1, sizeof(download_dbinfo));
+		dbinfo->requestid = sqlite3_column_int(stmt, 0);
+		buffer = (char *)(sqlite3_column_text(stmt, 1));
+		dbinfo->packagename = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->packagename
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->packagename, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->packagename[buffer_length] = '\0';
+		}
+		dbinfo->notification = sqlite3_column_int(stmt, 2);
+		buffer = (char *)(sqlite3_column_text(stmt, 3));
+		dbinfo->installpath = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->installpath
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->installpath, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->installpath[buffer_length] = '\0';
+		}
+		buffer = (char *)(sqlite3_column_text(stmt, 4));
+		dbinfo->filename = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->filename
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->filename, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->filename[buffer_length] = '\0';
+		}
+		buffer = (char *)(sqlite3_column_text(stmt, 5));
+		dbinfo->createdate = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->createdate
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->createdate, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->createdate[buffer_length] = '\0';
+		}
+		dbinfo->state = sqlite3_column_int(stmt, 6);
+		buffer = (char *)(sqlite3_column_text(stmt, 7));
+		dbinfo->url = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->url
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->url, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->url[buffer_length] = '\0';
+		}
+		buffer = (char *)(sqlite3_column_text(stmt, 8));
+		dbinfo->mimetype = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->mimetype
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->mimetype, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->mimetype[buffer_length] = '\0';
+		}
+		buffer = (char *)(sqlite3_column_text(stmt, 9));
+		dbinfo->saved_path = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->saved_path
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->saved_path, buffer,
+				buffer_length * sizeof(char));
+			dbinfo->saved_path[buffer_length] = '\0';
+		}
+	} else {
+		TRACE_DEBUG_MSG("sqlite3_step is failed. [%s] errorcode[%d]",
+				sqlite3_errmsg(g_download_provider_db), errorcode);
+		__download_provider_db_close();
+		download_provider_db_info_free(dbinfo);
+		return NULL;
+	}
+	_download_provider_sql_close(stmt);
+	return dbinfo;
 }
 
 download_request_info *download_provider_db_get_requestinfo(download_dbinfo *dbinfo)
@@ -632,7 +762,7 @@ download_request_info *download_provider_db_get_requestinfo(download_dbinfo *dbi
 	if (dbinfo->packagename) {
 		requestinfo->client_packagename.length =
 			strlen(dbinfo->packagename);
-		if (requestinfo->client_packagename.length > 0) {
+		if (requestinfo->client_packagename.length > 1) {
 			requestinfo->client_packagename.str
 				=
 				(char *)
@@ -649,7 +779,7 @@ download_request_info *download_provider_db_get_requestinfo(download_dbinfo *dbi
 	}
 	if (dbinfo->url) {
 		requestinfo->url.length = strlen(dbinfo->url);
-		if (requestinfo->url.length > 0) {
+		if (requestinfo->url.length > 1) {
 			requestinfo->url.str
 				=
 				(char *)calloc((requestinfo->url.length + 1),
@@ -661,7 +791,7 @@ download_request_info *download_provider_db_get_requestinfo(download_dbinfo *dbi
 	}
 	if (dbinfo->installpath) {
 		requestinfo->install_path.length = strlen(dbinfo->installpath);
-		if (requestinfo->install_path.length > 0) {
+		if (requestinfo->install_path.length > 1) {
 			requestinfo->install_path.str
 				=
 				(char *)
@@ -676,7 +806,7 @@ download_request_info *download_provider_db_get_requestinfo(download_dbinfo *dbi
 	}
 	if (dbinfo->filename) {
 		requestinfo->filename.length = strlen(dbinfo->filename);
-		if (requestinfo->filename.length > 0) {
+		if (requestinfo->filename.length > 1) {
 			requestinfo->filename.str
 				=
 				(char *)calloc((requestinfo->filename.length + 1),
@@ -696,7 +826,7 @@ download_request_info *download_provider_db_get_requestinfo(download_dbinfo *dbi
 int download_provider_db_history_new(download_clientinfo *clientinfo)
 {
 	int errorcode;
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = NULL;
 
 	if (!clientinfo || !clientinfo->requestinfo
 		|| clientinfo->requestinfo->requestid <= 0) {
@@ -727,7 +857,7 @@ int download_provider_db_history_new(download_clientinfo *clientinfo)
 		_download_provider_sql_close(stmt);
 		return -1;
 	}
-	if (clientinfo->requestinfo->client_packagename.length > 0) {
+	if (clientinfo->requestinfo->client_packagename.length > 1) {
 		if (sqlite3_bind_text
 			(stmt, 2, clientinfo->requestinfo->client_packagename.str,
 			 -1, NULL) != SQLITE_OK) {
@@ -737,7 +867,7 @@ int download_provider_db_history_new(download_clientinfo *clientinfo)
 			return -1;
 		}
 	}
-	if (clientinfo->downloadinfo && clientinfo->downloadinfo->content_name) {
+	if (clientinfo->downloadinfo && sizeof(clientinfo->downloadinfo->content_name) > 1) {
 		if (sqlite3_bind_text
 			(stmt, 3, clientinfo->downloadinfo->content_name, -1,
 			NULL) != SQLITE_OK) {
@@ -753,7 +883,7 @@ int download_provider_db_history_new(download_clientinfo *clientinfo)
 		_download_provider_sql_close(stmt);
 		return -1;
 	}
-	if (clientinfo->downloadinfo && clientinfo->downloadinfo->mime_type) {
+	if (clientinfo->downloadinfo && sizeof(clientinfo->downloadinfo->mime_type) > 1) {
 		if (sqlite3_bind_text
 			(stmt, 5, clientinfo->downloadinfo->mime_type, -1,
 			NULL) != SQLITE_OK) {
@@ -788,7 +918,7 @@ int download_provider_db_history_new(download_clientinfo *clientinfo)
 int download_provider_db_history_remove(int uniqueid)
 {
 	int errorcode;
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = NULL;
 
 	if (uniqueid <= 0) {
 		TRACE_DEBUG_MSG("[NULL-CHECK]");
@@ -831,7 +961,7 @@ int download_provider_db_history_remove(int uniqueid)
 int download_provider_db_history_limit_rows()
 {
 	int errorcode;
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = NULL;
 
 	if (_download_provider_sql_open() < 0) {
 		TRACE_DEBUG_MSG("db_util_open is failed [%s]",
@@ -865,4 +995,124 @@ int download_provider_db_history_limit_rows()
 			sqlite3_errmsg(g_download_provider_db));
 	__download_provider_db_close();
 	return -1;
+}
+
+download_dbinfo *download_provider_db_history_get_info(int requestid)
+{
+	if (requestid <= 0)
+		return NULL;
+
+	int errorcode;
+	int buffer_length = 0;
+	sqlite3_stmt *stmt = NULL;
+	char *buffer = NULL;
+	download_dbinfo *dbinfo = NULL;
+
+	if (_download_provider_sql_open() < 0) {
+		TRACE_DEBUG_MSG("db_util_open is failed [%s]",
+				sqlite3_errmsg(g_download_provider_db));
+		return NULL;
+	}
+
+	errorcode =
+		sqlite3_prepare_v2(g_download_provider_db,
+			"SELECT uniqueid, packagename, notification, installpath, filename, creationdate, state, url, mimetype, savedpath FROM history WHERE uniqueid = ?",
+			-1, &stmt, NULL);
+	if (errorcode != SQLITE_OK) {
+		TRACE_DEBUG_MSG("sqlite3_prepare_v2 is failed. [%s]",
+				sqlite3_errmsg(g_download_provider_db));
+		_download_provider_sql_close(stmt);
+		return NULL;
+	}
+	if (sqlite3_bind_int(stmt, 1, requestid) != SQLITE_OK) {
+		TRACE_DEBUG_MSG("sqlite3_bind_int is failed. [%s]",
+				sqlite3_errmsg(g_download_provider_db));
+		_download_provider_sql_close(stmt);
+		return NULL;
+	}
+
+	if ((errorcode = sqlite3_step(stmt)) == SQLITE_ROW) {
+		dbinfo = (download_dbinfo *) calloc(1, sizeof(download_dbinfo));
+		dbinfo->requestid = sqlite3_column_int(stmt, 0);
+		buffer = (char *)(sqlite3_column_text(stmt, 1));
+		dbinfo->packagename = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->packagename
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->packagename, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->packagename[buffer_length] = '\0';
+		}
+		dbinfo->notification = sqlite3_column_int(stmt, 2);
+		buffer = (char *)(sqlite3_column_text(stmt, 3));
+		dbinfo->installpath = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->installpath
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->installpath, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->installpath[buffer_length] = '\0';
+		}
+		buffer = (char *)(sqlite3_column_text(stmt, 4));
+		dbinfo->filename = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->filename
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->filename, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->filename[buffer_length] = '\0';
+		}
+		buffer = (char *)(sqlite3_column_text(stmt, 5));
+		dbinfo->createdate = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->createdate
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->createdate, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->createdate[buffer_length] = '\0';
+		}
+		dbinfo->state = sqlite3_column_int(stmt, 6);
+		buffer = (char *)(sqlite3_column_text(stmt, 7));
+		dbinfo->url = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->url
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->url, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->url[buffer_length] = '\0';
+		}
+		buffer = (char *)(sqlite3_column_text(stmt, 8));
+		dbinfo->mimetype = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->mimetype
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->mimetype, buffer,
+					buffer_length * sizeof(char));
+			dbinfo->mimetype[buffer_length] = '\0';
+		}
+		buffer = (char *)(sqlite3_column_text(stmt, 9));
+		dbinfo->saved_path = NULL;
+		if (buffer) {
+			buffer_length = strlen(buffer);
+			dbinfo->saved_path
+				= (char *)calloc(buffer_length + 1, sizeof(char));
+			memcpy(dbinfo->saved_path, buffer,
+				buffer_length * sizeof(char));
+			dbinfo->saved_path[buffer_length] = '\0';
+		}
+	} else {
+		TRACE_DEBUG_MSG("sqlite3_step is failed. [%s] errorcode[%d]",
+				sqlite3_errmsg(g_download_provider_db), errorcode);
+		__download_provider_db_close();
+		download_provider_db_info_free(dbinfo);
+		return NULL;
+	}
+	_download_provider_sql_close(stmt);
+	return dbinfo;
 }

@@ -15,6 +15,7 @@ BuildRequires:  pkgconfig(xdgmime)
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(db-util)
 BuildRequires:  pkgconfig(sqlite3)
+BuildRequires:  pkgconfig(bundle)
 BuildRequires:  pkgconfig(capi-appfw-application)
 BuildRequires:  pkgconfig(capi-network-connection)
 

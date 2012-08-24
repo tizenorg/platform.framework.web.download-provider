@@ -75,9 +75,23 @@ void *_start_download(void *args)
 		for (i = 0; i < len; i++)
 			req_header[i] =
 				strdup(clientinfo->requestinfo->headers.str[i].str);
-		if (clientinfo->requestinfo->install_path.length > 0)
-			da_ret =
-				da_start_download_with_extension(clientinfo->requestinfo->
+		if (clientinfo->requestinfo->install_path.length > 1) {
+			if (clientinfo->requestinfo->filename.length > 1)
+				da_ret =
+					da_start_download_with_extension(clientinfo->requestinfo->
+							url.str, &req_dl_id,
+							DA_FEATURE_REQUEST_HEADER,
+							req_header, &len,
+							DA_FEATURE_INSTALL_PATH,
+							clientinfo->requestinfo->install_path.str,
+							DA_FEATURE_FILE_NAME,
+							clientinfo->requestinfo->filename.str,
+							DA_FEATURE_USER_DATA,
+							(void *)clientinfoslot,
+							NULL);
+			else
+				da_ret =
+					da_start_download_with_extension(clientinfo->requestinfo->
 							url.str, &req_dl_id,
 							DA_FEATURE_REQUEST_HEADER,
 							req_header, &len,
@@ -86,36 +100,72 @@ void *_start_download(void *args)
 							DA_FEATURE_USER_DATA,
 							(void *)clientinfoslot,
 							NULL);
-		else
-			da_ret =
-				da_start_download_with_extension(clientinfo->requestinfo->
+		} else {
+			if (clientinfo->requestinfo->filename.length > 1)
+				da_ret =
+					da_start_download_with_extension(clientinfo->requestinfo->
+							url.str, &req_dl_id,
+							DA_FEATURE_REQUEST_HEADER,
+							req_header, &len,
+							DA_FEATURE_FILE_NAME,
+							clientinfo->requestinfo->filename.str,
+							DA_FEATURE_USER_DATA,
+							(void *)clientinfoslot,
+							NULL);
+			else
+				da_ret =
+					da_start_download_with_extension(clientinfo->requestinfo->
 							url.str, &req_dl_id,
 							DA_FEATURE_REQUEST_HEADER,
 							req_header, &len,
 							DA_FEATURE_USER_DATA,
 							(void *)clientinfoslot,
 							NULL);
+		}
 		for (i = 0; i < len; i++) {
 			if (req_header[i])
 				free(req_header[i]);
 		}
 	} else {
-		if (clientinfo->requestinfo->install_path.length > 0)
-			da_ret =
-				da_start_download_with_extension(clientinfo->requestinfo->
+		if (clientinfo->requestinfo->install_path.length > 1) {
+			if (clientinfo->requestinfo->filename.length > 1)
+				da_ret =
+					da_start_download_with_extension(clientinfo->requestinfo->
+							url.str, &req_dl_id,
+							DA_FEATURE_INSTALL_PATH,
+							clientinfo->requestinfo->install_path.str,
+							DA_FEATURE_FILE_NAME,
+							clientinfo->requestinfo->filename.str,
+							DA_FEATURE_USER_DATA,
+							(void *)clientinfoslot,
+							NULL);
+			else
+				da_ret =
+					da_start_download_with_extension(clientinfo->requestinfo->
 							url.str, &req_dl_id,
 							DA_FEATURE_INSTALL_PATH,
 							clientinfo->requestinfo->install_path.str,
 							DA_FEATURE_USER_DATA,
 							(void *)clientinfoslot,
 							NULL);
-		else
-			da_ret =
-				da_start_download_with_extension(clientinfo->requestinfo->
+		} else {
+			if (clientinfo->requestinfo->filename.length > 1)
+				da_ret =
+					da_start_download_with_extension(clientinfo->requestinfo->
+							url.str, &req_dl_id,
+							DA_FEATURE_FILE_NAME,
+							clientinfo->requestinfo->filename.str,
+							DA_FEATURE_USER_DATA,
+							(void *)clientinfoslot,
+							NULL);
+			else
+				da_ret =
+					da_start_download_with_extension(clientinfo->requestinfo->
 							url.str, &req_dl_id,
 							DA_FEATURE_USER_DATA,
 							(void *)clientinfoslot,
 							NULL);
+		}
 	}
 
 	// if start_download() return error cause of maximun download limitation, set state to DOWNLOAD_STATE_PENDED.
@@ -139,7 +189,6 @@ void *_start_download(void *args)
 							requestinfo->requestid);
 		ipc_send_request_stateinfo(clientinfo);
 		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
-		clear_clientinfoslot(clientinfoslot);
 		return 0;
 	}
 
@@ -209,29 +258,54 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 							request_clientinfo->requestinfo->requestid);
 			if (type == DOWNLOAD_CONTROL_STOP) {
 				TRACE_DEBUG_MSG("Request : DOWNLOAD_CONTROL_STOP");
-				// remove info from downloading table.
-				download_provider_db_requestinfo_remove
-					(request_clientinfo->requestinfo->requestid);
 				if (searchindex >= 0) {
-					CLIENT_MUTEX_LOCK(&
-						(clientinfo_list[searchindex].clientinfo->client_mutex));
 					if (da_cancel_download
 						(clientinfo_list[searchindex].clientinfo->req_id)
 						== DA_RESULT_OK) {
 						request_clientinfo->state = DOWNLOAD_STATE_STOPPED;
 						request_clientinfo->err = DOWNLOAD_ERROR_NONE;
+						if (clientinfo_list[searchindex].clientinfo->requestinfo
+							&& clientinfo_list[searchindex].clientinfo->requestinfo->notification)
+							set_downloadedinfo_appfw_notification(clientinfo_list[searchindex].clientinfo);
+						download_provider_db_requestinfo_remove(request_clientinfo->requestinfo->requestid);
+						download_provider_db_history_new(clientinfo_list[searchindex].clientinfo);
 					} else {
 						request_clientinfo->state = DOWNLOAD_STATE_FAILED;
 						request_clientinfo->err = DOWNLOAD_ERROR_INVALID_PARAMETER;
 					}
-					ipc_send_stateinfo(request_clientinfo);
-					CLIENT_MUTEX_UNLOCK(&
-						(clientinfo_list[searchindex].clientinfo->client_mutex));
+				} else { // no found
+					request_clientinfo->state = DOWNLOAD_STATE_NONE;
+					request_clientinfo->err = DOWNLOAD_ERROR_NONE;
 				}
-			} else if (type == DOWNLOAD_CONTROL_GET_STATE_INFO)
-			{
-				// not implemented yet
+				ipc_send_stateinfo(request_clientinfo);
+			} else if (type == DOWNLOAD_CONTROL_GET_STATE_INFO) {
 				// search slots/downloading db/history db
+				if (searchindex > 0) { // exist in slots (memory)
+					request_clientinfo->state =
+						clientinfo_list[searchindex].clientinfo->state;
+					request_clientinfo->err =
+						clientinfo_list[searchindex].clientinfo->err;
+				} else {  //search downloading db or history db
+					download_dbinfo* dbinfo =
+						download_provider_db_get_info(
+							request_clientinfo->requestinfo->requestid);
+					if (dbinfo) { // found in downloading db..it means crashed job
+						request_clientinfo->state = DOWNLOAD_STATE_PENDED;
+						request_clientinfo->err = DOWNLOAD_ERROR_TOO_MANY_DOWNLOADS;
+					} else { // no exist in downloading db
+						dbinfo = download_provider_db_history_get_info(
+							request_clientinfo->requestinfo->requestid);
+						if (!dbinfo) { // no info anywhere
+							request_clientinfo->state = DOWNLOAD_STATE_NONE;
+							request_clientinfo->err = DOWNLOAD_ERROR_NONE;
+						} else { //history info
+							request_clientinfo->state = dbinfo->state;
+							request_clientinfo->err = DOWNLOAD_ERROR_NONE;
+						}
+					}
+					download_provider_db_info_free(dbinfo);
+				}
+				ipc_send_stateinfo(request_clientinfo);
 				// estabilish the spec of return value.
 			}
 		}
@@ -253,14 +327,11 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 		int searchindex = get_same_request_slot_index(clientinfo_list,
 						request_clientinfo->requestinfo->requestid);
 		if (searchindex < 0) {
-			CLIENT_MUTEX_LOCK(&(request_clientinfo->client_mutex));
 			TRACE_DEBUG_MSG("Not Found Same Request ID");
-			request_clientinfo->requestinfo->requestid = 0;
 			// Invalid id
 			request_clientinfo->state = DOWNLOAD_STATE_FAILED;
 			request_clientinfo->err = DOWNLOAD_ERROR_INVALID_PARAMETER;
 			ipc_send_request_stateinfo(request_clientinfo);
-			CLIENT_MUTEX_UNLOCK(&(request_clientinfo->client_mutex));
 			clear_clientinfo(request_clientinfo);
 			return 0;
 		} else {	// found request id. // how to deal etag ?
@@ -364,11 +435,11 @@ int _handle_client_request(download_clientinfo* clientinfo)
 		return -1;
 	}
 
-	CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 	switch (msgType = ipc_receive_header(clientinfo->clientfd)) {
 	case DOWNLOAD_CONTROL_STOP:
 		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_STOP");
 		da_ret = da_cancel_download(clientinfo->req_id);
+		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		if (da_ret != DA_RESULT_OK) {
 			/* FIXME : need to seperate in detail according to error return values */
 			clientinfo->state = DOWNLOAD_STATE_FAILED;
@@ -377,12 +448,21 @@ int _handle_client_request(download_clientinfo* clientinfo)
 		} else {
 			clientinfo->state = DOWNLOAD_STATE_STOPPED;
 			clientinfo->err = DOWNLOAD_ERROR_NONE;
+			if (clientinfo->requestinfo) {
+				if (clientinfo->requestinfo->notification)
+					set_downloadedinfo_appfw_notification(clientinfo);
+				download_provider_db_requestinfo_remove(clientinfo->
+					requestinfo->requestid);
+			}
+			download_provider_db_history_new(clientinfo);
 		}
 		ipc_send_stateinfo(clientinfo);
+		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case DOWNLOAD_CONTROL_PAUSE:
 		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_PAUSE");
 		da_ret = da_suspend_download(clientinfo->req_id);
+		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		if (da_ret != DA_RESULT_OK) {
 			/* FIXME : need to seperate in detail according to error return values */
 			clientinfo->state = DOWNLOAD_STATE_FAILED;
@@ -393,10 +473,12 @@ int _handle_client_request(download_clientinfo* clientinfo)
 			clientinfo->err = DOWNLOAD_ERROR_NONE;
 		}
 		ipc_send_stateinfo(clientinfo);
+		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case DOWNLOAD_CONTROL_RESUME:
 		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_RESUME");
 		da_ret = da_resume_download(clientinfo->req_id);
+		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		if (da_ret != DA_RESULT_OK) {
 			/* FIXME : need to seperate in detail according to error return values */
 			clientinfo->state = DOWNLOAD_STATE_FAILED;
@@ -407,14 +489,19 @@ int _handle_client_request(download_clientinfo* clientinfo)
 			clientinfo->err = DOWNLOAD_ERROR_NONE;
 		}
 		ipc_send_stateinfo(clientinfo);
+		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case DOWNLOAD_CONTROL_GET_STATE_INFO:	// sync call
 		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_GET_STATE_INFO");
+		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		ipc_send_stateinfo(clientinfo);
+		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case DOWNLOAD_CONTROL_GET_DOWNLOAD_INFO:	// sync call
 		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_GET_DOWNLOAD_INFO");
+		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		ipc_send_downloadinfo(clientinfo);
+		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case -1:
 	case 0:
@@ -423,14 +510,11 @@ int _handle_client_request(download_clientinfo* clientinfo)
 		// bloken socket... it seems the client is dead or closed by agent thread.
 		// close socket, this will break the loop. and terminate this thread.
 		clear_socket(clientinfo);
-		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		return -1;
 	default:
 		TRACE_DEBUG_MSG("Unknow message [%d]", msgType);
-		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		return -1;
 	}
-	CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 	return 0;
 }
 
@@ -460,6 +544,7 @@ void *run_manage_download_server(void *args)
 		TerminateDaemon(SIGTERM);
 		return 0;
 	}
+	clear_downloadinginfo_appfw_notification();
 
 	if ((listenfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 		TRACE_DEBUG_MSG("failed to create socket");
@@ -530,14 +615,11 @@ void *run_manage_download_server(void *args)
 		for (i=0; i < MAX_CLIENT; i++) {
 			if (!clientinfo_list[i].clientinfo)
 				continue;
-			CLIENT_MUTEX_LOCK(&(clientinfo_list[i].clientinfo->client_mutex));
 			// clear slot.
 			if (clientinfo_list[i].clientinfo->state >= DOWNLOAD_STATE_FINISHED) {
-				CLIENT_MUTEX_UNLOCK(&(clientinfo_list[i].clientinfo->client_mutex));
 				clear_clientinfoslot(&clientinfo_list[i]);
 				continue;
 			}
-			CLIENT_MUTEX_UNLOCK(&(clientinfo_list[i].clientinfo->client_mutex));
 		}
 
 		rset = g_download_provider_socket_readset;
@@ -555,9 +637,12 @@ void *run_manage_download_server(void *args)
 		for (i=0; i < MAX_CLIENT; i++) {  // find the socket received the packet.
 			if (!clientinfo_list[i].clientinfo)
 				continue;
+			// ignore it is not started yet.
+			if (clientinfo_list[i].clientinfo->state <= DOWNLOAD_STATE_READY)
+				continue;
 			// ignore if finished
-			//if (clientinfo_list[i].clientinfo->state >= DOWNLOAD_STATE_FINISHED)
-				//continue;
+			if (clientinfo_list[i].clientinfo->state >= DOWNLOAD_STATE_FINISHED)
+				continue;
 			//Even if no socket, downloading should be progressed.
 			if (clientinfo_list[i].clientinfo->clientfd <= 0)
 				continue;
@@ -604,14 +689,16 @@ void *run_manage_download_server(void *args)
 				sleep(5);	// provider need the time of refresh.
 				continue;
 			}
-			FD_SET(request_clientinfo->clientfd, &g_download_provider_socket_readset);	// add new descriptor to set
-			FD_SET(request_clientinfo->clientfd, &g_download_provider_socket_exceptset);
-			if (request_clientinfo->clientfd > maxfd )
-				maxfd = request_clientinfo->clientfd;	/* for select */
-
 			if (_handle_new_connection(clientinfo_list, request_clientinfo) < 0) {
 				sleep(1);
 				continue;
+			}
+			// after starting the download by DA, event thread will start to get the event from client.
+			if (request_clientinfo && request_clientinfo->clientfd > 0) {
+				FD_SET(request_clientinfo->clientfd, &g_download_provider_socket_readset);	// add new descriptor to set
+				FD_SET(request_clientinfo->clientfd, &g_download_provider_socket_exceptset);
+				if (request_clientinfo->clientfd > maxfd )
+					maxfd = request_clientinfo->clientfd;	/* for select */
 			}
 		}
 
@@ -939,20 +1026,22 @@ void __notify_cb(user_notify_info_t *notify_info, void *user_data)
 		TRACE_DEBUG_MSG("[CRITICAL] clientinfo is NULL");
 		return;
 	}
-	CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
+
 	TRACE_DEBUG_MSG("id[%d],state[%d],err[%d]",
 			notify_info->da_dl_req_id,
 			notify_info->state, notify_info->err);
 	if (clientinfo->req_id != notify_info->da_dl_req_id) {
 		TRACE_DEBUG_MSG("[CRITICAL] req_id[%d] da_dl_req_id[%d}",
 				clientinfo->req_id, notify_info->da_dl_req_id);
-		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		return;
 	}
 
+	CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
+
 	clientinfo->state = __change_state(notify_info->state);
 	clientinfo->err = __change_error(notify_info->err);
-	if (clientinfo->state >= DOWNLOAD_STATE_FINISHED) {
+	if (clientinfo->state == DOWNLOAD_STATE_FINISHED ||
+			clientinfo->state == DOWNLOAD_STATE_FAILED) {
 		if (clientinfo->requestinfo) {
 			if (clientinfo->requestinfo->notification)
 				set_downloadedinfo_appfw_notification(clientinfo);

@@ -7,6 +7,7 @@
 
 #include "download-provider-ipc.h"
 #include "download-provider-log.h"
+#include "bundle.h"
 
 int ipc_receive_header(int fd)
 {
@@ -122,6 +123,7 @@ int ipc_send_downloadinginfo(download_clientinfo *clientinfo)
 	return type;
 }
 
+extern int service_import_from_bundle(service_h service, bundle *data);
 int ipc_receive_request_msg(download_clientinfo *clientinfo)
 {
 	if (!clientinfo || clientinfo->clientfd <= 0)
@@ -141,7 +143,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		TRACE_DEBUG_MSG("failed to read message header");
 		return -1;
 	}
-	if (clientinfo->requestinfo->client_packagename.length > 0) {
+	if (clientinfo->requestinfo->client_packagename.length > 1) {
 		clientinfo->requestinfo->client_packagename.str =
 			(char *)
 			calloc((clientinfo->requestinfo->client_packagename.length +
@@ -164,7 +166,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 				clientinfo->requestinfo->client_packagename.
 				str);
 	}
-	if (clientinfo->requestinfo->url.length > 0) {
+	if (clientinfo->requestinfo->url.length > 1) {
 		clientinfo->requestinfo->url.str =
 			(char *)calloc((clientinfo->requestinfo->url.length + 1),
 					sizeof(char));
@@ -180,7 +182,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		TRACE_DEBUG_MSG("request url [%s]",
 				clientinfo->requestinfo->url.str);
 	}
-	if (clientinfo->requestinfo->install_path.length > 0) {
+	if (clientinfo->requestinfo->install_path.length > 1) {
 		clientinfo->requestinfo->install_path.str =
 			(char *)
 			calloc((clientinfo->requestinfo->install_path.length + 1),
@@ -202,7 +204,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		TRACE_DEBUG_MSG("request install_path [%s]",
 				clientinfo->requestinfo->install_path.str);
 	}
-	if (clientinfo->requestinfo->filename.length > 0) {
+	if (clientinfo->requestinfo->filename.length > 1) {
 		clientinfo->requestinfo->filename.str =
 			(char *)
 			calloc((clientinfo->requestinfo->filename.length + 1),
@@ -222,6 +224,55 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		TRACE_DEBUG_MSG("request filename [%s]",
 				clientinfo->requestinfo->filename.str);
 	}
+	if (clientinfo->requestinfo->service_data.length > 1) {
+		bundle_raw *raw_data = NULL;
+		int len = 0;
+		bundle *b = NULL;
+		service_h service_handle;
+		clientinfo->requestinfo->service_data.str =
+			(char *)
+			calloc((clientinfo->requestinfo->service_data.length + 1),
+				sizeof(char));
+		if (read
+			(clientinfo->clientfd,
+			clientinfo->requestinfo->service_data.str,
+			clientinfo->requestinfo->service_data.length * sizeof(char)) <
+			0) {
+			TRACE_DEBUG_MSG
+				("failed to read message header filename(%s)",
+				strerror(errno));
+			return -1;
+		}
+		clientinfo->requestinfo->service_data.str[clientinfo->requestinfo->
+								service_data.length] = '\0';
+		raw_data = (bundle_raw *)clientinfo->requestinfo->service_data.str;
+		len = clientinfo->requestinfo->service_data.length;
+		if ((b = bundle_decode(raw_data, len)) == NULL) {
+			TRACE_DEBUG_MSG("Failed to decode bundle raw data");
+			return -1;
+		}
+		if (service_create(&service_handle) < 0) {
+			TRACE_DEBUG_MSG("Failed to create service handle");
+			bundle_free(b);
+			return -1;
+		}
+		if (service_import_from_bundle(service_handle, b) < 0) {
+			TRACE_DEBUG_MSG("Failed to import service handle");
+			bundle_free(b);
+			service_destroy(service_handle);
+			return -1;
+		}
+
+		clientinfo->service_handle = service_handle;
+		char *pkg = NULL;
+		service_get_package(service_handle, &pkg);
+		if (pkg) {
+			TRACE_DEBUG_MSG("operation### [%s]",pkg);
+			free(pkg);
+		}
+
+		bundle_free(b);
+	}
 	if (clientinfo->requestinfo->headers.rows) {
 		clientinfo->requestinfo->headers.str =
 			(download_flexible_string *) calloc(clientinfo->requestinfo->headers.
@@ -237,7 +288,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 					strerror(errno));
 				return -1;
 			}
-			if (clientinfo->requestinfo->headers.str[i].length > 0) {
+			if (clientinfo->requestinfo->headers.str[i].length > 1) {
 				TRACE_DEBUG_MSG("headers[%d] length[%d]", i,
 						clientinfo->requestinfo->
 						headers.str[i].length);
