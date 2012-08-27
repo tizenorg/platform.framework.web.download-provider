@@ -16,7 +16,7 @@ void *run_manage_download_server(void *args);
 
 void TerminateDaemon(int signo)
 {
-	TRACE_DEBUG_MSG("Received SIGTERM");
+	TRACE_DEBUG_INFO_MSG("Received SIGTERM");
 	if (g_main_loop_is_running(gMainLoop))
 		g_main_loop_quit(gMainLoop);
 }
@@ -81,7 +81,7 @@ int main()
 
 	g_main_loop_run(gMainLoop);
 
-	TRACE_DEBUG_MSG("Download-Provider will be terminated.");
+	TRACE_DEBUG_INFO_MSG("Download-Provider will be terminated.");
 
 	pthread_cancel(gRequestThreadPid);
 	pthread_join(gRequestThreadPid, NULL);

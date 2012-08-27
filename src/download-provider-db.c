@@ -608,14 +608,10 @@ void download_provider_db_info_free(download_dbinfo *info)
 	if (info->saved_path)
 		free(info->saved_path);
 	info->saved_path = NULL;
-	free(info);
-	info = NULL;
 }
 
 void download_provider_db_list_free(download_dbinfo_list *list)
 {
-	TRACE_DEBUG_MSG("");
-
 	int i = 0;
 	if (!list)
 		return;
@@ -745,6 +741,7 @@ download_dbinfo *download_provider_db_get_info(int requestid)
 				sqlite3_errmsg(g_download_provider_db), errorcode);
 		__download_provider_db_close();
 		download_provider_db_info_free(dbinfo);
+		free(dbinfo);
 		return NULL;
 	}
 	_download_provider_sql_close(stmt);
@@ -1016,7 +1013,7 @@ download_dbinfo *download_provider_db_history_get_info(int requestid)
 
 	errorcode =
 		sqlite3_prepare_v2(g_download_provider_db,
-			"SELECT uniqueid, packagename, notification, installpath, filename, creationdate, state, url, mimetype, savedpath FROM history WHERE uniqueid = ?",
+			"SELECT packagename, filename, creationdate, state, mimetype, savedpath FROM history WHERE uniqueid = ?",
 			-1, &stmt, NULL);
 	if (errorcode != SQLITE_OK) {
 		TRACE_DEBUG_MSG("sqlite3_prepare_v2 is failed. [%s]",
@@ -1033,8 +1030,8 @@ download_dbinfo *download_provider_db_history_get_info(int requestid)
 
 	if ((errorcode = sqlite3_step(stmt)) == SQLITE_ROW) {
 		dbinfo = (download_dbinfo *) calloc(1, sizeof(download_dbinfo));
-		dbinfo->requestid = sqlite3_column_int(stmt, 0);
-		buffer = (char *)(sqlite3_column_text(stmt, 1));
+		dbinfo->requestid = requestid;
+		buffer = (char *)(sqlite3_column_text(stmt, 0));
 		dbinfo->packagename = NULL;
 		if (buffer) {
 			buffer_length = strlen(buffer);
@@ -1044,18 +1041,7 @@ download_dbinfo *download_provider_db_history_get_info(int requestid)
 					buffer_length * sizeof(char));
 			dbinfo->packagename[buffer_length] = '\0';
 		}
-		dbinfo->notification = sqlite3_column_int(stmt, 2);
-		buffer = (char *)(sqlite3_column_text(stmt, 3));
-		dbinfo->installpath = NULL;
-		if (buffer) {
-			buffer_length = strlen(buffer);
-			dbinfo->installpath
-				= (char *)calloc(buffer_length + 1, sizeof(char));
-			memcpy(dbinfo->installpath, buffer,
-					buffer_length * sizeof(char));
-			dbinfo->installpath[buffer_length] = '\0';
-		}
-		buffer = (char *)(sqlite3_column_text(stmt, 4));
+		buffer = (char *)(sqlite3_column_text(stmt, 1));
 		dbinfo->filename = NULL;
 		if (buffer) {
 			buffer_length = strlen(buffer);
@@ -1065,7 +1051,7 @@ download_dbinfo *download_provider_db_history_get_info(int requestid)
 					buffer_length * sizeof(char));
 			dbinfo->filename[buffer_length] = '\0';
 		}
-		buffer = (char *)(sqlite3_column_text(stmt, 5));
+		buffer = (char *)(sqlite3_column_text(stmt, 2));
 		dbinfo->createdate = NULL;
 		if (buffer) {
 			buffer_length = strlen(buffer);
@@ -1075,18 +1061,8 @@ download_dbinfo *download_provider_db_history_get_info(int requestid)
 					buffer_length * sizeof(char));
 			dbinfo->createdate[buffer_length] = '\0';
 		}
-		dbinfo->state = sqlite3_column_int(stmt, 6);
-		buffer = (char *)(sqlite3_column_text(stmt, 7));
-		dbinfo->url = NULL;
-		if (buffer) {
-			buffer_length = strlen(buffer);
-			dbinfo->url
-				= (char *)calloc(buffer_length + 1, sizeof(char));
-			memcpy(dbinfo->url, buffer,
-					buffer_length * sizeof(char));
-			dbinfo->url[buffer_length] = '\0';
-		}
-		buffer = (char *)(sqlite3_column_text(stmt, 8));
+		dbinfo->state = sqlite3_column_int(stmt, 3);
+		buffer = (char *)(sqlite3_column_text(stmt, 4));
 		dbinfo->mimetype = NULL;
 		if (buffer) {
 			buffer_length = strlen(buffer);
@@ -1096,7 +1072,7 @@ download_dbinfo *download_provider_db_history_get_info(int requestid)
 					buffer_length * sizeof(char));
 			dbinfo->mimetype[buffer_length] = '\0';
 		}
-		buffer = (char *)(sqlite3_column_text(stmt, 9));
+		buffer = (char *)(sqlite3_column_text(stmt, 5));
 		dbinfo->saved_path = NULL;
 		if (buffer) {
 			buffer_length = strlen(buffer);
@@ -1111,6 +1087,7 @@ download_dbinfo *download_provider_db_history_get_info(int requestid)
 				sqlite3_errmsg(g_download_provider_db), errorcode);
 		__download_provider_db_close();
 		download_provider_db_info_free(dbinfo);
+		free(dbinfo);
 		return NULL;
 	}
 	_download_provider_sql_close(stmt);

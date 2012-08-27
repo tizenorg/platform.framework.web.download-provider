@@ -490,9 +490,6 @@ da_result_t __get_candidate_file_name(stage_info *stage, char **out_pure_file_na
 	return DA_RESULT_OK;
 
 ERR:
-	if (pure_file_name)
-		free(pure_file_name);
-
 	if (extension)
 		free(extension);
 

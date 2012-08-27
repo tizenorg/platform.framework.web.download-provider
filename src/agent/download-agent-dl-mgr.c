@@ -160,9 +160,6 @@ static da_result_t __cancel_download_with_download_id(int download_id)
 	}
 	_da_thread_mutex_unlock (&mutex_download_state[download_id]);
 
-	if (ret != DA_RESULT_OK)
-		goto ERR;
-
 	stage = GET_DL_CURRENT_STAGE(download_id);
 	if (!stage)
 		return DA_RESULT_OK;
@@ -278,9 +275,6 @@ static da_result_t __suspend_download_with_download_id(int download_id)
 	DA_LOG(Default, "download_state = %d", GET_DL_STATE_ON_ID(download_id));
 	_da_thread_mutex_unlock (&mutex_download_state[download_id]);
 
-	if (ret != DA_RESULT_OK)
-		goto ERR;
-
 	stage = GET_DL_CURRENT_STAGE(download_id);
 	if (!stage)
 		return DA_ERR_CANNOT_SUSPEND;
@@ -389,9 +383,6 @@ static da_result_t __resume_download_with_download_id(int download_id)
 	download_state = GET_DL_STATE_ON_ID(download_id);
 	DA_LOG(Default, "download_state = %d", GET_DL_STATE_ON_ID(download_id));
 	_da_thread_mutex_unlock (&mutex_download_state[download_id]);
-
-	if (ret != DA_RESULT_OK)
-		goto ERR;
 
 	stage = GET_DL_CURRENT_STAGE(download_id);
 

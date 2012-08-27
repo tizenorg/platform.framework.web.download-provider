@@ -162,7 +162,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 								requestinfo->
 								client_packagename.
 								length] = '\0';
-		TRACE_DEBUG_MSG("request client_packagename [%s]",
+		TRACE_DEBUG_INFO_MSG("request client_packagename [%s]",
 				clientinfo->requestinfo->client_packagename.
 				str);
 	}
@@ -179,7 +179,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		}
 		clientinfo->requestinfo->url.str[clientinfo->requestinfo->url.
 							length] = '\0';
-		TRACE_DEBUG_MSG("request url [%s]",
+		TRACE_DEBUG_INFO_MSG("request url [%s]",
 				clientinfo->requestinfo->url.str);
 	}
 	if (clientinfo->requestinfo->install_path.length > 1) {
@@ -201,7 +201,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 								requestinfo->
 								install_path.length] =
 			'\0';
-		TRACE_DEBUG_MSG("request install_path [%s]",
+		TRACE_DEBUG_INFO_MSG("request install_path [%s]",
 				clientinfo->requestinfo->install_path.str);
 	}
 	if (clientinfo->requestinfo->filename.length > 1) {
@@ -221,7 +221,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		}
 		clientinfo->requestinfo->filename.str[clientinfo->requestinfo->
 								filename.length] = '\0';
-		TRACE_DEBUG_MSG("request filename [%s]",
+		TRACE_DEBUG_INFO_MSG("request filename [%s]",
 				clientinfo->requestinfo->filename.str);
 	}
 	if (clientinfo->requestinfo->service_data.length > 1) {
@@ -289,7 +289,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 				return -1;
 			}
 			if (clientinfo->requestinfo->headers.str[i].length > 1) {
-				TRACE_DEBUG_MSG("headers[%d] length[%d]", i,
+				TRACE_DEBUG_INFO_MSG("headers[%d] length[%d]", i,
 						clientinfo->requestinfo->
 						headers.str[i].length);
 				clientinfo->requestinfo->headers.str[i].str =
@@ -310,7 +310,7 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 				clientinfo->requestinfo->headers.str[i].
 					str[clientinfo->requestinfo->headers.str[i].
 					length] = '\0';
-				TRACE_DEBUG_MSG("headers[%d][%s]", i,
+				TRACE_DEBUG_INFO_MSG("headers[%d][%s]", i,
 						clientinfo->requestinfo->
 						headers.str[i].str);
 			}

@@ -304,11 +304,12 @@ da_result_t  send_client_update_dl_info (
 	if (http_response_header) {
 		update_dl_info->http_response_header = strdup(http_response_header);
 	}
-	if (http_chunked_data)
+	if (http_chunked_data) {
 		update_dl_info->http_chunked_data = calloc (1, file_size);
 		if (update_dl_info->http_chunked_data)
 			memcpy(update_dl_info->http_chunked_data, http_chunked_data,
 				file_size);
+	}
 	DA_LOG(ClientNoti, "pushing file_size=%lu, download_id=%d, dl_req_id=%d",
 			file_size, download_id, dl_req_id);
 

@@ -27,7 +27,7 @@ int get_download_request_id(void)
 			uniquetime = uniquetime + (tval.tv_usec + 1) % 0xfffff;
 		else
 			uniquetime = uniquetime + tval.tv_usec;
-		TRACE_DEBUG_MSG("ID : %d", uniquetime);
+		TRACE_DEBUG_INFO_MSG("ID : %d", uniquetime);
 	} while (last_uniquetime == uniquetime);
 	last_uniquetime = uniquetime;	// store
 	return uniquetime;
@@ -49,7 +49,7 @@ void clear_socket(download_clientinfo *clientinfo)
 
 void clear_clientinfo(download_clientinfo *clientinfo)
 {
-	TRACE_DEBUG_MSG("[TEST] clear [%p]",clientinfo);
+	TRACE_DEBUG_INFO_MSG("[TEST] clear [%p]",clientinfo);
 	// clear this slot
 	if (!clientinfo)
 		return;
@@ -111,7 +111,6 @@ void clear_clientinfo(download_clientinfo *clientinfo)
 
 void clear_clientinfoslot(download_clientinfo_slot *clientinfoslot)
 {
-	TRACE_DEBUG_MSG("");
 	// clear this slot
 	if (!clientinfoslot)
 		return;

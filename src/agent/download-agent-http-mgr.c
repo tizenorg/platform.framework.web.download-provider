@@ -1686,10 +1686,6 @@ ERR:
 		free(field);
 		field = NULL;
 	}
-	if (value) {
-		free(value);
-		value = NULL;
-	}
 	return;
 }
 

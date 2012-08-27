@@ -64,6 +64,7 @@ da_result_t start_download_with_extension(
 	client_input_t *client_input = DA_NULL;
 	client_input_basic_t *client_input_basic = DA_NULL;
 	download_thread_input *thread_info = DA_NULL;
+	pthread_attr_t thread_attr;
 
 	DA_LOG_FUNC_START(Default);
 
@@ -132,7 +133,7 @@ da_result_t start_download_with_extension(
 	}
 
 	thread_info = (download_thread_input *)calloc(1, sizeof(download_thread_input));
-	if(!thread_info) {
+	if (!thread_info) {
 		DA_LOG_ERR(Default, "DA_ERR_FAIL_TO_MEMALLOC");
 		ret = DA_ERR_FAIL_TO_MEMALLOC;
 		goto ERR;
@@ -140,8 +141,18 @@ da_result_t start_download_with_extension(
 		thread_info->download_id = download_id;
 		thread_info->client_input = client_input;
 	}
+	if (pthread_attr_init(&thread_attr) != 0) {
+		ret = DA_ERR_FAIL_TO_CREATE_THREAD;
+		goto ERR;
+	}
 
-	if(pthread_create(&GET_DL_THREAD_ID(download_id), DA_NULL, __thread_start_download, thread_info) < 0) {
+	if (pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED) != 0) {
+		ret = DA_ERR_FAIL_TO_CREATE_THREAD;
+		goto ERR;
+	}
+
+	if (pthread_create(&GET_DL_THREAD_ID(download_id), &thread_attr,
+			__thread_start_download, thread_info) < 0) {
 		DA_LOG_ERR(Thread, "making thread failed..");
 		ret = DA_ERR_FAIL_TO_CREATE_THREAD;
 	} else {

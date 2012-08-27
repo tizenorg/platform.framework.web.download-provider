@@ -10,9 +10,12 @@
 #define LOG_TAG "download-provider"
 #define TRACE_DEBUG_MSG(format, ARG...)  \
 { \
-LOGD(format"[%s][%d]", ##ARG, __FUNCTION__, __LINE__); \
+LOGE(format"[%s][%d]", ##ARG, __FUNCTION__, __LINE__); \
 }
-
+#define TRACE_DEBUG_INFO_MSG(format, ARG...)  \
+{ \
+LOGI(format"[%s][%d]", ##ARG, __FUNCTION__, __LINE__); \
+}
 #else
 #define TRACE_DEBUG_MSG(format, ARG...) ;
 #endif

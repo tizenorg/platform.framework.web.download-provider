@@ -170,7 +170,7 @@ void *_start_download(void *args)
 
 	// if start_download() return error cause of maximun download limitation, set state to DOWNLOAD_STATE_PENDED.
 	if (da_ret == DA_ERR_ALREADY_MAX_DOWNLOAD) {
-		TRACE_DEBUG_MSG("change to pended request [%d]", da_ret);
+		TRACE_DEBUG_INFO_MSG("change to pended request [%d]", da_ret);
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		clientinfo->state = DOWNLOAD_STATE_PENDED;
 		clientinfo->err = DOWNLOAD_ERROR_TOO_MANY_DOWNLOADS;
@@ -180,7 +180,7 @@ void *_start_download(void *args)
 		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		return 0;
 	} else if (da_ret != DA_RESULT_OK) {
-		TRACE_DEBUG_MSG("Fail to request start [%d]", da_ret);
+		TRACE_DEBUG_INFO_MSG("Fail to request start [%d]", da_ret);
 		/* FIXME : need to seperate in detail according to error return values */
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		clientinfo->state = DOWNLOAD_STATE_FAILED;
@@ -194,7 +194,7 @@ void *_start_download(void *args)
 
 	CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 
-	TRACE_DEBUG_MSG("started download [%d]", da_ret);
+	TRACE_DEBUG_INFO_MSG("started download [%d]", da_ret);
 
 	clientinfo->req_id = req_dl_id;
 	clientinfo->state = DOWNLOAD_STATE_DOWNLOADING;
@@ -229,7 +229,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 		(request_clientinfo->clientfd, SOL_SOCKET,
 		SO_PEERCRED, &request_clientinfo->credentials,
 		&cr_len) == 0) {
-		TRACE_DEBUG_MSG
+		TRACE_DEBUG_INFO_MSG
 			("Client Info : pid=%d, uid=%d, gid=%d\n",
 			request_clientinfo->credentials.pid,
 			request_clientinfo->credentials.uid,
@@ -239,7 +239,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 
 	download_controls type =
 		ipc_receive_header(request_clientinfo->clientfd);
-	TRACE_DEBUG_MSG("[ACCEPT] HEADER : [%d] ", type);
+	TRACE_DEBUG_INFO_MSG("[ACCEPT] HEADER : [%d] ", type);
 	// first of all, receive requestinfo .
 	if (type <= 0 || ipc_receive_request_msg(request_clientinfo) < 0) {
 		TRACE_DEBUG_MSG("Ignore this connection, Invalid command");
@@ -257,7 +257,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 							(clientinfo_list,
 							request_clientinfo->requestinfo->requestid);
 			if (type == DOWNLOAD_CONTROL_STOP) {
-				TRACE_DEBUG_MSG("Request : DOWNLOAD_CONTROL_STOP");
+				TRACE_DEBUG_INFO_MSG("Request : DOWNLOAD_CONTROL_STOP");
 				if (searchindex >= 0) {
 					if (da_cancel_download
 						(clientinfo_list[searchindex].clientinfo->req_id)
@@ -327,7 +327,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 		int searchindex = get_same_request_slot_index(clientinfo_list,
 						request_clientinfo->requestinfo->requestid);
 		if (searchindex < 0) {
-			TRACE_DEBUG_MSG("Not Found Same Request ID");
+			TRACE_DEBUG_INFO_MSG("Not Found Same Request ID");
 			// Invalid id
 			request_clientinfo->state = DOWNLOAD_STATE_FAILED;
 			request_clientinfo->err = DOWNLOAD_ERROR_INVALID_PARAMETER;
@@ -336,7 +336,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 			return 0;
 		} else {	// found request id. // how to deal etag ?
 			// connect to slot.
-			TRACE_DEBUG_MSG("Found Same Request ID slot[%d]", searchindex);
+			TRACE_DEBUG_INFO_MSG("Found Same Request ID slot[%d]", searchindex);
 			CLIENT_MUTEX_LOCK(&(request_clientinfo->client_mutex));
 			// close previous socket.
 			if (clientinfo_list[searchindex].clientinfo->clientfd > 0)
@@ -380,7 +380,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 
 	clientinfo_list[searchslot].clientinfo = request_clientinfo;
 
-	TRACE_DEBUG_MSG("New Connection slot [%d] max [%d] max once [%d]",
+	TRACE_DEBUG_INFO_MSG("New Connection slot [%d] max [%d] max once [%d]",
 											searchslot,
 											MAX_CLIENT,
 											DA_MAX_DOWNLOAD_REQ_AT_ONCE);
@@ -395,7 +395,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 			(clientinfo_list[searchslot].clientinfo,
 			DOWNLOAD_DB_STATE);
 		ipc_send_request_stateinfo(clientinfo_list[searchslot].clientinfo);
-		TRACE_DEBUG_MSG ("Pended Request is saved to [%d/%d]",
+		TRACE_DEBUG_INFO_MSG ("Pended Request is saved to [%d/%d]",
 			searchslot, MAX_CLIENT);
 		CLIENT_MUTEX_UNLOCK(&(clientinfo_list[searchslot].clientinfo->client_mutex));
 		sleep(5);	// provider need the time of refresh.
@@ -406,8 +406,8 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 			(&clientinfo_list[searchslot].clientinfo->thread_pid,
 			&g_download_provider_thread_attr, _start_download,
 			&clientinfo_list[searchslot]) != 0) {
-			TRACE_DEBUG_MSG("failed to call pthread_create for client");
-			TRACE_DEBUG_MSG("Change to pended job");
+			TRACE_DEBUG_INFO_MSG("failed to call pthread_create for client");
+			TRACE_DEBUG_INFO_MSG("Change to pended job");
 			CLIENT_MUTEX_LOCK(&(clientinfo_list[searchslot].clientinfo->client_mutex));
 			clientinfo_list[searchslot].clientinfo->state =
 				DOWNLOAD_STATE_PENDED;
@@ -437,7 +437,7 @@ int _handle_client_request(download_clientinfo* clientinfo)
 
 	switch (msgType = ipc_receive_header(clientinfo->clientfd)) {
 	case DOWNLOAD_CONTROL_STOP:
-		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_STOP");
+		TRACE_DEBUG_INFO_MSG("DOWNLOAD_CONTROL_STOP");
 		da_ret = da_cancel_download(clientinfo->req_id);
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		if (da_ret != DA_RESULT_OK) {
@@ -460,7 +460,7 @@ int _handle_client_request(download_clientinfo* clientinfo)
 		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case DOWNLOAD_CONTROL_PAUSE:
-		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_PAUSE");
+		TRACE_DEBUG_INFO_MSG("DOWNLOAD_CONTROL_PAUSE");
 		da_ret = da_suspend_download(clientinfo->req_id);
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		if (da_ret != DA_RESULT_OK) {
@@ -476,7 +476,7 @@ int _handle_client_request(download_clientinfo* clientinfo)
 		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case DOWNLOAD_CONTROL_RESUME:
-		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_RESUME");
+		TRACE_DEBUG_INFO_MSG("DOWNLOAD_CONTROL_RESUME");
 		da_ret = da_resume_download(clientinfo->req_id);
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		if (da_ret != DA_RESULT_OK) {
@@ -492,13 +492,13 @@ int _handle_client_request(download_clientinfo* clientinfo)
 		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case DOWNLOAD_CONTROL_GET_STATE_INFO:	// sync call
-		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_GET_STATE_INFO");
+		TRACE_DEBUG_INFO_MSG("DOWNLOAD_CONTROL_GET_STATE_INFO");
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		ipc_send_stateinfo(clientinfo);
 		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		break;
 	case DOWNLOAD_CONTROL_GET_DOWNLOAD_INFO:	// sync call
-		TRACE_DEBUG_MSG("DOWNLOAD_CONTROL_GET_DOWNLOAD_INFO");
+		TRACE_DEBUG_INFO_MSG("DOWNLOAD_CONTROL_GET_DOWNLOAD_INFO");
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
 		ipc_send_downloadinfo(clientinfo);
 		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
@@ -577,7 +577,7 @@ void *run_manage_download_server(void *args)
 	}
 
 	maxfd = listenfd;
-	TRACE_DEBUG_MSG("Ready to listen IPC [%d][%s]", listenfd,
+	TRACE_DEBUG_INFO_MSG("Ready to listen IPC [%d][%s]", listenfd,
 			DOWNLOAD_PROVIDER_IPC);
 
 	// allocation the array structure for managing the clients.
@@ -625,6 +625,7 @@ void *run_manage_download_server(void *args)
 		rset = g_download_provider_socket_readset;
 		exceptset = g_download_provider_socket_exceptset;
 
+		memset(&timeout, 0x00, sizeof(struct timeval));
 		timeout.tv_sec = flexible_timeout;
 
 		if (select((maxfd + 1), &rset, 0, &exceptset, &timeout) < 0) {
@@ -647,7 +648,7 @@ void *run_manage_download_server(void *args)
 			if (clientinfo_list[i].clientinfo->clientfd <= 0)
 				continue;
 			if (FD_ISSET(clientinfo_list[i].clientinfo->clientfd, &rset) > 0) {
-				TRACE_DEBUG_MSG("FD_ISSET [%d] readset slot[%d]",
+				TRACE_DEBUG_INFO_MSG("FD_ISSET [%d] readset slot[%d]",
 					clientinfo_list[i].clientinfo->clientfd, i);
 				_handle_client_request(clientinfo_list[i].clientinfo);
 			} else if (FD_ISSET(clientinfo_list[i].clientinfo->clientfd, &exceptset) > 0) {
@@ -661,7 +662,7 @@ void *run_manage_download_server(void *args)
 			TerminateDaemon(SIGTERM);
 			break;
 		} else if (FD_ISSET(listenfd, &rset) > 0) { // new connection
-			TRACE_DEBUG_MSG("FD_ISSET listenfd rset");
+			TRACE_DEBUG_INFO_MSG("FD_ISSET listenfd rset");
 			// reset timeout.
 			flexible_timeout =
 				DOWNLOAD_PROVIDER_CARE_CLIENT_MIN_INTERVAL;
@@ -718,7 +719,7 @@ void *run_manage_download_server(void *args)
 				if (clientinfo_list[searchslot].clientinfo) {
 					if (clientinfo_list[searchslot].clientinfo->state ==
 						DOWNLOAD_STATE_PENDED) {
-						TRACE_DEBUG_MSG
+						TRACE_DEBUG_INFO_MSG
 							("Retry Pended Request [%d/%d] state [%d/%d]",
 							searchslot, MAX_CLIENT,
 							count_downloading_threads,
@@ -744,31 +745,61 @@ void *run_manage_download_server(void *args)
 				DA_MAX_DOWNLOAD_REQ_AT_ONCE) {
 				// Auto re-download feature. ethernet may be connected with other downloading items.
 				connection_h network_handle = NULL;
-				connection_ethernet_state_e system_network_state
-					= CONNECTION_ETHERNET_STATE_DISCONNECTED;
 				if (connection_create(&network_handle) < 0) {
 					TRACE_DEBUG_MSG
 						("Failed connection_create");
 					continue;
 				}
+
+				connection_ethernet_state_e system_network_state
+					= CONNECTION_ETHERNET_STATE_DISCONNECTED;
 				if (connection_get_ethernet_state(network_handle,
 											&system_network_state) !=
 					CONNECTION_ERROR_NONE)
 					TRACE_DEBUG_MSG
 						("Failed connection_get_ethernet_state");
+				TRACE_DEBUG_INFO_MSG
+					("ethernet check result : [%d]", (int)system_network_state);
+
+				connection_cellular_state_e system_cellular_state
+					= CONNECTION_CELLULAR_STATE_OUT_OF_SERVICE;
+				if (connection_get_cellular_state(network_handle,
+											&system_cellular_state) !=
+					CONNECTION_ERROR_NONE)
+					TRACE_DEBUG_MSG
+						("Failed connection_get_ethernet_state");
+				TRACE_DEBUG_INFO_MSG
+					("cellula check result : [%d]", (int)system_cellular_state);
+
+				connection_wifi_state_e system_wifi_state
+					= CONNECTION_WIFI_STATE_DEACTIVATED;
+				if (connection_get_wifi_state(network_handle,
+											&system_wifi_state) !=
+					CONNECTION_ERROR_NONE)
+					TRACE_DEBUG_MSG
+						("Failed connection_get_ethernet_state");
+				TRACE_DEBUG_INFO_MSG
+					("wifi check result : [%d]", (int)system_wifi_state);
+
 				if (connection_destroy(network_handle) !=
 					CONNECTION_ERROR_NONE)
 					TRACE_DEBUG_MSG
 						("Failed connection_destroy");
-				if (system_network_state !=
-					CONNECTION_ETHERNET_STATE_CONNECTED)
+
+				if (!(system_network_state
+						== CONNECTION_ETHERNET_STATE_CONNECTED
+					|| system_cellular_state
+						== CONNECTION_CELLULAR_STATE_AVAILABLE
+					|| system_wifi_state
+						== CONNECTION_WIFI_STATE_CONNECTED))
 					continue;
+
 				// check auto-retrying list regardless state. pended state is also included to checking list.
 				int i = 0;
 				download_dbinfo_list *db_list =
 					download_provider_db_get_list(DOWNLOAD_STATE_NONE);
 				if (!db_list || db_list->count <= 0) {
-					TRACE_DEBUG_MSG
+					TRACE_DEBUG_INFO_MSG
 						("provider does not need to check DB anymore. in this life.");
 					check_retry = 0;	// provider does not need to check DB anymore. in this life.
 					if (db_list)
@@ -784,14 +815,14 @@ void *run_manage_download_server(void *args)
 					if (get_same_request_slot_index
 						(clientinfo_list,db_list->item[i].requestid) < 0) {
 						// not found requestid in memory
-						TRACE_DEBUG_MSG
+						TRACE_DEBUG_INFO_MSG
 							("Retry download [%d]",
 							db_list->item[i].requestid);
 						//search empty slot. copy db info to slot.
 						searchslot =
 							get_empty_slot_index(clientinfo_list);
 						if (searchslot < 0) {
-							TRACE_DEBUG_MSG
+							TRACE_DEBUG_INFO_MSG
 								("download-provider is busy, try later");
 							flexible_timeout =
 								flexible_timeout * 2;
@@ -816,7 +847,7 @@ void *run_manage_download_server(void *args)
 						clientinfo_list[searchslot].clientinfo =
 							request_clientinfo;
 
-						TRACE_DEBUG_MSG
+						TRACE_DEBUG_INFO_MSG
 							("Retry download [%d/%d][%d/%d]",
 							searchslot, MAX_CLIENT,
 							count_downloading_threads,
@@ -853,7 +884,7 @@ void *run_manage_download_server(void *args)
 				DOWNLOAD_PROVIDER_CARE_CLIENT_MAX_INTERVAL)
 				flexible_timeout =
 					DOWNLOAD_PROVIDER_CARE_CLIENT_MAX_INTERVAL;
-			TRACE_DEBUG_MSG("Next Timeout after [%ld] sec",
+			TRACE_DEBUG_INFO_MSG("Next Timeout after [%ld] sec",
 					flexible_timeout);
 
 		} // if (i >= MAX_CLIENT) { // timeout
@@ -898,8 +929,8 @@ void __download_info_cb(user_download_info_t *download_info, void *user_data)
 		TRACE_DEBUG_MSG("[CRITICAL] clientinfo is NULL");
 		return;
 	}
-	TRACE_DEBUG_MSG("id[%d],size[%lu]",
-			download_info->da_dl_req_id, download_info->file_size)
+	TRACE_DEBUG_INFO_MSG("id[%d],size[%lu]",
+			download_info->da_dl_req_id, download_info->file_size);
 
 	if (clientinfo->req_id != download_info->da_dl_req_id) {
 		TRACE_DEBUG_MSG("[CRITICAL] req_id[%d] da_dl_req_id[%d}",
@@ -914,7 +945,7 @@ void __download_info_cb(user_download_info_t *download_info, void *user_data)
 	if (clientinfo->downloadinfo)
 		clientinfo->downloadinfo->file_size = download_info->file_size;
 	if (download_info->file_type) {
-		TRACE_DEBUG_MSG("mime[%s]", download_info->file_type);
+		TRACE_DEBUG_INFO_MSG("mime[%s]", download_info->file_type);
 
 		len = strlen(download_info->file_type);
 		if (len > (DP_MAX_STR_LEN - 1))
@@ -928,7 +959,7 @@ void __download_info_cb(user_download_info_t *download_info, void *user_data)
 	}
 	if (download_info->tmp_saved_path) {
 		char *str = NULL;
-		TRACE_DEBUG_MSG("tmp path[%s]", download_info->tmp_saved_path);
+		TRACE_DEBUG_INFO_MSG("tmp path[%s]", download_info->tmp_saved_path);
 		clientinfo->tmp_saved_path =
 			strdup(download_info->tmp_saved_path);
 		download_provider_db_requestinfo_update_column(clientinfo,
@@ -944,7 +975,7 @@ void __download_info_cb(user_download_info_t *download_info, void *user_data)
 					str, len);
 				download_provider_db_requestinfo_update_column
 					(clientinfo, DOWNLOAD_DB_FILENAME);
-				TRACE_DEBUG_MSG("content_name[%s]",
+				TRACE_DEBUG_INFO_MSG("content_name[%s]",
 						clientinfo->downloadinfo->
 						content_name);
 			}
@@ -988,13 +1019,18 @@ void __downloading_info_cb(user_downloading_info_t *download_info,
 		clientinfo->downloadinginfo->received_size =
 			download_info->total_received_size;
 	if (download_info->saved_path) {
-		TRACE_DEBUG_MSG("tmp path[%s]", download_info->saved_path);
+		TRACE_DEBUG_INFO_MSG("tmp path[%s]", download_info->saved_path);
 		len = strlen(download_info->saved_path);
 		if (len > (DP_MAX_PATH_LEN - 1))
 			len = DP_MAX_PATH_LEN - 1;
 		if (clientinfo->downloadinginfo)
 			strncpy(clientinfo->downloadinginfo->saved_path,
 				download_info->saved_path, len);
+		/* FIXME : This should be reviewd again after smack rules is applied */
+		if (chown(clientinfo->downloadinginfo->saved_path,
+				clientinfo->credentials.uid,
+				clientinfo->credentials.gid) < 0)
+			TRACE_DEBUG_INFO_MSG("Fail to chown [%s]", strerror(errno));
 	}
 
 	static size_t updated_second;
@@ -1027,7 +1063,7 @@ void __notify_cb(user_notify_info_t *notify_info, void *user_data)
 		return;
 	}
 
-	TRACE_DEBUG_MSG("id[%d],state[%d],err[%d]",
+	TRACE_DEBUG_INFO_MSG("id[%d],state[%d],err[%d]",
 			notify_info->da_dl_req_id,
 			notify_info->state, notify_info->err);
 	if (clientinfo->req_id != notify_info->da_dl_req_id) {
@@ -1049,11 +1085,11 @@ void __notify_cb(user_notify_info_t *notify_info, void *user_data)
 				requestinfo->requestid);
 		}
 		download_provider_db_history_new(clientinfo);
-		TRACE_DEBUG_MSG("[TEST]Finish clientinfo[%p],fd[%d]",
+		TRACE_DEBUG_INFO_MSG("[TEST]Finish clientinfo[%p],fd[%d]",
 			clientinfo, clientinfo->clientfd);
 	}
 
-	TRACE_DEBUG_MSG("state[%d]", clientinfo->state);
+	TRACE_DEBUG_INFO_MSG("state[%d]", clientinfo->state);
 	ipc_send_stateinfo(clientinfo);
 
 	CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
@@ -1065,44 +1101,44 @@ int __change_state(da_state state)
 	switch (state) {
 	case DA_STATE_WAITING:
 	case DA_STATE_DOWNLOAD_STARTED:
-		TRACE_DEBUG_MSG("DA_STATE_DOWNLOAD_STARTED");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_DOWNLOAD_STARTED");
 		ret = DOWNLOAD_STATE_READY;
 		break;
 	case DA_STATE_DOWNLOADING:
-		TRACE_DEBUG_MSG("DA_STATE_DOWNLOADING");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_DOWNLOADING");
 		ret = DOWNLOAD_STATE_DOWNLOADING;
 		break;
 	case DA_STATE_DOWNLOAD_COMPLETE:
-		TRACE_DEBUG_MSG("DA_STATE_COMPLETE");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_COMPLETE");
 		ret = DOWNLOAD_STATE_INSTALLING;
 		break;
 	case DA_STATE_CANCELED:
-		TRACE_DEBUG_MSG("DA_STATE_CANCELED");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_CANCELED");
 		ret = DOWNLOAD_STATE_STOPPED;
 		break;
 	case DA_STATE_CANCELED_ALL:
-		TRACE_DEBUG_MSG("DA_STATE_CANCELED_ALL");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_CANCELED_ALL");
 		break;
 	case DA_STATE_SUSPENDED:
-		TRACE_DEBUG_MSG("DA_STATE_SUSPENDED");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_SUSPENDED");
 		ret = DOWNLOAD_STATE_PAUSED;
 		break;
 	case DA_STATE_SUSPENDED_ALL:
-		TRACE_DEBUG_MSG("DA_STATE_SUSPENDED_ALL");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_SUSPENDED_ALL");
 		break;
 	case DA_STATE_RESUMED:
-		TRACE_DEBUG_MSG("DA_STATE_RESUMED");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_RESUMED");
 		ret = DOWNLOAD_STATE_DOWNLOADING;
 		break;
 	case DA_STATE_RESUMED_ALL:
-		TRACE_DEBUG_MSG("DA_STATE_RESUMED_ALL");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_RESUMED_ALL");
 		break;
 	case DA_STATE_FINISHED:
-		TRACE_DEBUG_MSG("DA_STATE_FINISHED");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_FINISHED");
 		ret = DOWNLOAD_STATE_FINISHED;
 		break;
 	case DA_STATE_FAILED:
-		TRACE_DEBUG_MSG("DA_STATE_FAILED");
+		TRACE_DEBUG_INFO_MSG("DA_STATE_FAILED");
 		ret = DOWNLOAD_STATE_FAILED;
 		break;
 	default:

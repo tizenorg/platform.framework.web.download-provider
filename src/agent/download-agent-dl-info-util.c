@@ -102,9 +102,12 @@ da_result_t deinit_download_mgr(void) {
 			if (dl_info && dl_info->is_using) {
 				request_to_abort_http_download(GET_DL_CURRENT_STAGE(i));
 				DA_LOG_CRITICAL(Thread, "===download id[%d] thread id[%lu] join===",i, GET_DL_THREAD_ID(i));
+/* Because the download daemon can call the deinit function, the resources of pthread are not freed
+   FIXME later : It is needed to change the termination flow again.
 		if (pthread_join(GET_DL_THREAD_ID(i), &t_return) < 0) {
 			DA_LOG_ERR(Thread, "join client thread is failed!!!");
 		}
+*/
 		DA_LOG_CRITICAL(Thread, "===download id[%d] thread join return[%d]===",i, (char*)t_return);
 }
 }
