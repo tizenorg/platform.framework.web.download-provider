@@ -844,6 +844,8 @@ void *run_manage_download_server(void *args)
 							continue;
 						}
 
+						CLIENT_MUTEX_INIT(&(request_clientinfo->client_mutex), NULL);
+						request_clientinfo->state = DOWNLOAD_STATE_READY;
 						clientinfo_list[searchslot].clientinfo =
 							request_clientinfo;
 
