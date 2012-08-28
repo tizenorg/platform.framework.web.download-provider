@@ -248,7 +248,9 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 	}
 
 	if (type == DOWNLOAD_CONTROL_STOP
-		|| type == DOWNLOAD_CONTROL_GET_STATE_INFO) {
+		|| type == DOWNLOAD_CONTROL_GET_STATE_INFO
+		|| type == DOWNLOAD_CONTROL_RESUME
+		|| type == DOWNLOAD_CONTROL_PAUSE) {
 		// get requestid from socket.
 		if (request_clientinfo->requestinfo
 			&& request_clientinfo->requestinfo->requestid > 0) {
@@ -308,6 +310,38 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 				}
 				ipc_send_stateinfo(request_clientinfo);
 				// estabilish the spec of return value.
+			} else if (type == DOWNLOAD_CONTROL_PAUSE) {
+				if (searchindex >= 0) {
+					if (da_suspend_download
+						(clientinfo_list[searchindex].clientinfo->req_id)
+						== DA_RESULT_OK) {
+						request_clientinfo->state = DOWNLOAD_STATE_PAUSE_REQUESTED;
+						request_clientinfo->err = DOWNLOAD_ERROR_NONE;
+					} else {
+						request_clientinfo->state = DOWNLOAD_STATE_FAILED;
+						request_clientinfo->err = DOWNLOAD_ERROR_INVALID_PARAMETER;
+					}
+				} else { // no found
+					request_clientinfo->state = DOWNLOAD_STATE_NONE;
+					request_clientinfo->err = DOWNLOAD_ERROR_NONE;
+				}
+				ipc_send_stateinfo(request_clientinfo);
+			} else if (type == DOWNLOAD_CONTROL_RESUME) {
+				if (searchindex >= 0) {
+					if (da_resume_download
+						(clientinfo_list[searchindex].clientinfo->req_id)
+						== DA_RESULT_OK) {
+						request_clientinfo->state = DOWNLOAD_STATE_DOWNLOADING;
+						request_clientinfo->err = DOWNLOAD_ERROR_NONE;
+					} else {
+						request_clientinfo->state = DOWNLOAD_STATE_FAILED;
+						request_clientinfo->err = DOWNLOAD_ERROR_INVALID_PARAMETER;
+					}
+				} else { // no found
+					request_clientinfo->state = DOWNLOAD_STATE_NONE;
+					request_clientinfo->err = DOWNLOAD_ERROR_NONE;
+				}
+				ipc_send_stateinfo(request_clientinfo);
 			}
 		}
 		clear_clientinfo(request_clientinfo);
