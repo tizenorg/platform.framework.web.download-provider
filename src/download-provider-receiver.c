@@ -304,6 +304,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 						}
 					}
 					download_provider_db_info_free(dbinfo);
+					free(dbinfo);
 				}
 				ipc_send_stateinfo(request_clientinfo);
 				// estabilish the spec of return value.
