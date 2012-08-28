@@ -1,7 +1,8 @@
+
 Name:       download-provider
 Summary:    download the contents in background.
-Version: 	0.0.3
-Release:    2
+Version: 	0.0.5
+Release:    3
 Group:      TO_BE/FILLED_IN
 License:    TO_BE/FILLED_IN
 Source0:    %{name}-%{version}.tar.gz
@@ -79,6 +80,31 @@ fi
 %{_libdir}/pkgconfig/download-provider.pc
 
 %changelog
+* Mon Aug 27 2012 Kwangmin Bang <justine.bang@samsung.com>
+- Change the ownership of downloaded file
+- Add detached option when pthread is created
+- fix the failure getting history info from database
+- fix first timeout takes a long time
+- fix wrong checking of network status
+- fix the crash by double free
+- divide log level
+- Resolve prevent defects for agent module
+- Resolve a bug to join domain in case of playready
+
+* Tue Aug 23 2012 Kwangmin Bang <justine.bang@samsung.com>
+- event thread does not deal in some state
+- fix the lockup by mutex and the crash by invaild socket event
+
+* Tue Aug 22 2012 Jungki Kwak <jungki.kwak@samsung.com>
+- Fix the crash when use notification
+- One thread model for socket
+- Fix the defects found by prevent tool
+- Remove mutex lock/unlock in case of invalid id
+- Support the status of download in case of getting new connection with requestid
+- Clear db and register notification when stopped the download
+- Update notification function
+- Enable to set the defined file name by user
+
 * Tue Aug 17 2012 Jungki Kwak <jungki.kwak@samsung.com>
 - Enable to use destination path
 - Add to handle invalid id
