@@ -143,7 +143,8 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		TRACE_DEBUG_MSG("failed to read message header");
 		return -1;
 	}
-	if (clientinfo->requestinfo->client_packagename.length > 1) {
+	if (clientinfo->requestinfo->client_packagename.length > 1
+		&& clientinfo->requestinfo->client_packagename.length < DP_MAX_STR_LEN) {
 		clientinfo->requestinfo->client_packagename.str =
 			(char *)
 			calloc((clientinfo->requestinfo->client_packagename.length +
@@ -166,7 +167,8 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 				clientinfo->requestinfo->client_packagename.
 				str);
 	}
-	if (clientinfo->requestinfo->url.length > 1) {
+	if (clientinfo->requestinfo->url.length > 1
+		&& clientinfo->requestinfo->url.length < DP_MAX_URL_LEN) {
 		clientinfo->requestinfo->url.str =
 			(char *)calloc((clientinfo->requestinfo->url.length + 1),
 					sizeof(char));
@@ -182,7 +184,8 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		TRACE_DEBUG_INFO_MSG("request url [%s]",
 				clientinfo->requestinfo->url.str);
 	}
-	if (clientinfo->requestinfo->install_path.length > 1) {
+	if (clientinfo->requestinfo->install_path.length > 1
+		&& clientinfo->requestinfo->install_path.length < DP_MAX_PATH_LEN) {
 		clientinfo->requestinfo->install_path.str =
 			(char *)
 			calloc((clientinfo->requestinfo->install_path.length + 1),
@@ -204,7 +207,8 @@ int ipc_receive_request_msg(download_clientinfo *clientinfo)
 		TRACE_DEBUG_INFO_MSG("request install_path [%s]",
 				clientinfo->requestinfo->install_path.str);
 	}
-	if (clientinfo->requestinfo->filename.length > 1) {
+	if (clientinfo->requestinfo->filename.length > 1
+		&& clientinfo->requestinfo->filename.length < DP_MAX_STR_LEN) {
 		clientinfo->requestinfo->filename.str =
 			(char *)
 			calloc((clientinfo->requestinfo->filename.length + 1),

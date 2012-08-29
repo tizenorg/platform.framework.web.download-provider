@@ -113,7 +113,7 @@ bool download_provider_appfw_notification_cb(ui_notification_h notification,
 	TRACE_DEBUG_MSG("content [%s]", content);
 
 	// relatively unique
-	if (title && clientinfo->downloadinfo->content_name) {
+	if (title) {
 		int title_length = strlen(title);
 		int content_name_length =
 			strlen(clientinfo->downloadinfo->content_name);
@@ -125,6 +125,7 @@ bool download_provider_appfw_notification_cb(ui_notification_h notification,
 	}
 	// Only when matched title.
 	if (checkInfo && content) {
+		checkInfo = false;
 		char *failed_content =
 			__get_string_status(DOWNLOAD_STATE_FAILED);
 		if (failed_content) {
@@ -275,7 +276,7 @@ int create_appfw_notification(download_clientinfo *clientinfo, bool ongoing)
 	if (!ongoing) {
 		// view the special viewer by contents
 		if (clientinfo->downloadinginfo
-			&& clientinfo->downloadinginfo->saved_path
+			&& sizeof(clientinfo->downloadinginfo->saved_path) > 0
 			&& clientinfo->state == DOWNLOAD_STATE_FINISHED) {
 			if (service_set_operation
 				(clientinfo->service_handle,
