@@ -2,7 +2,7 @@
 Name:       download-provider
 Summary:    download the contents in background.
 Version: 	0.0.5
-Release:    3
+Release:    5
 Group:      TO_BE/FILLED_IN
 License:    TO_BE/FILLED_IN
 Source0:    %{name}-%{version}.tar.gz
@@ -80,6 +80,11 @@ fi
 %{_libdir}/pkgconfig/download-provider.pc
 
 %changelog
+* Thu Aug 30 2012 Kwangmin Bang <justine.bang@samsung.com>
+- initialize mutex for auto-redownloading
+- support Pause/Resume with new connection
+- fix the memory leak
+
 * Mon Aug 27 2012 Kwangmin Bang <justine.bang@samsung.com>
 - Change the ownership of downloaded file
 - Add detached option when pthread is created
