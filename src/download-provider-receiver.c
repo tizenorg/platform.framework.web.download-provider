@@ -685,8 +685,6 @@ void *run_manage_download_server(void *args)
 			//Even if no socket, downloading should be progressed.
 			if (clientinfo_list[i].clientinfo->clientfd <= 0)
 				continue;
-			if (is_timeout)
-				is_timeout = 0;
 			if (FD_ISSET(clientinfo_list[i].clientinfo->clientfd, &rset) > 0) {
 				// ignore it is not started yet.
 				if (clientinfo_list[i].clientinfo->state <= DOWNLOAD_STATE_READY)
@@ -694,6 +692,8 @@ void *run_manage_download_server(void *args)
 				TRACE_DEBUG_INFO_MSG("FD_ISSET [%d] readset slot[%d]",
 					clientinfo_list[i].clientinfo->clientfd, i);
 				_handle_client_request(clientinfo_list[i].clientinfo);
+				if (is_timeout)
+					is_timeout = 0;
 			} else if (FD_ISSET(clientinfo_list[i].clientinfo->clientfd, &exceptset) > 0) {
 				TRACE_DEBUG_MSG("FD_ISSET [%d] exceptset slot[%d]", clientinfo_list[i].clientinfo->clientfd, i);
 				clear_clientinfoslot(&clientinfo_list[i]);
