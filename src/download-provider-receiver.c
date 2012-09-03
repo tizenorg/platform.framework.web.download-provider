@@ -472,6 +472,12 @@ int _handle_client_request(download_clientinfo* clientinfo)
 
 	switch (msgType = ipc_receive_header(clientinfo->clientfd)) {
 	case DOWNLOAD_CONTROL_STOP:
+		if (clientinfo->state >= DOWNLOAD_STATE_FINISHED) {
+			// clear slot requested by client after finished download
+			TRACE_DEBUG_INFO_MSG("request Free slot to main thread");
+			clear_socket(clientinfo);
+			break;
+		}
 		TRACE_DEBUG_INFO_MSG("DOWNLOAD_CONTROL_STOP");
 		da_ret = da_cancel_download(clientinfo->req_id);
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
@@ -567,6 +573,7 @@ void *run_manage_download_server(void *args)
 	download_clientinfo *request_clientinfo;
 	int check_retry = 1;
 	int i = 0;
+	int is_timeout = 0;
 
 	socklen_t clientlen;
 	struct sockaddr_un listenaddr, clientaddr;
@@ -647,16 +654,18 @@ void *run_manage_download_server(void *args)
 	while (g_main_loop_is_running(mainloop)) {
 
 		// clean slots
-		for (i=0; i < MAX_CLIENT; i++) {
+		for (i = 0; i < MAX_CLIENT; i++) {
 			if (!clientinfo_list[i].clientinfo)
 				continue;
 			// clear slot.
 			if (clientinfo_list[i].clientinfo->state >= DOWNLOAD_STATE_FINISHED) {
-				clear_clientinfoslot(&clientinfo_list[i]);
+				if (clientinfo_list[i].clientinfo->clientfd <= 0)
+					clear_clientinfoslot(&clientinfo_list[i]);
 				continue;
 			}
 		}
 
+		is_timeout = 1;
 		rset = g_download_provider_socket_readset;
 		exceptset = g_download_provider_socket_exceptset;
 
@@ -670,19 +679,18 @@ void *run_manage_download_server(void *args)
 			break;
 		}
 
-		for (i=0; i < MAX_CLIENT; i++) {  // find the socket received the packet.
+		for (i = 0; i < MAX_CLIENT; i++) {  // find the socket received the packet.
 			if (!clientinfo_list[i].clientinfo)
-				continue;
-			// ignore it is not started yet.
-			if (clientinfo_list[i].clientinfo->state <= DOWNLOAD_STATE_READY)
-				continue;
-			// ignore if finished
-			if (clientinfo_list[i].clientinfo->state >= DOWNLOAD_STATE_FINISHED)
 				continue;
 			//Even if no socket, downloading should be progressed.
 			if (clientinfo_list[i].clientinfo->clientfd <= 0)
 				continue;
+			if (is_timeout)
+				is_timeout = 0;
 			if (FD_ISSET(clientinfo_list[i].clientinfo->clientfd, &rset) > 0) {
+				// ignore it is not started yet.
+				if (clientinfo_list[i].clientinfo->state <= DOWNLOAD_STATE_READY)
+					continue;
 				TRACE_DEBUG_INFO_MSG("FD_ISSET [%d] readset slot[%d]",
 					clientinfo_list[i].clientinfo->clientfd, i);
 				_handle_client_request(clientinfo_list[i].clientinfo);
@@ -698,6 +706,8 @@ void *run_manage_download_server(void *args)
 			break;
 		} else if (FD_ISSET(listenfd, &rset) > 0) { // new connection
 			TRACE_DEBUG_INFO_MSG("FD_ISSET listenfd rset");
+			if (is_timeout)
+				is_timeout = 0;
 			// reset timeout.
 			flexible_timeout =
 				DOWNLOAD_PROVIDER_CARE_CLIENT_MIN_INTERVAL;
@@ -738,7 +748,7 @@ void *run_manage_download_server(void *args)
 			}
 		}
 
-		if (i >= MAX_CLIENT) { // timeout
+		if (is_timeout && i >= MAX_CLIENT) { // timeout
 			// If there is better solution to be able to know
 			// the number of downloading threads, replace below rough codes.
 			count_downloading_threads =
@@ -1122,7 +1132,7 @@ void __notify_cb(user_notify_info_t *notify_info, void *user_data)
 				requestinfo->requestid);
 		}
 		download_provider_db_history_new(clientinfo);
-		TRACE_DEBUG_INFO_MSG("[TEST]Finish clientinfo[%p],fd[%d]",
+		TRACE_DEBUG_INFO_MSG("[TEST]Finish clientinfo[%p], fd[%d]",
 			clientinfo, clientinfo->clientfd);
 	}
 
