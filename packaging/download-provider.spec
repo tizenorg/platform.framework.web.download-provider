@@ -2,7 +2,7 @@
 Name:       download-provider
 Summary:    download the contents in background.
 Version: 	0.0.5
-Release:    5
+Release:    6
 Group:      TO_BE/FILLED_IN
 License:    TO_BE/FILLED_IN
 Source0:    %{name}-%{version}.tar.gz
@@ -80,6 +80,10 @@ fi
 %{_libdir}/pkgconfig/download-provider.pc
 
 %changelog
+* Mon Sep 03 2012 Kwangmin Bang <justine.bang@samsung.com>
+- free slot after getting event from url-download
+- fix INTEGER OVERFLOW
+
 * Thu Aug 30 2012 Kwangmin Bang <justine.bang@samsung.com>
 - initialize mutex for auto-redownloading
 - support Pause/Resume with new connection
