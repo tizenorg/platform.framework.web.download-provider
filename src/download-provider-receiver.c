@@ -212,7 +212,7 @@ void *_start_download(void *args)
 
 int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_clientinfo *request_clientinfo)
 {
-	uint searchslot = 0;
+	int searchslot = 0;
 
 	// NULL - checking
 	if (!clientinfo_list || !request_clientinfo ) {
@@ -434,7 +434,6 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 		TRACE_DEBUG_INFO_MSG ("Pended Request is saved to [%d/%d]",
 			searchslot, MAX_CLIENT);
 		CLIENT_MUTEX_UNLOCK(&(clientinfo_list[searchslot].clientinfo->client_mutex));
-		sleep(5);	// provider need the time of refresh.
 	} else {
 		// create thread for receiving the reqeust info from client.
 		// and if possible, it will create the thread for listening the event.
@@ -569,7 +568,7 @@ void *run_manage_download_server(void *args)
 	struct timeval timeout;
 	long flexible_timeout;
 	download_clientinfo_slot *clientinfo_list;
-	uint searchslot = 0;
+	int searchslot = 0;
 	uint count_downloading_threads = 0;
 	download_clientinfo *request_clientinfo;
 	int check_retry = 1;
