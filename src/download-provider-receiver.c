@@ -343,6 +343,7 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 				}
 				ipc_send_stateinfo(request_clientinfo);
 			}
+			ipc_receive_header(request_clientinfo->clientfd);
 		}
 		clear_clientinfo(request_clientinfo);
 		return 0;
