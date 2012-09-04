@@ -9,7 +9,6 @@
 #include "download-provider-log.h"
 
 GMainLoop *gMainLoop = 0;	// need for libsoup, decided the life-time by mainloop.
-pthread_t gRequestThreadPid;
 
 int lock_download_provider_pid(char *path);
 void *run_manage_download_server(void *args);
@@ -23,21 +22,26 @@ void TerminateDaemon(int signo)
 
 static gboolean CreateThreadFunc(void *data)
 {
+	pthread_t thread_pid;
 	pthread_attr_t thread_attr;
 	if (pthread_attr_init(&thread_attr) != 0) {
 		TRACE_DEBUG_MSG("failed to init pthread attr");
-		if (g_main_loop_is_running(gMainLoop))
-			g_main_loop_quit(gMainLoop);
+		TerminateDaemon(SIGTERM);
 		return FALSE;
+	}
+	if (pthread_attr_setdetachstate(&thread_attr,
+									PTHREAD_CREATE_DETACHED) != 0) {
+		TRACE_DEBUG_MSG("failed to set detach option");
+		TerminateDaemon(SIGTERM);
+		return 0;
 	}
 	// create thread for receiving the client request.
 	if (pthread_create
-		(&gRequestThreadPid, &thread_attr, run_manage_download_server,
+		(&thread_pid, &thread_attr, run_manage_download_server,
 		data) != 0) {
 		TRACE_DEBUG_MSG
 			("failed to create pthread for run_manage_download_server");
-		if (g_main_loop_is_running(gMainLoop))
-			g_main_loop_quit(gMainLoop);
+		TerminateDaemon(SIGTERM);
 	}
 	return FALSE;
 }
@@ -82,9 +86,6 @@ int main()
 	g_main_loop_run(gMainLoop);
 
 	TRACE_DEBUG_INFO_MSG("Download-Provider will be terminated.");
-
-	pthread_cancel(gRequestThreadPid);
-	pthread_join(gRequestThreadPid, NULL);
 
 	// if exit socket file, delete it
 	if (access(DOWNLOAD_PROVIDER_IPC, F_OK) == 0) {
