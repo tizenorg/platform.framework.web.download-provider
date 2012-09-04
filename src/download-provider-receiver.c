@@ -9,8 +9,6 @@
 
 #include <glib.h>
 
-#include <net_connection.h>
-
 #include "download-provider-config.h"
 #include "download-provider-log.h"
 #include "download-provider-pthread.h"
@@ -37,6 +35,17 @@ void TerminateDaemon(int signo);
 pthread_attr_t g_download_provider_thread_attr;
 fd_set g_download_provider_socket_readset;
 fd_set g_download_provider_socket_exceptset;
+
+int _change_pended_download(download_clientinfo *clientinfo)
+{
+	if (!clientinfo)
+		return -1;
+	clientinfo->state = DOWNLOAD_STATE_PENDED;
+	clientinfo->err = DOWNLOAD_ERROR_TOO_MANY_DOWNLOADS;
+	download_provider_db_requestinfo_update_column(clientinfo, DOWNLOAD_DB_STATE);
+	ipc_send_request_stateinfo(clientinfo);
+	return 0;
+}
 
 void *_start_download(void *args)
 {
@@ -168,15 +177,12 @@ void *_start_download(void *args)
 		}
 	}
 
-	// if start_download() return error cause of maximun download limitation, set state to DOWNLOAD_STATE_PENDED.
+	// if start_download() return error cause of maximun download limitation,
+	// set state to DOWNLOAD_STATE_PENDED.
 	if (da_ret == DA_ERR_ALREADY_MAX_DOWNLOAD) {
 		TRACE_DEBUG_INFO_MSG("change to pended request [%d]", da_ret);
 		CLIENT_MUTEX_LOCK(&(clientinfo->client_mutex));
-		clientinfo->state = DOWNLOAD_STATE_PENDED;
-		clientinfo->err = DOWNLOAD_ERROR_TOO_MANY_DOWNLOADS;
-		download_provider_db_requestinfo_update_column(clientinfo,
-									DOWNLOAD_DB_STATE);
-		ipc_send_request_stateinfo(clientinfo);
+		_change_pended_download(clientinfo);
 		CLIENT_MUTEX_UNLOCK(&(clientinfo->client_mutex));
 		return 0;
 	} else if (da_ret != DA_RESULT_OK) {
@@ -210,9 +216,31 @@ void *_start_download(void *args)
 	return 0;
 }
 
+int _create_download_thread(download_clientinfo_slot *clientinfo_slot)
+{
+	if (!clientinfo_slot)
+		return -1;
+
+	// create thread for receiving the reqeust info from client.
+	// and if possible, it will create the thread for listening the event.
+	clientinfo_slot->clientinfo->state = DOWNLOAD_STATE_READY;
+	clientinfo_slot->clientinfo->err = DOWNLOAD_ERROR_NONE;
+	if (pthread_create
+		(&clientinfo_slot->clientinfo->thread_pid,
+		&g_download_provider_thread_attr, _start_download,
+		clientinfo_slot) != 0) {
+		TRACE_DEBUG_INFO_MSG("failed to call pthread_create for client");
+		TRACE_DEBUG_INFO_MSG("Change to pended job");
+		_change_pended_download(clientinfo_slot->clientinfo);
+		return -1;
+	}
+	return 0;
+}
+
 int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_clientinfo *request_clientinfo)
 {
 	int searchslot = 0;
+	unsigned active_count = 0;
 
 	// NULL - checking
 	if (!clientinfo_list || !request_clientinfo ) {
@@ -416,45 +444,40 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 
 	clientinfo_list[searchslot].clientinfo = request_clientinfo;
 
-	TRACE_DEBUG_INFO_MSG("New Connection slot [%d] max [%d] max once [%d]",
+	active_count = get_downloading_count(clientinfo_list);
+
+	TRACE_DEBUG_INFO_MSG("New Connection slot [%d/%d] active [%d/%d]",
 											searchslot,
 											MAX_CLIENT,
+											active_count,
 											DA_MAX_DOWNLOAD_REQ_AT_ONCE);
 
-	if (get_downloading_count(clientinfo_list) >=
-		DA_MAX_DOWNLOAD_REQ_AT_ONCE) {
-		CLIENT_MUTEX_LOCK(&(clientinfo_list[searchslot].clientinfo->client_mutex));
+	if (active_count >= DA_MAX_DOWNLOAD_REQ_AT_ONCE) {
 		// deal as pended job.
-		clientinfo_list[searchslot].clientinfo->state = DOWNLOAD_STATE_PENDED;
-		clientinfo_list[searchslot].clientinfo->err = DOWNLOAD_ERROR_TOO_MANY_DOWNLOADS;
-		download_provider_db_requestinfo_update_column
-			(clientinfo_list[searchslot].clientinfo,
-			DOWNLOAD_DB_STATE);
-		ipc_send_request_stateinfo(clientinfo_list[searchslot].clientinfo);
+		_change_pended_download(clientinfo_list[searchslot].clientinfo);
 		TRACE_DEBUG_INFO_MSG ("Pended Request is saved to [%d/%d]",
 			searchslot, MAX_CLIENT);
-		CLIENT_MUTEX_UNLOCK(&(clientinfo_list[searchslot].clientinfo->client_mutex));
 	} else {
-		// create thread for receiving the reqeust info from client.
-		// and if possible, it will create the thread for listening the event.
-		if (pthread_create
-			(&clientinfo_list[searchslot].clientinfo->thread_pid,
-			&g_download_provider_thread_attr, _start_download,
-			&clientinfo_list[searchslot]) != 0) {
-			TRACE_DEBUG_INFO_MSG("failed to call pthread_create for client");
-			TRACE_DEBUG_INFO_MSG("Change to pended job");
-			CLIENT_MUTEX_LOCK(&(clientinfo_list[searchslot].clientinfo->client_mutex));
-			clientinfo_list[searchslot].clientinfo->state =
-				DOWNLOAD_STATE_PENDED;
-			clientinfo_list[searchslot].clientinfo->err =
-				DOWNLOAD_ERROR_TOO_MANY_DOWNLOADS;
-			download_provider_db_requestinfo_update_column
-				(clientinfo_list[searchslot].clientinfo,
-				DOWNLOAD_DB_STATE);
-			ipc_send_request_stateinfo(clientinfo_list[searchslot].clientinfo);
-			CLIENT_MUTEX_UNLOCK(&(clientinfo_list[searchslot].clientinfo->client_mutex));
-			sleep(5);	// provider need the time of refresh.
+		// Pending First
+		unsigned free_slot_count
+			= DA_MAX_DOWNLOAD_REQ_AT_ONCE - active_count;
+		int pendedslot = get_pended_slot_index(clientinfo_list);
+		if(pendedslot >= 0) {
+			TRACE_DEBUG_INFO_MSG ("Free Space [%d]", free_slot_count);
+			for (;free_slot_count > 0 && pendedslot >= 0; free_slot_count--) {
+				TRACE_DEBUG_INFO_MSG ("Start pended job [%d]", pendedslot);
+				_create_download_thread(&clientinfo_list[pendedslot]);
+				pendedslot = get_pended_slot_index(clientinfo_list);
+			}
 		}
+
+		if (free_slot_count <= 0) { // change to PENDED
+			// start pended job, deal this job to pended
+			_change_pended_download(clientinfo_list[searchslot].clientinfo);
+			TRACE_DEBUG_INFO_MSG ("Pended Request is saved to [%d/%d]",
+				searchslot, MAX_CLIENT);
+		} else
+			_create_download_thread(&clientinfo_list[searchslot]);
 	}
 	return 0;
 }
@@ -569,7 +592,7 @@ void *run_manage_download_server(void *args)
 	long flexible_timeout;
 	download_clientinfo_slot *clientinfo_list;
 	int searchslot = 0;
-	uint count_downloading_threads = 0;
+	unsigned active_count = 0;
 	download_clientinfo *request_clientinfo;
 	int check_retry = 1;
 	int i = 0;
@@ -748,95 +771,31 @@ void *run_manage_download_server(void *args)
 			}
 		}
 
-		if (is_timeout && i >= MAX_CLIENT) { // timeout
+		if (is_timeout) { // timeout
 			// If there is better solution to be able to know
 			// the number of downloading threads, replace below rough codes.
-			count_downloading_threads =
-				get_downloading_count(clientinfo_list);
+			active_count = get_downloading_count(clientinfo_list);
 			// check whether the number of downloading is already maximum.
-			if (count_downloading_threads >=
-				DA_MAX_DOWNLOAD_REQ_AT_ONCE)
+			if (active_count >= DA_MAX_DOWNLOAD_REQ_AT_ONCE)
 				continue;
 
-			// search pended request
-			for (searchslot = 0; searchslot < MAX_CLIENT;
-				searchslot++) {
-				if (clientinfo_list[searchslot].clientinfo) {
-					if (clientinfo_list[searchslot].clientinfo->state ==
-						DOWNLOAD_STATE_PENDED) {
-						TRACE_DEBUG_INFO_MSG
-							("Retry Pended Request [%d/%d] state [%d/%d]",
-							searchslot, MAX_CLIENT,
-							count_downloading_threads,
-							DA_MAX_DOWNLOAD_REQ_AT_ONCE);
-						// create thread for restarting the pended download.
-						if (pthread_create
-							(&clientinfo_list[searchslot].clientinfo->thread_pid,
-							&g_download_provider_thread_attr,
-							_start_download,
-							&clientinfo_list[searchslot]) != 0) {
-							TRACE_DEBUG_MSG
-								("failed to call pthread_create for client");
-						}
-						count_downloading_threads++;
-						usleep(1000);	// sleep in busy state.
-						break;
-					}
+			unsigned free_slot_count
+					= DA_MAX_DOWNLOAD_REQ_AT_ONCE - active_count;
+			int pendedslot = get_pended_slot_index(clientinfo_list);
+			if(pendedslot >= 0) {
+				TRACE_DEBUG_INFO_MSG ("Free Space [%d]", free_slot_count);
+				for (;free_slot_count > 0 && pendedslot >= 0; free_slot_count--) {
+					TRACE_DEBUG_INFO_MSG ("start pended job [%d]", pendedslot);
+					if (_create_download_thread(&clientinfo_list[pendedslot]) > 0)
+						active_count++;
+					pendedslot = get_pended_slot_index(clientinfo_list);
 				}
 			}
 
-			if (check_retry
-				&& count_downloading_threads <
-				DA_MAX_DOWNLOAD_REQ_AT_ONCE) {
-				// Auto re-download feature. ethernet may be connected with other downloading items.
-				connection_h network_handle = NULL;
-				if (connection_create(&network_handle) < 0) {
-					TRACE_DEBUG_MSG
-						("Failed connection_create");
-					continue;
-				}
-
-				connection_ethernet_state_e system_network_state
-					= CONNECTION_ETHERNET_STATE_DISCONNECTED;
-				if (connection_get_ethernet_state(network_handle,
-											&system_network_state) !=
-					CONNECTION_ERROR_NONE)
-					TRACE_DEBUG_MSG
-						("Failed connection_get_ethernet_state");
-				TRACE_DEBUG_INFO_MSG
-					("ethernet check result : [%d]", (int)system_network_state);
-
-				connection_cellular_state_e system_cellular_state
-					= CONNECTION_CELLULAR_STATE_OUT_OF_SERVICE;
-				if (connection_get_cellular_state(network_handle,
-											&system_cellular_state) !=
-					CONNECTION_ERROR_NONE)
-					TRACE_DEBUG_MSG
-						("Failed connection_get_ethernet_state");
-				TRACE_DEBUG_INFO_MSG
-					("cellula check result : [%d]", (int)system_cellular_state);
-
-				connection_wifi_state_e system_wifi_state
-					= CONNECTION_WIFI_STATE_DEACTIVATED;
-				if (connection_get_wifi_state(network_handle,
-											&system_wifi_state) !=
-					CONNECTION_ERROR_NONE)
-					TRACE_DEBUG_MSG
-						("Failed connection_get_ethernet_state");
-				TRACE_DEBUG_INFO_MSG
-					("wifi check result : [%d]", (int)system_wifi_state);
-
-				if (connection_destroy(network_handle) !=
-					CONNECTION_ERROR_NONE)
-					TRACE_DEBUG_MSG
-						("Failed connection_destroy");
-
-				if (!(system_network_state
-						== CONNECTION_ETHERNET_STATE_CONNECTED
-					|| system_cellular_state
-						== CONNECTION_CELLULAR_STATE_AVAILABLE
-					|| system_wifi_state
-						== CONNECTION_WIFI_STATE_CONNECTED))
+			if (check_retry && free_slot_count > 0) {
+				// Auto re-download feature. 
+				// ethernet may be connected with other downloading items.
+				if (get_network_status() < 0)
 					continue;
 
 				// check auto-retrying list regardless state. pended state is also included to checking list.
@@ -846,13 +805,14 @@ void *run_manage_download_server(void *args)
 				if (!db_list || db_list->count <= 0) {
 					TRACE_DEBUG_INFO_MSG
 						("provider does not need to check DB anymore. in this life.");
-					check_retry = 0;	// provider does not need to check DB anymore. in this life.
+					// provider does not need to check DB anymore. in this life.
+					check_retry = 0;
 					if (db_list)
 						download_provider_db_list_free(db_list);
 					continue;
 				}
 				for (i = 0;
-					count_downloading_threads <
+					active_count <
 					DA_MAX_DOWNLOAD_REQ_AT_ONCE
 					&& i < db_list->count; i++) {
 					if (db_list->item[i].requestid <= 0)
@@ -897,24 +857,10 @@ void *run_manage_download_server(void *args)
 						TRACE_DEBUG_INFO_MSG
 							("Retry download [%d/%d][%d/%d]",
 							searchslot, MAX_CLIENT,
-							count_downloading_threads,
+							active_count,
 							DA_MAX_DOWNLOAD_REQ_AT_ONCE);
-						if (pthread_create
-							(&clientinfo_list[searchslot].clientinfo->thread_pid,
-							&g_download_provider_thread_attr,
-							_start_download,
-							&clientinfo_list[searchslot])
-							!= 0) {
-							TRACE_DEBUG_MSG
-								("failed to call pthread_create for client");
-							clientinfo_list[searchslot].clientinfo->state =
-								DOWNLOAD_STATE_PENDED;
-							clientinfo_list[searchslot].clientinfo->err =
-								DOWNLOAD_ERROR_TOO_MANY_DOWNLOADS;
-							sleep(5);
-						}
-						count_downloading_threads++;
-						usleep(1000);	// sleep in busy state.
+						if (_create_download_thread(&clientinfo_list[searchslot]) > 0)
+							active_count++;
 					}
 				}
 				if (i >= db_list->count)	// do not search anymore.
@@ -923,7 +869,7 @@ void *run_manage_download_server(void *args)
 			}
 
 			// save system resource (CPU)
-			if (check_retry == 0 && count_downloading_threads == 0
+			if (check_retry == 0 && active_count == 0
 				&& flexible_timeout <
 				DOWNLOAD_PROVIDER_CARE_CLIENT_MAX_INTERVAL)
 				flexible_timeout = flexible_timeout * 2;

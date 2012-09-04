@@ -11,5 +11,7 @@ int get_downloading_count(download_clientinfo_slot *clientinfo_list);
 int get_same_request_slot_index(download_clientinfo_slot *clientinfo_list,
 				int requestid);
 int get_empty_slot_index(download_clientinfo_slot *clientinfo_list);
+int get_pended_slot_index(download_clientinfo_slot *clientinfo_list);
+int get_network_status();
 
 #endif

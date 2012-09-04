@@ -6,6 +6,8 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 
+#include <net_connection.h>
+
 #include "download-provider-config.h"
 #include "download-provider-notification.h"
 #include "download-provider-pthread.h"
@@ -170,3 +172,60 @@ int get_empty_slot_index(download_clientinfo_slot *clientinfo_list)
 			return i;
 	return -1;
 }
+
+int get_pended_slot_index(download_clientinfo_slot *clientinfo_list)
+{
+	int i = 0;
+
+	if (!clientinfo_list)
+		return -1;
+
+	for (i = 0; i < MAX_CLIENT; i++)
+		if (clientinfo_list[i].clientinfo
+			&& clientinfo_list[i].clientinfo->state
+				== DOWNLOAD_STATE_PENDED)
+			return i;
+	return -1;
+}
+
+int get_network_status()
+{
+	connection_h network_handle = NULL;
+	if (connection_create(&network_handle) < 0) {
+		TRACE_DEBUG_MSG("Failed connection_create");
+		return -1;
+	}
+
+	connection_ethernet_state_e system_network_state
+		= CONNECTION_ETHERNET_STATE_DISCONNECTED;
+	if (connection_get_ethernet_state(network_handle,
+		&system_network_state) != CONNECTION_ERROR_NONE)
+		TRACE_DEBUG_MSG("Failed connection_get_ethernet_state");
+	TRACE_DEBUG_INFO_MSG
+		("ethernet check result : [%d]", (int)system_network_state);
+
+	connection_cellular_state_e system_cellular_state
+		= CONNECTION_CELLULAR_STATE_OUT_OF_SERVICE;
+	if (connection_get_cellular_state(network_handle,
+		&system_cellular_state) != CONNECTION_ERROR_NONE)
+		TRACE_DEBUG_MSG("Failed connection_get_ethernet_state");
+	TRACE_DEBUG_INFO_MSG
+		("cellula check result : [%d]", (int)system_cellular_state);
+
+	connection_wifi_state_e system_wifi_state
+		= CONNECTION_WIFI_STATE_DEACTIVATED;
+	if (connection_get_wifi_state(network_handle,
+		&system_wifi_state) != CONNECTION_ERROR_NONE)
+		TRACE_DEBUG_MSG("Failed connection_get_ethernet_state");
+	TRACE_DEBUG_INFO_MSG
+		("wifi check result : [%d]", (int)system_wifi_state);
+
+	if (connection_destroy(network_handle) != CONNECTION_ERROR_NONE)
+		TRACE_DEBUG_MSG("Failed connection_destroy");
+
+	if (!(system_network_state == CONNECTION_ETHERNET_STATE_CONNECTED
+		|| system_cellular_state == CONNECTION_CELLULAR_STATE_AVAILABLE
+		|| system_wifi_state == CONNECTION_WIFI_STATE_CONNECTED))
+		return -1;
+	return 0;
+	}
