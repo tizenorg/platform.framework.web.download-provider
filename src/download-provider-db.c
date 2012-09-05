@@ -1031,6 +1031,7 @@ download_dbinfo *download_provider_db_history_get_info(int requestid)
 	if ((errorcode = sqlite3_step(stmt)) == SQLITE_ROW) {
 		dbinfo = (download_dbinfo *) calloc(1, sizeof(download_dbinfo));
 		dbinfo->requestid = requestid;
+		TRACE_DEBUG_INFO_MSG("found id from db [%d]", requestid);
 		buffer = (char *)(sqlite3_column_text(stmt, 0));
 		dbinfo->packagename = NULL;
 		if (buffer) {

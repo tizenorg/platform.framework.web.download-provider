@@ -392,12 +392,24 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 						request_clientinfo->requestinfo->requestid);
 		if (searchindex < 0) {
 			TRACE_DEBUG_INFO_MSG("Not Found Same Request ID");
-			// Invalid id
-			request_clientinfo->state = DOWNLOAD_STATE_FAILED;
-			request_clientinfo->err = DOWNLOAD_ERROR_INVALID_PARAMETER;
-			ipc_send_request_stateinfo(request_clientinfo);
-			clear_clientinfo(request_clientinfo);
-			return 0;
+			/* Try to search history db */
+			download_dbinfo *dbinfo = download_provider_db_history_get_info(
+					request_clientinfo->requestinfo->requestid);
+			if (dbinfo == NULL) {
+				/* Try to serach downloading db. The crashed job can not be uploaded to memory */
+				dbinfo = download_provider_db_get_info(
+						request_clientinfo->requestinfo->requestid);
+				if (dbinfo == NULL) {
+					/* Invalid id */
+					request_clientinfo->state = DOWNLOAD_STATE_FAILED;
+					request_clientinfo->err = DOWNLOAD_ERROR_INVALID_PARAMETER;
+					ipc_send_request_stateinfo(request_clientinfo);
+					clear_clientinfo(request_clientinfo);
+					return 0;
+				}
+			}
+			download_provider_db_info_free(dbinfo);
+			free(dbinfo);
 		} else {	// found request id. // how to deal etag ?
 			// connect to slot.
 			TRACE_DEBUG_INFO_MSG("Found Same Request ID slot[%d]", searchindex);
