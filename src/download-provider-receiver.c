@@ -408,7 +408,6 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 			// change to new socket.
 			clientinfo_list[searchindex].clientinfo->clientfd =
 				request_clientinfo->clientfd;
-			ipc_send_request_stateinfo(clientinfo_list[searchindex].clientinfo);
 			// update some info.
 			clientinfo_list[searchindex].clientinfo->requestinfo->callbackinfo =
 				request_clientinfo->requestinfo->callbackinfo;
@@ -417,6 +416,21 @@ int _handle_new_connection(download_clientinfo_slot *clientinfo_list, download_c
 			request_clientinfo->clientfd = 0;	// prevent to not be disconnected.
 			CLIENT_MUTEX_UNLOCK(&(request_clientinfo->client_mutex));
 			clear_clientinfo(request_clientinfo);
+
+			if (clientinfo_list[searchindex].clientinfo->state
+				== DOWNLOAD_STATE_READY
+				|| clientinfo_list[searchindex].clientinfo->state
+				>= DOWNLOAD_STATE_FINISHED) {
+				active_count = get_downloading_count(clientinfo_list);
+				if (active_count >= DA_MAX_DOWNLOAD_REQ_AT_ONCE) {
+					// deal as pended job.
+					_change_pended_download(clientinfo_list[searchindex].clientinfo);
+					TRACE_DEBUG_INFO_MSG ("Pended Request is saved to [%d/%d]",
+					searchslot, MAX_CLIENT);
+				} else
+					_create_download_thread(&clientinfo_list[searchindex]);
+			} else
+				ipc_send_request_stateinfo(clientinfo_list[searchindex].clientinfo);
 			return 0;
 		}
 	}
