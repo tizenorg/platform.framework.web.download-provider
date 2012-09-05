@@ -2,7 +2,7 @@
 Name:       download-provider
 Summary:    download the contents in background.
 Version: 	0.0.5
-Release:    7
+Release:    8
 Group:      TO_BE/FILLED_IN
 License:    TO_BE/FILLED_IN
 Source0:    %{name}-%{version}.tar.gz
@@ -80,6 +80,13 @@ fi
 %{_libdir}/pkgconfig/download-provider.pc
 
 %changelog
+* Thu Sep 06 2012 Kwangmin Bang <justine.bang@samsung.com>
+- start to download again even if already finished
+- change thread style
+- arrange the request priority
+- change data type
+- wait till getting the response from client
+
 * Mon Sep 03 2012 Kwangmin Bang <justine.bang@samsung.com>
 - fix timeout error
 
