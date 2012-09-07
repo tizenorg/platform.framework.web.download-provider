@@ -1,9 +1,9 @@
 
 Name:       download-provider
 Summary:    download the contents in background.
-Version: 	0.0.5
+Version:    0.0.5
 Release:    8
-Group:      TO_BE/FILLED_IN
+Group:      Development/Libraries
 License:    TO_BE/FILLED_IN
 Source0:    %{name}-%{version}.tar.gz
 Requires(post): /usr/bin/sqlite3
@@ -54,10 +54,10 @@ mkdir -p %{buildroot}/opt/data/download-provider
 mkdir -p /opt/dbspace/
 if [ ! -f /opt/dbspace/.download-provider.db ];
 then
-	sqlite3 /opt/dbspace/.download-provider.db 'PRAGMA journal_mode=PERSIST;
-	CREATE TABLE downloading (id INTEGER PRIMARY KEY AUTOINCREMENT, uniqueid INTEGER UNIQUE, packagename TEXT, notification INTEGER, installpath TEXT, filename TEXT, creationdate TEXT, retrycount INTEGER, state INTEGER, url TEXT, mimetype TEXT, etag TEXT, savedpath TEXT);'
-	sqlite3 /opt/dbspace/.download-provider.db 'PRAGMA journal_mode=PERSIST;
-	CREATE TABLE history (id INTEGER PRIMARY KEY AUTOINCREMENT, uniqueid INTEGER UNIQUE, packagename TEXT, filename TEXT, creationdate TEXT, state INTEGER, mimetype TEXT, savedpath TEXT);'
+    sqlite3 /opt/dbspace/.download-provider.db 'PRAGMA journal_mode=PERSIST;
+    CREATE TABLE downloading (id INTEGER PRIMARY KEY AUTOINCREMENT, uniqueid INTEGER UNIQUE, packagename TEXT, notification INTEGER, installpath TEXT, filename TEXT, creationdate TEXT, retrycount INTEGER, state INTEGER, url TEXT, mimetype TEXT, etag TEXT, savedpath TEXT);'
+    sqlite3 /opt/dbspace/.download-provider.db 'PRAGMA journal_mode=PERSIST;
+    CREATE TABLE history (id INTEGER PRIMARY KEY AUTOINCREMENT, uniqueid INTEGER UNIQUE, packagename TEXT, filename TEXT, creationdate TEXT, state INTEGER, mimetype TEXT, savedpath TEXT);'
 fi
 
 %files
