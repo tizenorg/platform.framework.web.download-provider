@@ -2,9 +2,9 @@
 Name:       download-provider
 Summary:    download the contents in background.
 Version:    0.0.5
-Release:    8
+Release:    9
 Group:      Development/Libraries
-License:    TO_BE/FILLED_IN
+License:    Apache
 Source0:    %{name}-%{version}.tar.gz
 Requires(post): /usr/bin/sqlite3
 BuildRequires:  cmake
@@ -80,6 +80,10 @@ fi
 %{_libdir}/pkgconfig/download-provider.pc
 
 %changelog
+* Fri Sep 07 2012 Kwangmin Bang <justine.bang@samsung.com>
+- add LICENSE
+- Add to search download id from history db
+
 * Thu Sep 06 2012 Kwangmin Bang <justine.bang@samsung.com>
 - start to download again even if already finished
 - change thread style
