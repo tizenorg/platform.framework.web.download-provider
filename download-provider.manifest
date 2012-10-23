@@ -3,9 +3,6 @@
 		<domain name="download-provider" />
 	</define>
 	<request>
-		<domain name="download-provider" />
+		<domain name="_" />
 	</request>
-	<assign>
-		<filesystem path="/opt/dbspace/.download-provider.db" />
-	</assign>
 </manifest>
