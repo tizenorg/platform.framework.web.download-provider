@@ -1,0 +1,10 @@
+[Unit]
+Description=Download provider service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/download-provider
+
+[Install]
+WantedBy=tizen-middleware.target
+
