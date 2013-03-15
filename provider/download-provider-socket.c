@@ -205,6 +205,7 @@ int dp_accept_socket_new()
 
 int dp_socket_free(int sockfd)
 {
+	TRACE_INFO("[%d]", sockfd);
 	if (sockfd < 0)
 		return -1;
 	shutdown(sockfd, 0);

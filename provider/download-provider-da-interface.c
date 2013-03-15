@@ -95,6 +95,7 @@ static int __change_error(int err)
 	case DA_ERR_FAIL_TO_ACCESS_FILE:
 	case DA_ERR_FAIL_TO_GET_CONF_VALUE:
 	case DA_ERR_FAIL_TO_ACCESS_STORAGE:
+	default:
 		ret = DP_ERROR_IO_ERROR;
 		break;
 	}

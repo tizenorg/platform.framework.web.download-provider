@@ -78,8 +78,6 @@ static char *__print_command(dp_command_type cmd)
 			return "SET_NETWORK_TYPE";
 		case DP_CMD_SET_HTTP_HEADER :
 			return "SET_HTTP_HEADER";
-		case DP_CMD_SET_EXTRA_PARAM :
-			return "SET_EXTRA_PARAM";
 		case DP_CMD_DEL_HTTP_HEADER :
 			return "DEL_HTTP_HEADER";
 		case DP_CMD_GET_HTTP_HEADER :
@@ -98,8 +96,12 @@ static char *__print_command(dp_command_type cmd)
 			return "GET_PROGRESS_CALLBACK";
 		case DP_CMD_GET_HTTP_HEADERS :
 			return "GET_HTTP_HEADERS";
+		case DP_CMD_ADD_EXTRA_PARAM :
+			return "ADD_EXTRA_PARAM";
 		case DP_CMD_GET_EXTRA_PARAM :
 			return "GET_EXTRA_PARAM";
+		case DP_CMD_REMOVE_EXTRA_PARAM :
+			return "REMOVE_EXTRA_PARAM";
 		case DP_CMD_GET_AUTO_DOWNLOAD :
 			return "GET_AUTO_DOWNLOAD";
 		case DP_CMD_GET_NETWORK_TYPE :
@@ -223,6 +225,437 @@ static void __send_return_custom_type(int fd, dp_error_type errcode, void *value
 	dp_ipc_send_custom_type(fd, value, type_size);
 }
 
+static void __clear_group(dp_privates *privates, dp_client_group *group)
+{
+	dp_request *request = NULL;
+	int i = 0;
+
+	TRACE_INFO("");
+
+	for (i = 0; i < DP_MAX_REQUEST; i++) {
+		if (privates->requests[i].request == NULL)
+			continue;
+		if (privates->requests[i].request->group == NULL)
+			continue;
+		if (privates->requests[i].request->id <= 0)
+			continue;
+
+		request = privates->requests[i].request;
+
+		CLIENT_MUTEX_LOCK(&request->mutex);
+
+		if (request->group != group ||
+			request->group->cmd_socket != group->cmd_socket) {
+			CLIENT_MUTEX_UNLOCK(&request->mutex);
+			continue;
+		}
+
+		// cancel the requests which not setted auto-downloading
+		int auto_download = dp_db_get_int_column(request->id,
+				DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_AUTO_DOWNLOAD);
+		if (auto_download <= 0) {
+			int agentid = request->agent_id;
+			int requestid = request->id;
+			int state = request->state;
+			TRACE_INFO("[CANCEL][%d] [%s] fd[%d]", requestid,
+				request->group->pkgname, request->group->cmd_socket);
+
+			if ((state == DP_STATE_READY || state == DP_STATE_QUEUED ||
+				state == DP_STATE_CONNECTING ||
+				state == DP_STATE_DOWNLOADING ||
+				state == DP_STATE_PAUSE_REQUESTED ||
+				state == DP_STATE_PAUSED)) {
+				request->state = DP_STATE_FAILED;
+				request->error = DP_ERROR_CLIENT_DOWN;
+				if (dp_db_set_column(request->id, DP_DB_TABLE_LOG,
+						DP_DB_COL_STATE, DP_DB_COL_TYPE_INT,
+						&request->state) < 0) {
+						TRACE_ERROR("[ERROR][%d][SQL]", requestid);
+					dp_db_remove_all(request->id);
+				} else {
+					if (dp_db_set_column(request->id, DP_DB_TABLE_LOG,
+						DP_DB_COL_ERRORCODE, DP_DB_COL_TYPE_INT,
+						&request->error) < 0) {
+					TRACE_ERROR("[ERROR][%d][SQL]", requestid);
+					}
+				}
+			}
+
+			CLIENT_MUTEX_UNLOCK(&request->mutex);
+			dp_request_free(request);
+			privates->requests[i].request = NULL;
+
+			// call cancel_agent after free.
+			if (agentid > 0 &&
+				dp_is_alive_download(agentid)) {
+				TRACE_INFO
+					("[CANCEL-AGENT][%d] state [%s]",
+					requestid, dp_print_state(state));
+				if (dp_cancel_agent_download(agentid) < 0)
+					TRACE_INFO("[CANCEL FAILURE]");
+			}
+
+			continue;
+		}
+
+
+		// disconnect the request from group.
+		TRACE_INFO
+			("[DISCONNECT][%d] [%s] fd[%d]", request->id,
+			request->group->pkgname, request->group->cmd_socket);
+
+		request->group = NULL;
+		request->state_cb = 0;
+		request->progress_cb = 0;
+
+		CLIENT_MUTEX_UNLOCK(&request->mutex);
+		// yield to agent thread before free
+
+		// free finished slot without client process
+		request = privates->requests[i].request;
+		if (request != NULL) {
+			CLIENT_MUTEX_LOCK(&request->mutex);
+			if (request->state == DP_STATE_COMPLETED ||
+				request->state == DP_STATE_FAILED ||
+				request->state == DP_STATE_CANCELED) {
+				TRACE_INFO("[FREE][%d] state[%s]", request->id,
+					dp_print_state(request->state));
+				CLIENT_MUTEX_UNLOCK(&request->mutex);
+				dp_request_free(request);
+				privates->requests[i].request = NULL;
+				continue;
+			}
+			CLIENT_MUTEX_UNLOCK(&request->mutex);
+		}
+	}
+	// clear this group
+	dp_client_group_free(group);
+}
+
+static int __dp_add_extra_param(int fd, int id)
+{
+	dp_error_type ret = DP_ERROR_NONE;
+	int length = 0;
+	int i = 0;
+	unsigned values_length = 0;
+	char *key = NULL;
+	char **values = NULL;
+
+	if (fd < 0) {
+		TRACE_ERROR("[CHECK] socket");
+		return DP_ERROR_IO_ERROR;
+	}
+	if (id < 0) {
+		TRACE_ERROR("[CHECK] ID");
+		return DP_ERROR_INVALID_PARAMETER;
+	}
+
+	if (dp_ipc_read_custom_type(fd, &length, sizeof(int)) < 0) {
+		TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]", id);
+		ret = DP_ERROR_IO_ERROR;
+	} else {
+		TRACE_INFO("[RECV] length %d", length);
+		if (length <= 0) {
+			ret = DP_ERROR_INVALID_PARAMETER;
+		} else {
+			key = dp_ipc_read_string(fd);
+			if (key == NULL) {
+				TRACE_ERROR("[ERROR][%d][IO_ERROR] key", id);
+				ret = DP_ERROR_IO_ERROR;
+			} else {
+				if (length > 1) {
+					TRACE_INFO("[RECV] key : %s", key);
+					// get values
+					values = (char **)calloc((length - 1), sizeof(char *));
+					if (values == NULL) {
+						ret = DP_ERROR_OUT_OF_MEMORY;
+					} else {
+						for (i = 0; i < length - 1; i++) {
+							values[i] = dp_ipc_read_string(fd);
+							if (values[i] == NULL) {
+								ret = DP_ERROR_IO_ERROR;
+								break;
+							}
+							values_length++;
+						}
+					}
+				} else {
+					TRACE_ERROR("[ERROR][%d] length [%d]", id, length);
+					ret = DP_ERROR_INVALID_PARAMETER;
+				}
+			}
+		}
+	}
+	if (ret == DP_ERROR_NONE) {
+		// store to DB
+		for (i = 0; i < length - 1; i++) {
+			int conds_count = 3;
+			db_conds_list_fmt conds_p[conds_count]; // id + key + value
+			memset(&conds_p, 0x00, conds_count * sizeof(db_conds_list_fmt));
+			conds_p[0].column = DP_DB_COL_ID;
+			conds_p[0].type = DP_DB_COL_TYPE_INT;
+			conds_p[0].value = &id;
+			conds_p[1].column = DP_DB_COL_EXTRA_KEY;
+			conds_p[1].type = DP_DB_COL_TYPE_TEXT;
+			conds_p[1].value = key;
+			conds_p[2].column = DP_DB_COL_EXTRA_VALUE;
+			conds_p[2].type = DP_DB_COL_TYPE_TEXT;
+			conds_p[2].value = values[i];
+			int check_key =
+				dp_db_get_conds_rows_count(DP_DB_TABLE_NOTIFICATION,
+					DP_DB_COL_ID, "AND", conds_count, conds_p);
+			if (check_key <= 0) { // create newly
+				// insert
+				if (dp_db_insert_columns(DP_DB_TABLE_NOTIFICATION,
+						conds_count, conds_p) < 0) {
+					ret = DP_ERROR_OUT_OF_MEMORY;
+					break;
+				}
+			} // else skip. already exist
+		}
+	}
+	free(key);
+	for (i = 0; i < values_length; i++) {
+		free(values[i]);
+	}
+	free(values);
+	return ret;
+}
+
+static int __dp_get_extra_param_values(int fd, int id, char ***values,
+		unsigned *count)
+{
+	dp_error_type ret = DP_ERROR_NONE;
+	int length = 0;
+	char *key = NULL;
+	char **rows_array = NULL;
+
+	if (fd < 0) {
+		TRACE_ERROR("[CHECK] socket");
+		return DP_ERROR_IO_ERROR;
+	}
+	if (id < 0) {
+		TRACE_ERROR("[CHECK] ID");
+		return DP_ERROR_INVALID_PARAMETER;
+	}
+
+	if (dp_ipc_read_custom_type(fd, &length, sizeof(int)) < 0) {
+		TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]", id);
+		ret = DP_ERROR_IO_ERROR;
+	} else {
+		TRACE_INFO("[RECV] length %d", length);
+		if (length != 1) { // only a key
+			ret = DP_ERROR_INVALID_PARAMETER;
+		} else {
+			if ((key = dp_ipc_read_string(fd)) == NULL) {
+				TRACE_ERROR("[ERROR][%d][IO_ERROR] key", id);
+				ret = DP_ERROR_IO_ERROR;
+			}
+		}
+	}
+	if (ret == DP_ERROR_NONE) {
+		int conds_count = 2;
+		db_conds_list_fmt conds_p[conds_count]; // id + key + value
+		memset(&conds_p, 0x00, conds_count * sizeof(db_conds_list_fmt));
+		conds_p[0].column = DP_DB_COL_ID;
+		conds_p[0].type = DP_DB_COL_TYPE_INT;
+		conds_p[0].value = &id;
+		conds_p[1].column = DP_DB_COL_EXTRA_KEY;
+		conds_p[1].type = DP_DB_COL_TYPE_TEXT;
+		conds_p[1].value = key;
+		int check_rows = dp_db_get_conds_rows_count
+			(DP_DB_TABLE_NOTIFICATION, DP_DB_COL_EXTRA_VALUE, "AND",
+			conds_count, conds_p);
+		if (check_rows <= 0) {
+			// NO_DATA
+			ret = DP_ERROR_NO_DATA;
+		} else {
+			rows_array = (char **)calloc(check_rows, sizeof(char *));
+			if (rows_array == NULL) {
+				ret = DP_ERROR_OUT_OF_MEMORY;
+			} else {
+				// getting the array from DB with key condition
+				int rows_count =
+					dp_db_get_conds_list(DP_DB_TABLE_NOTIFICATION,
+						DP_DB_COL_EXTRA_VALUE, DP_DB_COL_TYPE_TEXT,
+						(void **)rows_array, check_rows, -1, NULL, NULL,
+						"AND", conds_count, conds_p);
+				if (rows_count <= 0) {
+					// NO_DATA
+					ret = DP_ERROR_NO_DATA;
+					free(rows_array);
+				} else {
+					*count = rows_count;
+					*values = rows_array;
+				}
+			}
+			free(key);
+		}
+	}
+	return ret;
+}
+
+static int __dp_remove_extra_param(int fd, int id)
+{
+	dp_error_type ret = DP_ERROR_NONE;
+	char *key = NULL;
+
+	if (fd < 0) {
+		TRACE_ERROR("[CHECK] socket");
+		return DP_ERROR_IO_ERROR;
+	}
+	if (id < 0) {
+		TRACE_ERROR("[CHECK] ID");
+		return DP_ERROR_INVALID_PARAMETER;
+	}
+
+	if ((key = dp_ipc_read_string(fd)) == NULL) {
+		TRACE_ERROR("[ERROR][%d] INVALID_PARAMETER", id);
+		ret = DP_ERROR_IO_ERROR;
+	}
+	if (ret == DP_ERROR_NONE) {
+		if (dp_db_cond_remove(id, DP_DB_TABLE_NOTIFICATION,
+				DP_DB_COL_EXTRA_KEY, DP_DB_COL_TYPE_TEXT, key) < 0) {
+			TRACE_ERROR("[ERROR][%d][SQL]", id);
+			ret = DP_ERROR_IO_ERROR;
+		}
+	}
+	TRACE_ERROR
+		("[ERROR][%d][%s] key:%s", id, dp_print_errorcode(ret), key);
+	free(key);
+	return ret;
+}
+
+static int __dp_set_group_new(int clientfd, dp_group_slots *groups,
+	dp_credential credential, fd_set *listen_fdset)
+{
+	// search in groups.
+	// if same group. update it.
+	// search same pkg or pid in groups
+	int pkg_len = 0;
+	int i = 0;
+	struct timeval tv_timeo; // 2.5 sec
+	char *pkgname = NULL;
+
+	tv_timeo.tv_sec = 2;
+	tv_timeo.tv_usec = 500000;
+	if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &tv_timeo,
+		sizeof(tv_timeo)) < 0) {
+		TRACE_STRERROR("[CRITICAL] setsockopt SO_RCVTIMEO");
+		return -1;
+	}
+
+	// getting the package name via pid
+	if (app_manager_get_package(credential.pid, &pkgname) ==
+			APP_MANAGER_ERROR_NONE) {
+		TRACE_INFO("package : %s", pkgname);
+	} else
+		TRACE_ERROR("[CRITICAL] app_manager_get_package");
+
+	//// TEST CODE ... to allow sample client ( no package name ).
+	if (pkgname == NULL) {
+		pkgname = dp_strdup("unknown_app");
+		TRACE_INFO("default package naming : %s", pkgname);
+	}
+
+	if (pkgname == NULL) {
+		TRACE_ERROR("[CRITICAL] app_manager_get_package");
+		return -1;
+	}
+	if ((pkg_len = strlen(pkgname)) <= 0) {
+		TRACE_ERROR("[CRITICAL] pkgname:%s", pkgname);
+		return -1;
+	}
+
+	for (i = 0; i < DP_MAX_GROUP; i++) {
+		if (groups[i].group != NULL) {
+			// clean garbage slot
+			if (groups[i].group->cmd_socket <= 0 ||
+					groups[i].group->pkgname == NULL) {
+				dp_client_group_free(groups[i].group);
+				groups[i].group = NULL;
+				continue;
+			}
+			if (strlen(groups[i].group->pkgname) == pkg_len &&
+					strncmp(groups[i].group->pkgname, pkgname,
+						pkg_len) == 0 ) {
+				// Found Same Group
+				TRACE_INFO("UPDATE Group: slot:%d pid:%d sock:%d [%s]",
+					i, credential.pid, clientfd, pkgname);
+				if (groups[i].group->cmd_socket > 0 &&
+						groups[i].group->cmd_socket != clientfd) {
+					FD_CLR(groups[i].group->cmd_socket, listen_fdset);
+					dp_socket_free(groups[i].group->cmd_socket);
+				}
+				groups[i].group->cmd_socket = clientfd;
+				free(pkgname);
+				return 0;
+			}
+		}
+	}
+
+	// new client
+	// search emtpy slot in groups
+	for (i = 0; i < DP_MAX_GROUP; i++)
+		if (groups[i].group == NULL)
+			break;
+	if (i >= DP_MAX_GROUP) {
+		TRACE_ERROR("[CRITICAL] No space in groups");
+		free(pkgname);
+		return -1;
+	}
+	// allocation
+	groups[i].group =
+		(dp_client_group *)calloc(1, sizeof(dp_client_group));
+	if (groups[i].group == NULL) {
+		TRACE_ERROR("[CRITICAL] calloc, ignore this client");
+		free(pkgname);
+		return -1;
+	}
+	// fill info
+	groups[i].group->cmd_socket = clientfd;
+	groups[i].group->event_socket = -1;
+	groups[i].group->queued_count = 0;
+	groups[i].group->pkgname = dp_strdup(pkgname);
+	groups[i].group->credential.pid = credential.pid;
+	groups[i].group->credential.uid = credential.uid;
+	groups[i].group->credential.gid = credential.gid;
+	TRACE_INFO("New Group: slot:%d pid:%d sock:%d [%s]", i,
+		credential.pid, clientfd, pkgname);
+	free(pkgname);
+	return 0;
+}
+
+
+static int __dp_set_group_event_sock(int clientfd,
+	dp_group_slots *groups, dp_credential credential)
+{
+	int i = 0;
+
+	TRACE_INFO("Check event pid:%d sock:%d", credential.pid, clientfd);
+	// search same pid in groups
+	for (i = 0; i < DP_MAX_GROUP; i++) {
+		if (groups[i].group != NULL &&
+				groups[i].group->credential.pid == credential.pid) {
+			if (groups[i].group->event_socket > 0 &&
+					groups[i].group->event_socket != clientfd)
+				dp_socket_free(groups[i].group->event_socket);
+			groups[i].group->event_socket = clientfd;
+			TRACE_INFO
+				("Found Group : slot:%d pid:%d csock:%d esock:%d [%s]",
+					i, credential.pid, groups[i].group->cmd_socket,
+					clientfd, groups[i].group->pkgname);
+			break;
+		}
+	}
+	if (i >= DP_MAX_GROUP) {
+		TRACE_ERROR
+			("[CRITICAL] Not found group for PID [%d]", credential.pid);
+		return -1;
+	}
+	return 0;
+}
+
 // in url-download, make 3 connection before send CREATE command.
 // after accepting, fill info to pacakgelist.
 // 3 socket per 1 package ( info/request/progress )
@@ -240,7 +673,7 @@ void *dp_thread_requests_manager(void *arg)
 	dp_error_type errorcode = DP_ERROR_NONE;
 
 	dp_privates *privates = (dp_privates*)arg;
-	if (!privates || !privates->groups) {
+	if (privates == NULL || privates->groups == NULL) {
 		TRACE_ERROR("[CRITICAL] Invalid Address");
 		dp_terminate(SIGTERM);
 		pthread_exit(NULL);
@@ -257,7 +690,7 @@ void *dp_thread_requests_manager(void *arg)
 	FD_SET(listenfd, &listen_fdset);
 	FD_SET(listenfd, &except_fdset);
 
-	while (privates && privates->listen_fd) {
+	while (privates != NULL && privates->listen_fd >= 0) {
 
 		// select with timeout
 		// initialize timeout structure for calling timeout exactly
@@ -277,7 +710,7 @@ void *dp_thread_requests_manager(void *arg)
 			break;
 		}
 
-		if (!privates) {
+		if (privates == NULL) {
 			TRACE_INFO("Terminate Thread");
 			break;
 		}
@@ -297,9 +730,6 @@ void *dp_thread_requests_manager(void *arg)
 			clientfd = accept(listenfd,
 							(struct sockaddr*)&clientaddr,
 							&clientlen);
-
-			TRACE_INFO("[New Connection]");
-
 			if (clientfd < 0) {
 				TRACE_ERROR("[CRITICAL] accept provider was crashed ?");
 				// provider need the time of refresh.
@@ -318,14 +748,8 @@ void *dp_thread_requests_manager(void *arg)
 				close(clientfd);
 				continue;
 			}
-			if (connect_cmd != DP_CMD_SET_COMMAND_SOCKET
-				&& connect_cmd != DP_CMD_SET_EVENT_SOCKET) {
-				TRACE_ERROR("[CRITICAL] Bad access, ignore this client");
-				close(clientfd);
-				continue;
-			}
 
-			#ifdef SO_PEERCRED
+#ifdef SO_PEERCRED
 			// getting the info of client
 			socklen_t cr_len = sizeof(credential);
 			if (getsockopt(clientfd, SOL_SOCKET, SO_PEERCRED,
@@ -334,7 +758,7 @@ void *dp_thread_requests_manager(void *arg)
 					("credential : pid=%d, uid=%d, gid=%d",
 					credential.pid, credential.uid, credential.gid);
 			}
-			#else // In case of not supported SO_PEERCRED
+#else // In case of not supported SO_PEERCRED
 			int client_pid = 0;
 			if (dp_ipc_read_custom_type(clientfd,
 					&client_pid, sizeof(int)) < 0) {
@@ -350,193 +774,42 @@ void *dp_thread_requests_manager(void *arg)
 			credential.pid = client_pid;
 			credential.uid = 5000;
 			credential.gid = 5000;
-			#endif
+#endif
 
-			struct timeval tv_timeo; // 2.5 sec
-			tv_timeo.tv_sec = 2;
-			tv_timeo.tv_usec = 500000;
-			if (setsockopt(clientfd, SOL_SOCKET, SO_SNDTIMEO, &tv_timeo,
-				sizeof( tv_timeo ) ) < 0) {
-				TRACE_STRERROR("[CRITICAL] setsockopt SO_SNDTIMEO");
-				close(clientfd);
-				continue;
-			}
-			if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &tv_timeo,
-				sizeof( tv_timeo ) ) < 0) {
-				TRACE_STRERROR("[CRITICAL] setsockopt SO_SNDTIMEO");
-				close(clientfd);
-				continue;
-			}
-
-			if (connect_cmd == DP_CMD_SET_COMMAND_SOCKET) {
-
-				// search in groups.
-				// if same group. update it.
-				// search same pkg or pid in groups
-				int group_index = -1;
-				int pkgname_length = 0;
-				char *client_pkgname = NULL;
-
-				// getting the package name via pid
-				int errcode =
-				app_manager_get_package(credential.pid, &client_pkgname);
-				if (errcode == APP_MANAGER_ERROR_NONE && client_pkgname
-					&& strlen(client_pkgname) < DP_MAX_STR_LEN) {
-					TRACE_INFO("package : %s", client_pkgname);
-				} else
-					TRACE_ERROR("[CRITICAL] app_manager_get_package");
-
-				if (client_pkgname
-					&& (pkgname_length = strlen(client_pkgname)) > 1) {
-					for (i = 0; i < DP_MAX_GROUP; i++) {
-						if (privates->groups[i].group) {
-							if (privates->groups[i].group->cmd_socket
-								<= 0
-								|| !privates->groups[i].group->pkgname) {
-								dp_client_group_free
-									(privates->groups[i].group);
-								privates->groups[i].group = NULL;
-								continue;
-							}
-							if (strlen
-									(privates->groups[i].group->pkgname)
-									== pkgname_length
-								&& strncmp
-									(privates->groups[i].group->pkgname,
-									client_pkgname, pkgname_length)
-									== 0 ) {
-								// Found Same Group
-								TRACE_INFO
-								("UPDATE Group : I %d [%s] PID [%d] cmd_socket[%d]",
-								i, client_pkgname, credential.pid, clientfd);
-								if (privates->groups[i].group->cmd_socket
-									> 0
-									&& privates->groups[i].group->cmd_socket
-									!= clientfd) {
-									FD_CLR
-									(privates->groups[i].group->cmd_socket,
-									&listen_fdset);
-									dp_socket_free
-									(privates->groups[i].group->cmd_socket);
-								}
-								privates->groups[i].group->cmd_socket = clientfd;
-								FD_SET(privates->groups[i].group->cmd_socket, &listen_fdset);
-								if (privates->groups[i].group->cmd_socket > maxfd)
-								maxfd = privates->groups[i].group->cmd_socket;
-								group_index = i;
-								break;
-							}
-						}
-					}
-				}
-				if (group_index == -1) { // search emtpy slot in groups
-					// search empty slot in groups
-					for (i = 0; i < DP_MAX_GROUP; i++)
-						if (!privates->groups[i].group)
-							break;
-					if (i >= DP_MAX_GROUP) {
-						TRACE_ERROR("[CRITICAL] No space in groups");
-						close(clientfd); // how to deal in url-download ?
-						if (client_pkgname)
-							free(client_pkgname);
-						continue;
-					}
-
-					//// TEST CODE ... to allow sample client ( no package name ).
-					if (!client_pkgname) {
-						client_pkgname = dp_strdup("unknown_app");
-						TRACE_INFO("package : %s", client_pkgname);
-					}
-
-					TRACE_INFO
-					("New Group : GI %d [%s] PID [%d] cmd_socket[%d]",
-					i, client_pkgname, credential.pid, clientfd);
-
-					// allocation
-					privates->groups[i].group =
-						(dp_client_group *) calloc(1,
-							sizeof(dp_client_group));
-					if (!privates->groups[i].group) {
-						TRACE_ERROR
-							("[CRITICAL] calloc, ignore this client");
-						close(clientfd);
-						if (client_pkgname)
-							free(client_pkgname);
-						continue;
-					}
-					// fill info
-					privates->groups[i].group->cmd_socket = clientfd;
-					privates->groups[i].group->event_socket = -1;
-					privates->groups[i].group->queued_count = 0;
-					privates->groups[i].group->pkgname =
-						dp_strdup(client_pkgname);
-					privates->groups[i].group->credential.pid =
-						credential.pid;
-					privates->groups[i].group->credential.uid =
-						credential.uid;
-					privates->groups[i].group->credential.gid =
-						credential.gid;
-					FD_SET(privates->groups[i].group->cmd_socket,
-						&listen_fdset);
-					if (privates->groups[i].group->cmd_socket > maxfd)
-						maxfd = privates->groups[i].group->cmd_socket;
-					TRACE_INFO
-						("Group : GI [%d] [%s] S [%d] Max [%d]",
-						i, client_pkgname,
-						privates->groups[i].group->cmd_socket, maxfd);
-				}
-				if (client_pkgname)
-					free(client_pkgname);
-
-			} else if (connect_cmd == DP_CMD_SET_EVENT_SOCKET) {
-
-				// search same pid in groups. have same life-cycle with cmd_socket
-				TRACE_INFO
-					("Group event IPC: PID [%d] cmd_socket[%d]",
-					credential.pid, clientfd);
-				// search same pkg or pid in groups
-				for (i = 0; i < DP_MAX_GROUP; i++) {
-					if (privates->groups[i].group) {
-						dp_client_group *group =
-							privates->groups[i].group;
-						if (group->credential.pid == credential.pid) {
-							TRACE_INFO
-							("Found Group : I %d [%s] PID [%d] \
-							socket (%d/%d)", i,
-							group->pkgname, credential.pid,
-							group->cmd_socket, group->event_socket);
-							if (group->event_socket > 0
-								&& group->event_socket != clientfd)
-								dp_socket_free(group->event_socket);
-							group->event_socket = clientfd;
-							TRACE_INFO
-							("Found Group : I %d PID [%d] \
-							event_socket[%d]",
-							i, credential.pid, clientfd);
-							break;
-						}
-					}
-				}
-				if (i >= DP_MAX_GROUP) {
-					TRACE_ERROR
-						("[CRITICAL] Not found group for PID [%d]",
-						credential.pid);
+			switch(connect_cmd) {
+			case DP_CMD_SET_COMMAND_SOCKET:
+				if (__dp_set_group_new(clientfd, privates->groups,
+						credential, &listen_fdset) == 0) {
+					FD_SET(clientfd, &listen_fdset);
+					if (clientfd > maxfd)
+						maxfd = clientfd;
+				} else {
 					close(clientfd);
-					continue;
 				}
+				break;
+			case DP_CMD_SET_EVENT_SOCKET:
+			{
+				if (__dp_set_group_event_sock(clientfd,
+						privates->groups, credential) < 0)
+					close(clientfd);
+				break;
+			}
+			default:
+				TRACE_ERROR("[CRITICAL] Bad access, ignore this client");
+				close(clientfd);
+				break;
 			}
 		} // New Connection
 
 		// listen cmd_socket of all group
 		for (i = 0; i < DP_MAX_GROUP; i++) {
-			if (!privates->groups[i].group)
+			dp_client_group *group = privates->groups[i].group;
+			if (group == NULL)
 				continue;
-			if (privates->groups[i].group->cmd_socket < 0) {
+			if (group->cmd_socket < 0) {
 				continue;
 			}
-			if (FD_ISSET(privates->groups[i].group->cmd_socket, &rset)
-				> 0) {
-				dp_client_group *group = privates->groups[i].group;
+			if (FD_ISSET(group->cmd_socket, &rset) > 0) {
 				dp_command client_cmd;
 				int index = -1;
 
@@ -563,109 +836,8 @@ void *dp_thread_requests_manager(void *arg)
 					("[Closed Peer] group[%d][%s] socket[%d]",
 					i, group->pkgname, group->cmd_socket);
 					// check all request included to this group
-					for (index = 0; index < DP_MAX_REQUEST; index++) {
-						if (!privates->requests[index].request)
-							continue;
-						if (!privates->requests[index].request->group)
-							continue;
-						if (privates->requests[index].request->id <= 0)
-							continue;
-						dp_request *request =
-							privates->requests[index].request;
-
-						CLIENT_MUTEX_LOCK(&request->mutex);
-						if (request->group != group ||
-							request->group->cmd_socket !=
-							group->cmd_socket) {
-							CLIENT_MUTEX_UNLOCK(&request->mutex);
-							continue;
-						}
-						int auto_download =
-							dp_db_get_int_column(request->id,
-									DP_DB_TABLE_REQUEST_INFO,
-									DP_DB_COL_AUTO_DOWNLOAD);
-						if (auto_download <= 0) {
-							int agentid = request->agent_id;
-							int requestid = request->id;
-							int state = request->state;
-							TRACE_INFO("[CANCEL][%d] [%s] fd[%d]",
-								requestid, request->group->pkgname,
-								request->group->cmd_socket);
-
-							if ((state == DP_STATE_READY ||
-								state == DP_STATE_QUEUED ||
-								state == DP_STATE_CONNECTING ||
-								state == DP_STATE_DOWNLOADING ||
-								state == DP_STATE_PAUSE_REQUESTED ||
-								state == DP_STATE_PAUSED)) {
-								request->state = DP_STATE_FAILED;
-								request->error = DP_ERROR_CLIENT_DOWN;
-								if (dp_db_set_column
-										(request->id, DP_DB_TABLE_LOG,
-										DP_DB_COL_STATE,
-										DP_DB_COL_TYPE_INT,
-										&request->state) < 0) {
-									TRACE_ERROR("[ERROR][%d][SQL]",
-										requestid);
-									dp_db_remove_all(request->id);
-								} else {
-									if (dp_db_set_column
-										(request->id, DP_DB_TABLE_LOG,
-										DP_DB_COL_ERRORCODE,
-										DP_DB_COL_TYPE_INT,
-										&request->error) < 0) {
-									TRACE_ERROR("[ERROR][%d][SQL]",
-										requestid);
-									}
-								}
-							}
-							CLIENT_MUTEX_UNLOCK(&request->mutex);
-							dp_request_free(request);
-							privates->requests[index].request = NULL;
-
-							// call cancel_agent after free.
-							if (agentid > 0 &&
-								dp_is_alive_download(agentid)) {
-								TRACE_INFO
-									("[CANCEL-AGENT][%d] state [%s]",
-									requestid, dp_print_state(state));
-								if (dp_cancel_agent_download(agentid) <
-									0)
-									TRACE_INFO("[CANCEL FAILURE]");
-							}
-
-							continue;
-						}
-
-
-						TRACE_INFO("[DISCONNECT][%d] [%s] fd[%d]",
-							request->id, request->group->pkgname,
-							request->group->cmd_socket);
-
-						request->group = NULL;
-						request->state_cb = 0;
-						request->progress_cb = 0;
-
-						CLIENT_MUTEX_UNLOCK(&request->mutex);
-						// yield to agent thread before free
-						CLIENT_MUTEX_LOCK(&request->mutex);
-						// free finished slot without client process
-						if (request->state == DP_STATE_COMPLETED
-							|| request->state == DP_STATE_FAILED
-							|| request->state == DP_STATE_CANCELED) {
-							TRACE_INFO
-								("[FREE][%d] state[%s]", request->id,
-								dp_print_state(request->state));
-							CLIENT_MUTEX_UNLOCK(&request->mutex);
-							dp_request_free(request);
-							privates->requests[index].request = NULL;
-							continue;
-						}
-						CLIENT_MUTEX_UNLOCK(&(request->mutex));
-					}
-					// clear this group
 					FD_CLR(group->cmd_socket, &listen_fdset);
-					dp_client_group_free(group);
+					__clear_group(privates, group);
 					privates->groups[i].group = NULL;
 					continue;
 				}
@@ -674,8 +846,13 @@ void *dp_thread_requests_manager(void *arg)
 				if (client_cmd.cmd == DP_CMD_ECHO) {
 					// provider can clear read buffer here
 					TRACE_INFO("[ECHO] fd[%d]", group->cmd_socket);
-					dp_ipc_send_errorcode
-						(group->cmd_socket, DP_ERROR_NONE);
+					if (dp_ipc_send_errorcode
+						(group->cmd_socket, DP_ERROR_NONE) < 0) {
+						// disconnect this group, bad client
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
+					}
 					continue;
 				}
 
@@ -718,7 +895,7 @@ void *dp_thread_requests_manager(void *arg)
 						DP_ERROR_INVALID_PARAMETER);
 					// disconnect this group, bad client
 					FD_CLR(group->cmd_socket, &listen_fdset);
-					dp_client_group_free(group);
+					__clear_group(privates, group);
 					privates->groups[i].group = NULL;
 					continue;
 				}
@@ -727,44 +904,44 @@ void *dp_thread_requests_manager(void *arg)
 				index = __get_same_request_index
 							(privates->requests, client_cmd.id);
 
+				// GET API works even if request is NULL.
 				dp_request *request = NULL;
 				if (index >= 0)
 					request = privates->requests[index].request;
 
+				// Authentication by packagename.
 				char *auth_pkgname = NULL;
+				errorcode = DP_ERROR_NONE;
 				if (request != NULL) {
 					auth_pkgname = dp_strdup(request->packagename);
+					if (auth_pkgname == NULL)
+						errorcode = DP_ERROR_OUT_OF_MEMORY;
 				} else {
 					auth_pkgname = dp_db_get_text_column(client_cmd.id,
 							DP_DB_TABLE_LOG, DP_DB_COL_PACKAGENAME);
-					if (auth_pkgname == NULL) {
+					if (auth_pkgname == NULL)
+						errorcode = DP_ERROR_ID_NOT_FOUND;
+				}
+				if (errorcode == DP_ERROR_NONE) {
+					// auth by pkgname
+					if (__cmp_string(group->pkgname, auth_pkgname) < 0) {
 						TRACE_ERROR
-							("[ERROR][%d] [DP_ERROR_ID_NOT_FOUND]",
-							client_cmd.id);
-						dp_ipc_send_errorcode
-						(group->cmd_socket, DP_ERROR_ID_NOT_FOUND);
-						continue;
+							("[ERROR][%d] Auth [%s]/[%s]", client_cmd.id,
+							group->pkgname, auth_pkgname);
+						errorcode = DP_ERROR_INVALID_PARAMETER;
 					}
 				}
-
-				// auth by pkgname
-				if (__cmp_string
-					(group->pkgname, auth_pkgname) < 0) {
-					TRACE_ERROR
-						("[ERROR][%d] Auth [%s]/[%s]", client_cmd.id,
-						group->pkgname, auth_pkgname);
-					dp_ipc_send_errorcode
-					(group->cmd_socket, DP_ERROR_INVALID_PARAMETER);
-					free(auth_pkgname);
+				free(auth_pkgname);
+				if (errorcode != DP_ERROR_NONE) {
+					TRACE_ERROR("[ERROR][%d][%s]", client_cmd.id,
+							dp_print_errorcode(errorcode));
+					dp_ipc_send_errorcode(group->cmd_socket, errorcode);
 					continue;
 				}
-				if (auth_pkgname != NULL)
-					free(auth_pkgname);
 
-				if (request != NULL && request->group == NULL) {
-					// if no group, update group.
+				// if no group, update group.
+				if (request != NULL && request->group == NULL)
 					request->group = group;
-				}
 
 				if (client_cmd.cmd == DP_CMD_DESTROY) {
 					if (request != NULL) {
@@ -1081,8 +1258,7 @@ void *dp_thread_requests_manager(void *arg)
 					if (dp_cancel_agent_download(request->agent_id)
 						< 0) {
 						TRACE_ERROR("[ERROR][%d][AGENT][ID:%d] now [%s]",
-								client_cmd.id,
-								request->agent_id,
+								client_cmd.id, request->agent_id,
 								dp_print_state(request->state));
 						CLIENT_MUTEX_UNLOCK(&(request->mutex));
 						dp_ipc_send_errorcode
@@ -1107,10 +1283,11 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_SET_URL) {
 					char *url = dp_ipc_read_string(group->cmd_socket);
 					if (url == NULL) {
-						TRACE_ERROR("[ERROR][%d] DP_ERROR_INVALID_URL",
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_INVALID_URL);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					dp_error_type ret =
@@ -1124,11 +1301,11 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_SET_DESTINATION) {
 					char *dest = dp_ipc_read_string(group->cmd_socket);
 					if (dest == NULL) {
-						TRACE_ERROR
-							("[ERROR][%d] DP_ERROR_INVALID_DESTINATION",
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode(group->cmd_socket,
-							DP_ERROR_INVALID_DESTINATION);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					dp_error_type ret =
@@ -1143,11 +1320,11 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_SET_FILENAME) {
 					char *fname = dp_ipc_read_string(group->cmd_socket);
 					if (fname == NULL) {
-						TRACE_ERROR
-							("[ERROR][%d] DP_ERROR_INVALID_PARAMETER",
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode(group->cmd_socket,
-							DP_ERROR_INVALID_PARAMETER);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					dp_error_type ret =
@@ -1163,11 +1340,12 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_SET_NOTIFICATION) {
 					int value = 0;
 					if (dp_ipc_read_custom_type(group->cmd_socket,
-						&value, sizeof(int)) < 0) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
-						client_cmd.id);
-						dp_ipc_send_errorcode(group->cmd_socket,
-							DP_ERROR_IO_ERROR);
+							&value, sizeof(int)) < 0) {
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
+							client_cmd.id);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					dp_error_type ret =
@@ -1182,11 +1360,12 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_SET_STATE_CALLBACK) {
 					int value = 0;
 					if (dp_ipc_read_custom_type(group->cmd_socket,
-						&value, sizeof(int)) < 0) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
+							&value, sizeof(int)) < 0) {
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode(group->cmd_socket,
-							DP_ERROR_IO_ERROR);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					dp_error_type ret =
@@ -1201,11 +1380,12 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_SET_PROGRESS_CALLBACK) {
 					int value = 0;
 					if (dp_ipc_read_custom_type(group->cmd_socket,
-						&value, sizeof(int)) < 0) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
+							&value, sizeof(int)) < 0) {
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode(group->cmd_socket,
-							DP_ERROR_IO_ERROR);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					dp_error_type ret =
@@ -1220,11 +1400,12 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_SET_AUTO_DOWNLOAD) {
 					int value = 0;
 					if (dp_ipc_read_custom_type(group->cmd_socket,
-						&value, sizeof(int)) < 0) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
+							&value, sizeof(int)) < 0) {
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode(group->cmd_socket,
-							DP_ERROR_IO_ERROR);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					dp_error_type ret =
@@ -1239,11 +1420,12 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_SET_NETWORK_TYPE) {
 					int value = 0;
 					if (dp_ipc_read_custom_type(group->cmd_socket,
-						&value, sizeof(int)) < 0) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
+							&value, sizeof(int)) < 0) {
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode(group->cmd_socket,
-							DP_ERROR_IO_ERROR);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					dp_error_type ret =
@@ -1255,67 +1437,23 @@ void *dp_thread_requests_manager(void *arg)
 					if (ret != DP_ERROR_NONE)
 						TRACE_ERROR("[ERROR][%d][%s]",
 							client_cmd.id, dp_print_errorcode(ret));
-				} else if (client_cmd.cmd == DP_CMD_SET_EXTRA_PARAM) {
-					char *key = dp_ipc_read_string(group->cmd_socket);
-					if (key == NULL) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
-							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_IO_ERROR);
-						continue;
-					}
-					char *value = dp_ipc_read_string(group->cmd_socket);
-					if (value == NULL) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
-							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_IO_ERROR);
-						free(key);
-						continue;
-					}
-
-					TRACE_INFO("[EXTRA-PARAM][%d][%s][%s]",
-						client_cmd.id, key, value);
-
-					if (dp_db_replace_column
-							(client_cmd.id, DP_DB_TABLE_NOTIFICATION,
-							DP_DB_COL_EXTRA_KEY, DP_DB_COL_TYPE_TEXT,
-							key) < 0) {
-						TRACE_ERROR("[ERROR][%d][SQL]", client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_IO_ERROR);
-						free(key);
-						free(value);
-						continue;
-					}
-					free(key);
-					if (dp_db_set_column
-							(client_cmd.id, DP_DB_TABLE_NOTIFICATION,
-							DP_DB_COL_EXTRA_VALUE, DP_DB_COL_TYPE_TEXT,
-							value) < 0) {
-						TRACE_ERROR("[ERROR][%d][SQL]", client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_IO_ERROR);
-					} else {
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_NONE);
-					}
-					free(value);
 				} else if (client_cmd.cmd == DP_CMD_SET_HTTP_HEADER) {
 					char *field = dp_ipc_read_string(group->cmd_socket);
 					if (field == NULL) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_IO_ERROR);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					char *value = dp_ipc_read_string(group->cmd_socket);
 					if (value == NULL) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_IO_ERROR);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						free(field);
 						continue;
 					}
@@ -1360,10 +1498,11 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_DEL_HTTP_HEADER) {
 					char *field = dp_ipc_read_string(group->cmd_socket);
 					if (field == NULL) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_IO_ERROR);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					char *check_field = dp_db_cond_get_text_column
@@ -1395,10 +1534,11 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_GET_HTTP_HEADER) {
 					char *field = dp_ipc_read_string(group->cmd_socket);
 					if (field == NULL) {
-						TRACE_ERROR("[ERROR][%d] [DP_ERROR_IO_ERROR]",
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
 							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_IO_ERROR);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
 					char *value = dp_db_cond_get_text_column
@@ -1417,34 +1557,63 @@ void *dp_thread_requests_manager(void *arg)
 							(group->cmd_socket, DP_ERROR_NONE, value);
 						free(value);
 					}
-				} else if (client_cmd.cmd == DP_CMD_GET_EXTRA_PARAM) {
-					char *key = dp_db_get_text_column
-							(client_cmd.id, DP_DB_TABLE_NOTIFICATION,
-							DP_DB_COL_EXTRA_KEY);
-					if (key == NULL) {
-						TRACE_ERROR
-							("[ERROR][%d] [DP_ERROR_NO_DATA]",
+				} else if (client_cmd.cmd == DP_CMD_ADD_EXTRA_PARAM) {
+					dp_error_type ret = DP_ERROR_NONE;
+					ret = __dp_add_extra_param(group->cmd_socket,
 							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_NO_DATA);
+					if (ret == DP_ERROR_IO_ERROR) {
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
+							client_cmd.id);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
 						continue;
 					}
-					char *value = dp_db_get_text_column
-							(client_cmd.id, DP_DB_TABLE_NOTIFICATION,
-							DP_DB_COL_EXTRA_VALUE);
-					if (value == NULL) {
-						TRACE_ERROR
-							("[ERROR][%d] [DP_ERROR_NO_DATA]",
-							client_cmd.id);
-						dp_ipc_send_errorcode
-							(group->cmd_socket, DP_ERROR_NO_DATA);
+					dp_ipc_send_errorcode(group->cmd_socket, ret);
+				} else if (client_cmd.cmd == DP_CMD_GET_EXTRA_PARAM) {
+					dp_error_type ret = DP_ERROR_NONE;
+					char **values = NULL;
+					unsigned rows_count = 0;
+					ret = __dp_get_extra_param_values(group->cmd_socket,
+							client_cmd.id, &values, &rows_count);
+					if (ret == DP_ERROR_NONE) {
+						__send_return_custom_type(group->cmd_socket,
+							DP_ERROR_NONE, &rows_count, sizeof(int));
+						// sending strings
+						int i = 0;
+						for (i = 0; i < rows_count; i++) {
+							if (dp_ipc_send_string
+									(group->cmd_socket, values[i]) < 0)
+								break;
+						}
+						for (i = 0; i < rows_count; i++)
+							free(values[i]);
 					} else {
-						__send_return_string
-							(group->cmd_socket, DP_ERROR_NONE, key);
-						dp_ipc_send_string(group->cmd_socket, value);
-						free(value);
+						if (ret == DP_ERROR_IO_ERROR) {
+							TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
+								client_cmd.id);
+							FD_CLR(group->cmd_socket, &listen_fdset);
+							__clear_group(privates, group);
+							privates->groups[i].group = NULL;
+							continue;
+						}
+						dp_ipc_send_errorcode(group->cmd_socket, ret);
 					}
-					free(key);
+					free(values);
+				} else if (client_cmd.cmd == DP_CMD_REMOVE_EXTRA_PARAM) {
+					dp_error_type ret = DP_ERROR_NONE;
+					ret =
+						__dp_remove_extra_param(group->cmd_socket,
+							client_cmd.id);
+					if (ret == DP_ERROR_IO_ERROR) {
+						TRACE_ERROR("[ERROR][%d] DP_ERROR_IO_ERROR",
+							client_cmd.id);
+						FD_CLR(group->cmd_socket, &listen_fdset);
+						__clear_group(privates, group);
+						privates->groups[i].group = NULL;
+						continue;
+					}
+					dp_ipc_send_errorcode(group->cmd_socket, ret);
 				} else if (client_cmd.cmd == DP_CMD_GET_URL) {
 					char *url = NULL;
 					errorcode = DP_ERROR_NONE;
@@ -1493,7 +1662,7 @@ void *dp_thread_requests_manager(void *arg)
 				} else if (client_cmd.cmd == DP_CMD_GET_NOTIFICATION) {
 					int enable = 0;
 					enable = dp_db_get_int_column(client_cmd.id,
-									DP_DB_TABLE_NOTIFICATION,
+									DP_DB_TABLE_REQUEST_INFO,
 									DP_DB_COL_NOTIFICATION_ENABLE);
 					if (enable < 0) {
 						TRACE_ERROR
@@ -1721,7 +1890,7 @@ void *dp_thread_requests_manager(void *arg)
 						DP_ERROR_INVALID_PARAMETER);
 					// disconnect this group, bad client
 					FD_CLR(group->cmd_socket, &listen_fdset);
-					dp_client_group_free(group);
+					__clear_group(privates, group);
 					privates->groups[i].group = NULL;
 				}
 			} // FD_ISSET

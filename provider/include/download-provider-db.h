@@ -118,6 +118,7 @@ CREATE UNIQUE INDEX requests_index ON logging (id, state, errorcode, packagename
 #define DP_DB_COL_HEADER_DATA "header_data"
 #define DP_DB_COL_NOTIFICATION_ENABLE "noti_enable"
 #define DP_DB_COL_EXTRA_KEY "extra_key"
+#define DP_DB_COL_DISTINCT_EXTRA_KEY "DISTINCT extra_key"
 #define DP_DB_COL_EXTRA_VALUE "extra_data"
 
 typedef enum {
@@ -126,6 +127,13 @@ typedef enum {
 	DP_DB_COL_TYPE_INT64 = 20,
 	DP_DB_COL_TYPE_TEXT = 30
 } db_column_data_type;
+
+typedef struct {
+	char *column;
+	db_column_data_type type;
+	int is_like;
+	void *value;
+} db_conds_list_fmt;
 
 int dp_db_open();
 void dp_db_close();
@@ -171,4 +179,17 @@ dp_request *dp_db_load_logging_request(int id);
 int dp_db_limit_rows(int limit);
 int dp_db_get_count_by_limit_time();
 int dp_db_get_list_by_limit_time(dp_request_slots *requests, int limit);
+
+int dp_db_insert_columns(char *table, int column_count,
+						db_conds_list_fmt *columns);
+
+int dp_db_get_conds_rows_count(char *table, char *getcolumn, char *op,
+						int conds_count, db_conds_list_fmt *conds);
+
+int dp_db_get_conds_list(char *table, char *getcolumn,
+						db_column_data_type gettype, void **list,
+						int rowslimit, int rowsoffset,
+						char *ordercolumn, char *ordering,
+						char *op, int conds_count,
+						db_conds_list_fmt *conds);
 #endif

@@ -132,14 +132,10 @@ da_result_t PI_http_start_transaction(const input_for_tranx_t *input_for_tranx,
 		int *out_tranx_id)
 {
 	da_result_t ret = DA_RESULT_OK;
-
 	int session_table_entry = -1;
 	pi_http_method_t pi_http_method = PI_HTTP_METHOD_GET;
-
 	queue_t *queue = DA_NULL;
-
 	char *url = DA_NULL;
-
 	SoupSession *session = DA_NULL;
 	SoupMessage *msg = DA_NULL;
 
@@ -883,6 +879,11 @@ void _pi_http_finished_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 
 	DA_LOG_FUNC_START(HTTPManager);
 
+	if (!msg) {
+		DA_LOG_ERR(HTTPManager, "Check NULL:msg");
+		return;
+	}
+
 	url = soup_uri_to_string(soup_message_get_uri(msg), DA_FALSE);
 
 	DA_LOG(HTTPManager,"status_code[%d], reason[%s], url[%s]",msg->status_code,msg->reason_phrase,url);
@@ -910,6 +911,16 @@ void _pi_http_restarted_cb(SoupMessage *msg, gpointer data)
 	DA_LOG_FUNC_START(HTTPManager);
 	/* Location URL is needed when extracting the file name from url.
 	 * So, the response header should be handled by http mgr.*/
+
+	if (!msg) {
+		DA_LOG_ERR(HTTPManager, "Check NULL:msg");
+		return;
+	}
+	// If there are user id and password at url, libsoup handle it automatically.
+	if (msg->status_code == SOUP_STATUS_UNAUTHORIZED) {
+		DA_LOG(HTTPManager,"Ignore:Unauthorized");
+		return;
+	}
 	_pi_http_store_read_header_to_queue(msg, NULL);
 }
 
@@ -917,10 +928,21 @@ void _pi_http_gotheaders_cb(SoupMessage *msg, gpointer data)
 {
 	DA_LOG_FUNC_START(HTTPManager);
 
+	if (!msg) {
+		DA_LOG_ERR(HTTPManager, "Check NULL:msg");
+		return;
+	}
+
 	if (SOUP_STATUS_IS_REDIRECTION(msg->status_code)) {
 		DA_LOG(HTTPManager,"Redirection !!");
 		if (SOUP_STATUS_NOT_MODIFIED != msg->status_code)
 			return;
+	}
+
+	// If there are user id and password at url, libsoup handle it automatically.
+	if (msg->status_code == SOUP_STATUS_UNAUTHORIZED) {
+		DA_LOG(HTTPManager,"Ignore:Unauthorized");
+		return;
 	}
 
 	soup_message_body_set_accumulate(msg->response_body, DA_FALSE);
@@ -936,10 +958,21 @@ void _pi_http_contentsniffed_cb(SoupMessage *msg, const char *sniffedType,
 {
 	DA_LOG_FUNC_START(HTTPManager);
 
+	if (!msg) {
+		DA_LOG_ERR(HTTPManager, "Check NULL:msg");
+		return;
+	}
+
 	if (SOUP_STATUS_IS_REDIRECTION(msg->status_code)) {
 		DA_LOG(HTTPManager,"Redirection !!");
 		if (SOUP_STATUS_NOT_MODIFIED != msg->status_code)
 			return;
+	}
+
+	// If there are user id and password at url, libsoup handle it automatically.
+	if (msg->status_code == SOUP_STATUS_UNAUTHORIZED) {
+		DA_LOG(HTTPManager,"Ignore:Unauthorized");
+		return;
 	}
 
 	if (using_content_sniffing)
@@ -950,6 +983,16 @@ void _pi_http_gotchunk_cb(SoupMessage *msg, SoupBuffer *chunk, gpointer data)
 {
 //	DA_LOG_FUNC_START(HTTPManager);
 
+	if (!msg) {
+		DA_LOG_ERR(HTTPManager, "Check NULL:msg");
+		return;
+	}
+
+	if (!chunk) {
+		DA_LOG_ERR(HTTPManager, "Check NULL:chunk");
+		return;
+	}
+
 	if (SOUP_STATUS_IS_REDIRECTION(msg->status_code))
 		return;
 
@@ -958,4 +1001,3 @@ void _pi_http_gotchunk_cb(SoupMessage *msg, SoupBuffer *chunk, gpointer data)
 				chunk->length);
 	}
 }
-

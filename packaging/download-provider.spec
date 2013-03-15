@@ -1,8 +1,8 @@
 
 Name:       download-provider
 Summary:    download the contents in background.
-Version:    1.0.2
-Release:    15
+Version:    1.0.5
+Release:    0
 Group:      Development/Libraries
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
@@ -18,6 +18,7 @@ BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(db-util)
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(bundle)
+BuildRequires:  pkgconfig(capi-base-common)
 BuildRequires:  pkgconfig(capi-appfw-app-manager)
 BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(notification)
@@ -38,15 +39,43 @@ Description: download the contents in background (developement files)
 %prep
 %setup -q
 
-cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
+%define _imagedir /usr/share/download-provider
+%define _databasedir /opt/usr/dbspace
+%define _databasefile %{_databasedir}/.download-provider.db
+%define _dbusservicedir /usr/share/dbus-1/services
+%define _licensedir /usr/share/license
+
+%define cmake \
+	CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -fvisibility=hidden"; export CFLAGS \
+	FFLAGS="${FFLAGS:-%optflags} -fPIC -fvisibility=hidden"; export FFLAGS \
+	LDFLAGS+=" -Wl,--as-needed -Wl,--hash-style=both"; export LDFLAGS \
+	%__cmake \\\
+		-DCMAKE_INSTALL_PREFIX:PATH=%{_prefix} \\\
+		-DBIN_INSTALL_DIR:PATH=%{_bindir} \\\
+		-DLIB_INSTALL_DIR:PATH=%{_libdir} \\\
+		-DINCLUDE_INSTALL_DIR:PATH=%{_includedir} \\\
+		-DPKG_NAME=%{name} \\\
+		-DPKG_VERSION=%{version} \\\
+		-DPKG_RELEASE=%{release} \\\
+		-DIMAGE_DIR:PATH=%{_imagedir} \\\
+		-DDATABASE_FILE:PATH=%{_databasefile} \\\
+		-DDBUS_SERVICE_DIR:PATH=%{_dbusservicedir} \\\
+		-DLICENSE_DIR:PATH=%{_licensedir} \\\
+		-DSUPPORT_DBUS_SYSTEM:BOOL=ON \\\
+		%if "%{?_lib}" == "lib64" \
+		%{?_cmake_lib_suffix64} \\\
+		%endif \
+		%{?_cmake_skip_rpath} \\\
+		-DBUILD_SHARED_LIBS:BOOL=ON
 
 %build
+%cmake .
 make %{?jobs:-j%jobs}
 
 %install
 rm -rf %{buildroot}
 %make_install
-mkdir -p %{buildroot}/usr/share/license
+mkdir -p %{buildroot}%{_licensedir}
 mkdir -p  %{buildroot}%{_sysconfdir}/rc.d/rc3.d
 ln -s %{_sysconfdir}/rc.d/init.d/download-provider-service  %{buildroot}%{_sysconfdir}/rc.d/rc3.d/S70download-provider-service
 mkdir -p  %{buildroot}%{_sysconfdir}/rc.d/rc5.d
@@ -56,11 +85,11 @@ mkdir -p %{buildroot}%{_libdir}/systemd/user/tizen-middleware.target.wants
 install %{SOURCE1} %{buildroot}%{_libdir}/systemd/user/
 ln -s ../download-provider.service %{buildroot}%{_libdir}/systemd/user/tizen-middleware.target.wants/
 
-mkdir -p %{buildroot}/opt/data/download-provider
-mkdir -p %{buildroot}/opt/usr/dbspace/
-if [ ! -f %{buildroot}/opt/usr/dbspace/.download-provider.db ];
+mkdir -p %{buildroot}/opt/data/%{name}
+mkdir -p %{buildroot}%{_databasedir}
+if [ ! -f %{buildroot}%{_databasefile} ];
 then
-sqlite3 %{buildroot}/opt/usr/dbspace/.download-provider.db 'PRAGMA journal_mode=PERSIST;
+sqlite3 %{buildroot}%{_databasefile} 'PRAGMA journal_mode=PERSIST;
 PRAGMA foreign_keys=ON;
 CREATE TABLE logging
 (
@@ -79,6 +108,7 @@ id INTEGER UNIQUE PRIMARY KEY,
 auto_download BOOLEAN DEFAULT 0,
 state_event BOOLEAN DEFAULT 0,
 progress_event BOOLEAN DEFAULT 0,
+noti_enable BOOLEAN DEFAULT 0,
 network_type TINYINT DEFAULT 0,
 filename TEXT DEFAULT NULL,
 destination TEXT DEFAULT NULL,
@@ -109,8 +139,7 @@ FOREIGN KEY(id) REFERENCES logging(id) ON DELETE CASCADE
 
 CREATE TABLE notification
 (
-id INTEGER UNIQUE PRIMARY KEY,
-noti_enable BOOLEAN DEFAULT 0,
+id INTEGER NOT NULL,
 extra_key TEXT DEFAULT NULL,
 extra_data TEXT DEFAULT NULL,
 FOREIGN KEY(id) REFERENCES logging(id) ON DELETE CASCADE
@@ -122,19 +151,21 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%dir %attr(0775,root,app) /opt/data/download-provider
+%dir %attr(0775,root,app) /opt/data/%{name}
 %manifest download-provider.manifest
-/usr/share/download-provider/*.png
+%{_imagedir}/*.png
 %{_libdir}/libdownloadagent2.so.0.0.1
 %{_libdir}/libdownloadagent2.so
 %{_libdir}/systemd/user/download-provider.service
 %{_libdir}/systemd/user/tizen-middleware.target.wants/download-provider.service
-%{_bindir}/download-provider
+%{_libdir}/libdownload-provider-interface.so.%{version}
+%{_libdir}/libdownload-provider-interface.so.0
+%{_bindir}/%{name}
 %{_sysconfdir}/rc.d/init.d/download-provider-service
 %{_sysconfdir}/rc.d/rc3.d/S70download-provider-service
 %{_sysconfdir}/rc.d/rc5.d/S70download-provider-service
-/usr/share/license/%{name}
-/usr/share/dbus-1/services/download-provider-service.service
+%{_licensedir}/%{name}
+%{_dbusservicedir}/org.download-provider.service
 %attr(660,root,app) /opt/usr/dbspace/.download-provider.db
 %attr(660,root,app) /opt/usr/dbspace/.download-provider.db-journal
 
@@ -142,11 +173,33 @@ fi
 %defattr(-,root,root,-)
 %{_libdir}/libdownloadagent2.so.0.0.1
 %{_libdir}/libdownloadagent2.so
-%{_bindir}/download-provider
+%{_libdir}/libdownload-provider-interface.so
 %{_includedir}/download-provider/download-provider.h
+%{_includedir}/download-provider/download-provider-defs.h
+%{_includedir}/download-provider/download-provider-interface.h
+%{_bindir}/%{name}
 %{_libdir}/pkgconfig/download-provider.pc
+%{_libdir}/pkgconfig/download-provider-interface.pc
 
 %changelog
+* Tue Mar 05 2013 Jungki Kwak <jungki.kwak@samsung.com>
+- Add function to handle credential URL
+- Add functions for notification extra list.
+- Close socket and group if failed to read the packet
+- Return errorcode if failed to copy string
+- Resolve wrong initialization
+- Remove warning message in build time
+- Functionize accepting the client
+- Support N values per a extra-parem key
+- Resolve a bug about converting error from agent
+- Modify to check return value about DRM API
+- Use enum value same with url-download
+- Add to ignore SIGPIPE
+- [prevent defect] Dereference before null check (REVERSE_INULL)
+- [prevent defect] Logically dead code (DEADCODE)
+- Check System Signal in all read call
+- Apply "ignore EINTR" patch of url-download to provider-interface
+
 * Fri Feb 01 2013 Kwangmin Bang <justine.bang@samsung.com>
 - [smack] manifest for booting-script
 - [prevent defect] Dereference after null check

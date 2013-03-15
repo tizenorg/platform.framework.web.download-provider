@@ -376,7 +376,7 @@ dp_error_type dp_request_set_notification(int id, dp_request *request, unsigned 
 
 	// update queue DB
 	if (dp_db_replace_column
-			(id, DP_DB_TABLE_NOTIFICATION,
+			(id, DP_DB_TABLE_REQUEST_INFO,
 			DP_DB_COL_NOTIFICATION_ENABLE, DP_DB_COL_TYPE_INT,
 			&enable) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);

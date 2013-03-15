@@ -144,6 +144,10 @@ int main(int argc, char **argv)
 		TRACE_ERROR("failed to register signal callback");
 		exit(EXIT_FAILURE);
 	}
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+		TRACE_ERROR("failed to register signal callback");
+		exit(EXIT_FAILURE);
+	}
 	// write IPC_FD_PATH. and lock
 	if ((lock_fd = dp_lock_pid(DP_LOCK_PID)) < 0) {
 		TRACE_ERROR

@@ -146,9 +146,9 @@ da_result_t get_mime_type(stage_info *stage, char **out_mime_type)
 	}
 
 	/* FIXME really need memory allocation? */
-	*out_mime_type = (char *) calloc(1, strlen(mime_type) + 1);
+	*out_mime_type = (char *)calloc(1, strlen(mime_type) + 1);
 	if (*out_mime_type) {
-		snprintf(*out_mime_type, strlen(mime_type) + 1, mime_type);
+		strncpy(*out_mime_type, mime_type, strlen(mime_type));
 		DA_LOG_VERBOSE(FileManager, "out_mime_type str[%s] ptr[%p] len[%d]",
 				*out_mime_type,*out_mime_type,strlen(*out_mime_type));
 	} else {
@@ -184,7 +184,7 @@ da_bool_t is_file_exist(const char *file_path)
 
 }
 
-da_bool_t is_dir_exist(char *file_path)
+da_bool_t is_dir_exist(const char *file_path)
 {
 	struct stat dir_state;
 	int stat_ret;

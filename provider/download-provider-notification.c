@@ -31,55 +31,27 @@
 #define S_(s) dgettext("sys_string", s)
 
 #define DP_NOTIFICATION_ICON_PATH IMAGE_DIR"/Q02_Notification_Download_failed.png"
-/* This should be same value of SERVICE_OPERATION_DOWNLOAD_NOTIFICATION from download.h */
-#define DP_DOWNLOAD_NOTI_OPERATION "http://tizen.org/appcontrol/operation/download_notification"
 
-static void __print_app_error_message(int ret)
+static const char *__noti_error_str(
+		notification_error_e err)
 {
-	switch (ret) {
-	case APPSVC_RET_OK:
-		TRACE_INFO("APPSVC_RET_OK");
-		break;
-	case APPSVC_RET_ELAUNCH:
-		TRACE_ERROR("APPSVC_RET_ELAUNCH");
-		break;
-	case APPSVC_RET_ENOMATCH:
-		TRACE_ERROR("APPSVC_RET_ENOMATCH");
-		break;
-	case APPSVC_RET_EINVAL:
-		TRACE_ERROR("APPSVC_RET_EINVAL");
-		break;
-	case APPSVC_RET_ERROR:
-		TRACE_ERROR("APPSVC_RET_ERROR");
-		break;
-	}
-}
-
-static void __print_notification_error_message(int ret)
-{
-	switch (ret) {
+	switch (err) {
 	case NOTIFICATION_ERROR_INVALID_DATA:
-		TRACE_ERROR("NOTIFICATION_ERROR_INVALID_DATA");
-		break;
+		return "NOTIFICATION_ERROR_INVALID_DATA";
 	case NOTIFICATION_ERROR_NO_MEMORY:
-		TRACE_ERROR("NOTIFICATION_ERROR_NO_MEMORY");
-		break;
+		return "NOTIFICATION_ERROR_NO_MEMORY";
 	case NOTIFICATION_ERROR_FROM_DB:
-		TRACE_ERROR("NOTIFICATION_ERROR_FROM_DB");
-		break;
+		return "NOTIFICATION_ERROR_FROM_DB";
 	case NOTIFICATION_ERROR_ALREADY_EXIST_ID:
-		TRACE_ERROR("NOTIFICATION_ERROR_ALREADY_EXIST_ID");
-		break;
+		return "NOTIFICATION_ERROR_ALREADY_EXIST_ID";
 	case NOTIFICATION_ERROR_FROM_DBUS:
-		TRACE_ERROR("NOTIFICATION_ERROR_FROM_DBUS");
-		break;
+		return "NOTIFICATION_ERROR_FROM_DBUS";
 	case NOTIFICATION_ERROR_NOT_EXIST_ID:
-		TRACE_ERROR("NOTIFICATION_ERROR_NOT_EXIST_ID");
-		break;
+		return "NOTIFICATION_ERROR_NOT_EXIST_ID";
 	default:
-		TRACE_ERROR("Unknown error");
 		break;
 	}
+	return "Unknown error";
 }
 
 static char *__get_string_status(dp_state_type state)
@@ -102,6 +74,116 @@ static char *__get_string_status(dp_state_type state)
 		break;
 	}
 	return message;
+}
+static void __free_char_pointer_array(char **array, int count)
+{
+	int i = 0;
+	if (count < 0)
+		count = 0;
+	for (i = 0; i < count; i++) {
+		if (array[i])
+			free(array[i]);
+	}
+	free(array);
+}
+
+static int __set_extra_data(bundle *b, int id)
+{
+	db_conds_list_fmt conds_p;
+	int conds_count = 0;
+	int count = 0;
+	// get count of key list.
+	conds_count = 1;
+	memset(&conds_p, 0x00, sizeof(db_conds_list_fmt));
+	conds_p.column = DP_DB_COL_ID;
+	conds_p.type = DP_DB_COL_TYPE_INT;
+	conds_p.value = &id;
+	count = dp_db_get_conds_rows_count(DP_DB_TABLE_NOTIFICATION,
+			DP_DB_COL_DISTINCT_EXTRA_KEY, "AND", 1, &conds_p);
+	if (count > 0) {
+		char **keys_array = NULL;
+		int i = 0;
+		keys_array = (char **)calloc(count, sizeof(char *));
+		if (keys_array == NULL) {
+			TRACE_ERROR("[FAIL] calloc failed");
+			return -1;
+		}
+		// get key list
+		int keys_count =
+			dp_db_get_conds_list(DP_DB_TABLE_NOTIFICATION,
+					DP_DB_COL_DISTINCT_EXTRA_KEY , DP_DB_COL_TYPE_TEXT,
+					(void **)keys_array, count, -1, NULL, NULL,
+					"AND", 1, &conds_p);
+		if (keys_count <= 0) {
+			TRACE_ERROR("[FAIL] Wrong db data");
+			__free_char_pointer_array(keys_array, 0);
+			return -1;
+		}
+		for (i = 0; i < keys_count; i++) {
+			db_conds_list_fmt conds_p2[2];
+			int conds_count2 = 2;
+			char **values_array = NULL;
+			int check_rows = 0;
+			int values_count = 0;
+
+			memset(conds_p2, 0x00, conds_count2 * sizeof(db_conds_list_fmt));
+			conds_p2[0].column = DP_DB_COL_ID;
+			conds_p2[0].type = DP_DB_COL_TYPE_INT;
+			conds_p2[0].value = &id;
+			conds_p2[1].column = DP_DB_COL_EXTRA_KEY;
+			conds_p2[1].type = DP_DB_COL_TYPE_TEXT;
+			conds_p2[1].value = (void *)(keys_array[i]);
+			// get value list
+			check_rows = dp_db_get_conds_rows_count(
+					DP_DB_TABLE_NOTIFICATION, DP_DB_COL_EXTRA_VALUE, "AND",
+					conds_count2, conds_p2);
+			if (check_rows <= 0) {
+				TRACE_ERROR("[FAIL] No values about key");
+				__free_char_pointer_array(keys_array, keys_count);
+				return -1;
+			}
+			values_array = (char **)calloc(check_rows, sizeof(char *));
+			if (values_array == NULL) {
+				TRACE_ERROR("[FAIL] calloc failed");
+				__free_char_pointer_array(keys_array, keys_count);
+				return -1;
+			}
+			values_count =
+				dp_db_get_conds_list(DP_DB_TABLE_NOTIFICATION,
+					DP_DB_COL_EXTRA_VALUE, DP_DB_COL_TYPE_TEXT,
+					(void **)values_array, check_rows, -1, NULL, NULL,
+					"AND", conds_count2, conds_p2);
+			if (values_count <= 0) {
+				TRACE_ERROR("[FAIL] No values about key");
+				__free_char_pointer_array(keys_array, keys_count);
+				__free_char_pointer_array(values_array, 0);
+				return -1;
+			}
+			if (values_count == 1) {
+				char *key = keys_array[i];
+				char *value = values_array[values_count-1];
+				if (appsvc_add_data(b, key, value) !=
+					APPSVC_RET_OK) {
+					TRACE_ERROR("[FAIL] set add data");
+					__free_char_pointer_array(keys_array, keys_count);
+					__free_char_pointer_array(values_array, values_count);
+					return -1;
+				}
+			} else {
+				char *key = keys_array[i];
+				if (appsvc_add_data_array(b, key, (const char **)values_array,
+						values_count) !=	APPSVC_RET_OK) {
+					TRACE_ERROR("[FAIL] set add data");
+					__free_char_pointer_array(keys_array, keys_count);
+					__free_char_pointer_array(values_array, values_count);
+					return -1;
+				}
+			}
+			__free_char_pointer_array(values_array, values_count);
+		}
+		__free_char_pointer_array(keys_array, keys_count);
+	}
+	return 0;
 }
 
 int dp_set_downloadinginfo_notification(int id, char *packagename)
@@ -137,7 +219,7 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 		free(content_name);
 
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set title [%d]", err);
+		TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -145,7 +227,7 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 	err = notification_set_image(noti_handle,
 			NOTIFICATION_IMAGE_TYPE_ICON, DP_NOTIFICATION_ICON_PATH);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set icon [%d]", err);
+		TRACE_ERROR("[FAIL] set icon [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -165,41 +247,17 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 		return -1;
 	}
 
-	if (appsvc_set_operation(b, DP_DOWNLOAD_NOTI_OPERATION) !=
-		APPSVC_RET_OK) {
-		TRACE_ERROR("[FAIL] set noti operation");
+	if (__set_extra_data(b, id) < 0) {
 		bundle_free(b);
 		notification_free(noti_handle);
 		return -1;
 	}
 
-	char *extra_key =
-		dp_db_get_text_column(id, DP_DB_TABLE_NOTIFICATION,
-			DP_DB_COL_EXTRA_KEY);
-	char *extra_value =
-		dp_db_get_text_column(id, DP_DB_TABLE_NOTIFICATION,
-			DP_DB_COL_EXTRA_VALUE);
-
-	if (extra_key && extra_value) {
-		if (appsvc_add_data(b, extra_key, extra_value) != APPSVC_RET_OK) {
-			TRACE_ERROR("[FAIL] set add data");
-			free(extra_key);
-			free(extra_value);
-			bundle_free(b);
-			notification_free(noti_handle);
-			return -1;
-		}
-	}
-	if (extra_key)
-		free(extra_key);
-	if (extra_value)
-		free(extra_value);
-
 	err = notification_set_execute_option(noti_handle,
 			NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
 
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set execute option [%d]", err);
+		TRACE_ERROR("[FAIL] set execute option [%s]", __noti_error_str(err));
 		bundle_free(b);
 		notification_free(noti_handle);
 		return -1;
@@ -209,14 +267,14 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 	err = notification_set_property(noti_handle,
 			NOTIFICATION_PROP_DISABLE_TICKERNOTI);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set property [%d]", err);
+		TRACE_ERROR("[FAIL] set property [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
 
 	err = notification_insert(noti_handle, &privId);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set insert [%d]", err);
+		TRACE_ERROR("[FAIL] set insert [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -237,7 +295,8 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 		err = notification_delete_by_priv_id(NULL, NOTIFICATION_TYPE_ONGOING,
 				priv_id);
 		if (err != NOTIFICATION_ERROR_NONE) {
-			TRACE_ERROR("[FAIL] delete notification handle, err", err);
+			TRACE_ERROR("[FAIL] delete notification handle [%s]",
+					__noti_error_str(err));
 		}
 	}
 
@@ -267,7 +326,7 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 		free(content_name);
 
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set title [%d]", err);
+		TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -277,7 +336,7 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 			__get_string_status(state), NULL,
 			NOTIFICATION_VARIABLE_TYPE_NONE);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set text [%d]", err);
+		TRACE_ERROR("[FAIL] set text [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -285,7 +344,7 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 
 	err = notification_set_time(noti_handle, tt);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set time [%d]", err);
+		TRACE_ERROR("[FAIL] set time [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -320,36 +379,19 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 			free(savedpath);
 		err = notification_set_execute_option(noti_handle,
 				NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
-	} else if (state == DP_STATE_CANCELED || state == DP_STATE_FAILED) {
-		if (appsvc_set_operation(b, DP_DOWNLOAD_NOTI_OPERATION) !=
-			APPSVC_RET_OK) {
-			TRACE_ERROR("[FAIL] set noti operation [%d]", err);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			TRACE_ERROR("[FAIL] set execute option[%s]", __noti_error_str(err));
 			bundle_free(b);
 			notification_free(noti_handle);
 			return -1;
 		}
 
-		char *extra_key =
-			dp_db_get_text_column(id, DP_DB_TABLE_NOTIFICATION,
-				DP_DB_COL_EXTRA_KEY);
-		char *extra_value =
-			dp_db_get_text_column(id, DP_DB_TABLE_NOTIFICATION,
-				DP_DB_COL_EXTRA_VALUE);
-		if (extra_key && extra_value) {
-			if (appsvc_add_data(b, extra_key, extra_value) !=
-				APPSVC_RET_OK) {
-				TRACE_ERROR("[FAIL] set add data");
-				free(extra_key);
-				free(extra_value);
-				bundle_free(b);
-				notification_free(noti_handle);
-				return -1;
-			}
+	} else if (state == DP_STATE_CANCELED || state == DP_STATE_FAILED) {
+		if (__set_extra_data(b, id) < 0) {
+			bundle_free(b);
+			notification_free(noti_handle);
+			return -1;
 		}
-		if (extra_key)
-			free(extra_key);
-		if (extra_value)
-			free(extra_value);
 
 		if (packagename &&
 			appsvc_set_pkgname(b, packagename) !=
@@ -361,6 +403,12 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 		}
 		err = notification_set_execute_option(noti_handle,
 				NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			TRACE_ERROR("[FAIL] set execute option[%s]", __noti_error_str(err));
+			bundle_free(b);
+			notification_free(noti_handle);
+			return -1;
+		}
 	} else {
 		TRACE_ERROR("[CRITICAL] invalid state");
 		bundle_free(b);
@@ -369,7 +417,7 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 	}
 
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set time [%d]", err);
+		TRACE_ERROR("[FAIL] set time [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		bundle_free(b);
 		return -1;
@@ -380,7 +428,7 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 	err = notification_set_image(noti_handle, NOTIFICATION_IMAGE_TYPE_ICON,
 			DP_NOTIFICATION_ICON_PATH);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set icon [%d]", err);
+		TRACE_ERROR("[FAIL] set icon [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -388,14 +436,14 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 	err = notification_set_property(noti_handle,
 			NOTIFICATION_PROP_DISABLE_TICKERNOTI);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set property [%d]", err);
+		TRACE_ERROR("[FAIL] set property [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
 
 	err = notification_insert(noti_handle, &privId);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set insert [%d]", err);
+		TRACE_ERROR("[FAIL] set insert [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -418,11 +466,13 @@ void dp_update_downloadinginfo_notification(int priv_id, double received_size, d
 		progress = received_size / file_size;
 		err = notification_update_progress(NULL, priv_id, progress);
 		if (err != NOTIFICATION_ERROR_NONE)
-			TRACE_ERROR("[FAIL] update noti progress[%d]", err);
+			TRACE_ERROR("[FAIL] update noti progress[%s]",
+					__noti_error_str(err));
 	} else {
 		err = notification_update_size(NULL, priv_id, received_size);
 		if (err != NOTIFICATION_ERROR_NONE)
-			TRACE_ERROR("[FAIL]  update noti progress[%d]", err);
+			TRACE_ERROR("[FAIL]  update noti progress[%s]",
+					__noti_error_str(err));
 	}
 }
 
@@ -431,7 +481,7 @@ void dp_clear_downloadinginfo_notification()
 	notification_error_e err = NOTIFICATION_ERROR_NONE;
 	err = notification_delete_all_by_type(NULL, NOTIFICATION_TYPE_ONGOING);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] clear noti [%d]", err);
+		TRACE_ERROR("[FAIL] clear noti [%s]", __noti_error_str(err));
 	}
 	return;
 }

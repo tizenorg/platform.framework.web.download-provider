@@ -92,7 +92,7 @@ da_result_t start_download_with_extension(
 
 			client_input->install_path = (char *)calloc(install_path_len+1, sizeof(char));
 			if (client_input->install_path)
-				snprintf(client_input->install_path, install_path_len+1, install_path);
+				strncpy(client_input->install_path, install_path, install_path_len);
 		}
 
 		if (file_name) {

@@ -1317,3 +1317,362 @@ int dp_db_get_http_headers_list(int id, char **headers)
 	__dp_finalize(stmt);
 	return headers_index;
 }
+
+static char *__merge_strings(char *dest, const char *src, char sep)
+{
+	int dest_length = 0;
+	int src_length = 0;
+
+	if (dest == NULL || src == NULL)
+		return NULL;
+
+	dest_length = strlen(dest);
+	src_length = strlen(src);
+
+	dest = sqlite3_realloc(dest, dest_length + src_length + 1);
+	dest = strncat(dest, &sep, 1);
+	dest = strncat(dest, src, src_length);
+	return dest;
+}
+
+static char *__get_conds_query(int count, db_conds_list_fmt *conds, char *op)
+{
+	char *conditions = NULL;
+	int i = 0;
+
+	if (count > 0 && conds != NULL) {
+		conditions = sqlite3_mprintf("WHERE");
+		for (i = 0; i < count; i++) {
+			char *token =
+				sqlite3_mprintf("%s %s ?", conds[i].column,
+					(conds[i].is_like == 1 ? "LIKE" : "="));
+			if (token != NULL) {
+				conditions = __merge_strings(conditions, token, ' ');
+				sqlite3_free(token);
+				token = NULL;
+			}
+			if (i < count - 1 && op)
+				conditions = __merge_strings(conditions, op, ' ');
+		}
+	}
+	return conditions;
+}
+
+static int __bind_value(sqlite3_stmt *stmt,
+				db_column_data_type condtype,  void *value, int index)
+{
+	int errorcode = SQLITE_ERROR;
+	int *cast_value = 0;
+
+	if (stmt == NULL)
+		return SQLITE_ERROR;
+
+	switch (condtype) {
+	case DP_DB_COL_TYPE_INT:
+		cast_value = value;
+		errorcode = sqlite3_bind_int(stmt, index, *cast_value);
+		TRACE_INFO("INT %d", *cast_value);
+		break;
+	case DP_DB_COL_TYPE_INT64:
+#ifdef SQLITE_INT64_TYPE
+		sqlite3_int64 *cast_value = value;
+		errorcode = sqlite3_bind_int64(stmt, index, *cast_value);
+		TRACE_INFO("INT %ld", *cast_value);
+#else
+		cast_value = value;
+		errorcode = sqlite3_bind_int(stmt, index, *cast_value);
+		TRACE_INFO("INT %d", *cast_value);
+#endif
+		break;
+	case DP_DB_COL_TYPE_TEXT:
+		errorcode =
+			sqlite3_bind_text(stmt, index, (char *)value, -1, SQLITE_STATIC);
+		TRACE_INFO("TEXT %s", value);
+		break;
+	default:
+		errorcode = SQLITE_ERROR;
+		break;
+	}
+	return errorcode;
+}
+
+int dp_db_insert_columns(char *table, int column_count,
+						db_conds_list_fmt *columns)
+{
+	int errorcode = SQLITE_OK;
+	int ret = -1;
+	sqlite3_stmt *stmt = NULL;
+	char *query = NULL;
+	int i = 0;
+
+	if (table == NULL) {
+		TRACE_ERROR("[CHECK TABLE NAME]");
+		return -1;
+	}
+	if (column_count <= 0) {
+		TRACE_ERROR("[CHECK db_conds_list_fmt count]");
+		return -1;
+	}
+	if (__dp_sql_open() < 0) {
+		TRACE_ERROR("[SQL HANDLE] [%s]", sqlite3_errmsg(g_dp_db_handle));
+		return -1;
+	}
+
+	query =
+		sqlite3_mprintf("INSERT INTO %s ", table);
+	query = __merge_strings(query, columns[0].column, '(');
+	for (i = 1; i < column_count; i++) {
+		char *column_query = NULL;
+		column_query = sqlite3_mprintf(", %s", columns[i].column);
+		query = __merge_strings(query, column_query, ' ');
+		sqlite3_free(column_query);
+	}
+	query = __merge_strings(query, " VALUES ", ')');
+	query = __merge_strings(query, "?", '(');
+	for (i = 1; i < column_count; i++) {
+		query = __merge_strings(query, ", ?", ' ');
+	}
+	query = __merge_strings(query, ")", ' ');
+	if (query == NULL) {
+		TRACE_ERROR("[CHECK COMBINE]");
+		return -1;
+	}
+
+	TRACE_INFO("[QUERY] %s", query);
+
+	ret = sqlite3_prepare_v2(g_dp_db_handle, query, -1, &stmt, NULL);
+	sqlite3_free(query);
+	if ( ret != SQLITE_OK) {
+		TRACE_ERROR("[PREPARE] [%s]", sqlite3_errmsg(g_dp_db_handle));
+		__dp_finalize(stmt);
+		return -1;
+	}
+
+	for (i = 0; i < column_count; i++) {
+		if (__bind_value
+				(stmt, columns[i].type, columns[i].value, (i + 1)) !=
+				SQLITE_OK) {
+			TRACE_ERROR("[BIND][%d][%s]", columns[i].type,
+				sqlite3_errmsg(g_dp_db_handle));
+			__dp_finalize(stmt);
+			return -1;
+		}
+	}
+
+	errorcode = sqlite3_step(stmt);
+	if (errorcode == SQLITE_OK || errorcode == SQLITE_DONE) {
+		__dp_finalize(stmt);
+		return 0;
+	}
+	__dp_finalize(stmt);
+	return -1;
+}
+
+int dp_db_get_conds_rows_count(char *table,
+						char *getcolumn, char *op,
+						int conds_count, db_conds_list_fmt *conds)
+{
+	int errorcode = SQLITE_OK;
+	int ret = -1;
+	sqlite3_stmt *stmt = NULL;
+	char *query = NULL;
+	int i = 0;
+
+	if (table == NULL) {
+		TRACE_ERROR("[CHECK TABLE NAME]");
+		return -1;
+	}
+	if (getcolumn == NULL) {
+		TRACE_ERROR("[CHECK RESULT COLUMN]");
+		return -1;
+	}
+	if (op == NULL) {
+		TRACE_ERROR("[CHECK OPERATOR] AND or OR");
+		return -1;
+	}
+	if (conds_count <= 0) {
+		TRACE_ERROR("[CHECK db_conds_list_fmt count]");
+		return -1;
+	}
+	if (__dp_sql_open() < 0) {
+		TRACE_ERROR("[SQL HANDLE] [%s]", sqlite3_errmsg(g_dp_db_handle));
+		return -1;
+	}
+
+	query =
+			sqlite3_mprintf("SELECT count(%s) FROM %s", getcolumn, table);
+
+	char *conditions = __get_conds_query(conds_count, conds, op);
+	if (conditions != NULL) {
+		query = __merge_strings(query, conditions, ' ');
+		sqlite3_free(conditions);
+	}
+
+	if (query == NULL) {
+		TRACE_ERROR("[CHECK COMBINE]");
+		return -1;
+	}
+
+	TRACE_INFO("[QUERY] %s", query);
+
+	ret = sqlite3_prepare_v2(g_dp_db_handle, query, -1, &stmt, NULL);
+	sqlite3_free(query);
+	if (ret != SQLITE_OK) {
+		TRACE_ERROR("[PREPARE] [%s]", sqlite3_errmsg(g_dp_db_handle));
+		__dp_finalize(stmt);
+		return -1;
+	}
+	for (i = 0; i < conds_count; i++) {
+		if (__bind_value
+				(stmt, conds[i].type, conds[i].value, (i + 1)) !=
+				SQLITE_OK) {
+			TRACE_ERROR("[BIND][%d][%s]", conds[i].type,
+				sqlite3_errmsg(g_dp_db_handle));
+			__dp_finalize(stmt);
+			return -1;
+		}
+	}
+	errorcode = sqlite3_step(stmt);
+	if (errorcode == SQLITE_ROW) {
+		int count = sqlite3_column_int(stmt, 0);
+		__dp_finalize(stmt);
+		return count;
+	}
+	__dp_finalize(stmt);
+	return 0;
+}
+
+int dp_db_get_conds_list(char *table, char *getcolumn,
+						db_column_data_type gettype, void **list,
+						int rowslimit, int rowsoffset,
+						char *ordercolumn, char *ordering,
+						char *op, int conds_count,
+						db_conds_list_fmt *conds)
+{
+	int errorcode = SQLITE_OK;
+	int rows_count = 0;
+	sqlite3_stmt *stmt = NULL;
+	int i = 0;
+
+	if (table == NULL) {
+		TRACE_ERROR("[CHECK TABLE NAME]");
+		return -1;
+	}
+	if (op == NULL) {
+		TRACE_ERROR("[CHECK OPERATOR] AND or OR");
+		return -1;
+	}
+	if (getcolumn == NULL) {
+		TRACE_ERROR("[CHECK COLUMN NAME]");
+		return -1;
+	}
+	if (conds_count <= 0) {
+		TRACE_ERROR("[CHECK db_conds_list_fmt count]");
+		return -1;
+	}
+	if (__dp_sql_open() < 0) {
+		TRACE_ERROR("[SQL HANDLE] [%s]", sqlite3_errmsg(g_dp_db_handle));
+		return -1;
+	}
+
+	char *limit = NULL;
+	char *order = NULL;
+	char *query = sqlite3_mprintf("SELECT %s FROM %s", getcolumn, table);
+	char *conditions = __get_conds_query(conds_count, conds, op);
+	if (conditions != NULL) {
+		query = __merge_strings(query, conditions, ' ');
+		sqlite3_free(conditions);
+	}
+
+	if (ordercolumn != NULL) {
+		order =
+			sqlite3_mprintf
+				("ORDER BY %s %s", ordercolumn,
+				(ordering == NULL ? "ASC" : ordering));
+		if (order != NULL) {
+			query = __merge_strings(query, order, ' ');
+			sqlite3_free(order);
+		}
+	}
+	if (rowslimit > 0) { // 0 or negative : no limitation
+		if (rowsoffset >= 0)
+			limit =
+				sqlite3_mprintf("LIMIT %d OFFSET %d", rowslimit,
+					rowsoffset);
+		else
+			limit = sqlite3_mprintf("LIMIT %d", rowslimit);
+		if (limit != NULL) {
+			query = __merge_strings(query, limit, ' ');
+			sqlite3_free(limit);
+		}
+	}
+
+	if (query == NULL) {
+		TRACE_ERROR("[CHECK COMBINE]");
+		return -1;
+	}
+	TRACE_INFO("[QUERY] %s", query);
+
+	errorcode =
+		sqlite3_prepare_v2(g_dp_db_handle, query, -1, &stmt, NULL);
+	sqlite3_free(query);
+	if (errorcode != SQLITE_OK) {
+		TRACE_ERROR("sqlite3_prepare_v2 is failed. [%s]",
+			sqlite3_errmsg(g_dp_db_handle));
+		__dp_finalize(stmt);
+		return -1;
+	}
+	for (i = 0; i < conds_count; i++) {
+		if (__bind_value
+				(stmt, conds[i].type, conds[i].value, (i + 1)) !=
+				SQLITE_OK) {
+			TRACE_ERROR
+				("[BIND][%d][%s]", conds[i].type,
+				sqlite3_errmsg(g_dp_db_handle));
+			__dp_finalize(stmt);
+			return -1;
+		}
+	}
+	while ((errorcode = sqlite3_step(stmt)) == SQLITE_ROW) {
+		switch (gettype) {
+		case DP_DB_COL_TYPE_INT:
+		{
+			int **list_int_p = (int **)list;
+			*list_int_p[rows_count++] = sqlite3_column_int(stmt, 0);
+			break;
+		}
+		case DP_DB_COL_TYPE_INT64:
+		{
+#ifdef SQLITE_INT64_TYPE
+			long long **list_long_p = (long long **)list;
+			*list_long_p[rows_count++] = sqlite3_column_int64(stmt, 0);
+#else
+			int **list_int_p = (int **)list;
+			*list_int_p[rows_count++] = sqlite3_column_int(stmt, 0);
+#endif
+			break;
+		}
+		case DP_DB_COL_TYPE_TEXT:
+		{
+			int getbytes = sqlite3_column_bytes(stmt, 0);
+			if (getbytes > 0) {
+				char *getstr = (char *)calloc((getbytes + 1), sizeof(char));
+				if (getstr != NULL) {
+					memcpy(getstr, sqlite3_column_text(stmt, 0),
+						getbytes * sizeof(char));
+					getstr[getbytes] = '\0';
+					list[rows_count++] = getstr;
+				}
+			}
+			break;
+		}
+		default:
+			break;
+		}
+		if (rows_count >= rowslimit)
+			break;
+	}
+	__dp_finalize(stmt);
+	return rows_count;
+}
+

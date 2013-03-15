@@ -29,7 +29,7 @@
 #define DA_DEFAULT_INSTALL_PATH_FOR_MMC "/opt/storage/sdcard/Downloads"
 
 da_bool_t is_file_exist(const char *file_path);
-da_bool_t is_dir_exist(char *dir_path);
+da_bool_t is_dir_exist(const char *dir_path);
 
 void get_file_size(char *file_path, unsigned long long *out_file_size);
 

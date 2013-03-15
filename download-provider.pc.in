@@ -1,9 +1,6 @@
-# Package Information (download-provider daemon style)
+# Package Information
 
-prefix=/usr
-includedir=${prefix}/include
-
-Name: Download Provider
-Description: Download Provider Daemon
+Name: @PROJECT_NAME@ 
+Description: @PACKAGE_DESCRIPTION@
 Version: @VERSION@
-Cflags: -I${includedir}/download-provider
+Cflags: -I/usr/include/download-provider

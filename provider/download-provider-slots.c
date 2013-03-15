@@ -108,20 +108,17 @@ int dp_request_free(dp_request *request)
 int dp_client_group_free(dp_client_group *group)
 {
 	TRACE_INFO("");
-	if (!group)
-		return -1;
-
-	if (group->cmd_socket > 0)
-		dp_socket_free(group->cmd_socket);
-	group->cmd_socket = -1;
-	if (group->event_socket > 0)
-		dp_socket_free(group->event_socket);
-	group->event_socket = -1;
-	group->queued_count = 0;
-	if (group->pkgname)
+	if (group != NULL) {
+		if (group->cmd_socket > 0)
+			dp_socket_free(group->cmd_socket);
+		group->cmd_socket = -1;
+		if (group->event_socket > 0)
+			dp_socket_free(group->event_socket);
+		group->event_socket = -1;
+		group->queued_count = 0;
 		free(group->pkgname);
-	free(group);
-	group = NULL;
+		free(group);
+	}
 	return 0;
 }
 

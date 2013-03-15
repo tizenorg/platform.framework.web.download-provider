@@ -17,6 +17,10 @@
 #ifndef _Download_Agent_Interface_H
 #define _Download_Agent_Interface_H
 
+#ifndef EXPORT_API
+#define EXPORT_API __attribute__((visibility("default")))
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -205,7 +209,7 @@ typedef struct {
  * }
  * @endcode
  */
-int da_init(da_client_cb_t *da_client_callback);
+EXPORT_API int da_init(da_client_cb_t *da_client_callback);
 
  /**
  * @fn int da_deinit ()
@@ -243,7 +247,7 @@ int da_init(da_client_cb_t *da_client_callback);
  * }
   @endcode
  */
-int da_deinit();
+EXPORT_API int da_deinit();
 
  /**
  * @fn int da_start_download(const char *url, int *download_id)
@@ -281,7 +285,7 @@ int da_deinit();
  *	printf("download requesting is failed with error code %d\n", da_ret);
  * @endcode
  */
-int da_start_download(const char *url, int *download_id);
+EXPORT_API int da_start_download(const char *url, int *download_id);
 
 /**
 * @fn int da_start_download_with_extension(const char *url, extension_data_t ext_data, int *download_id)
@@ -321,7 +325,7 @@ int da_start_download(const char *url, int *download_id);
             printf("download requesting is failed with error code %d\n", da_ret);
   @endcode
 */
-int da_start_download_with_extension(const char *url,
+EXPORT_API int da_start_download_with_extension(const char *url,
 	extension_data_t *ext_data,
 	int *download_id
 );
@@ -362,7 +366,7 @@ int da_start_download_with_extension(const char *url,
    }
  @endcode
  */
-int da_cancel_download(int download_id);
+EXPORT_API int da_cancel_download(int download_id);
 
 
 /**
@@ -402,9 +406,9 @@ int da_cancel_download(int download_id);
    }
  @endcode
  */
-int da_suspend_download(int download_id);
+EXPORT_API int da_suspend_download(int download_id);
 
-int da_suspend_download_without_update(int download_id);
+EXPORT_API int da_suspend_download_without_update(int download_id);
 /**
  * @fn int da_resume_download(int download_id)
  * @brief This function resumes downloading for passed download_id.
@@ -439,7 +443,7 @@ int da_suspend_download_without_update(int download_id);
    }
  @endcode
  */
-int da_resume_download(int download_id);
+EXPORT_API int da_resume_download(int download_id);
 
 /**
  * @fn int da_is_valid_download_id(int download_id)
@@ -462,7 +466,7 @@ int da_resume_download(int download_id);
  * @return		1 for success, or 0 for fail
   *
   */
-int da_is_valid_download_id(int download_id);
+EXPORT_API int da_is_valid_download_id(int download_id);
 
 #ifdef __cplusplus
 }

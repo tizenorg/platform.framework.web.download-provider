@@ -27,10 +27,8 @@ FOREACH(flag ${subpkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
 ENDFOREACH(flag)
 
-SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} -Wall -fPIC")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS}")
-SET(CMAKE_C_FLAGS_DEBUG "-O0 -g -Wall")
-SET(CMAKE_SHARED_LINKER_FLAGS "-Wl,--as-needed -Wl,--hash-style=both")
+SET(CMAKE_C_FLAGS_DEBUG "-O0 -Wall")
 
 IF("${ARCH}" MATCHES "^arm.*")
 	ADD_DEFINITIONS("-D_TARGET")
@@ -82,5 +80,5 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES SOVERSION 0.0.1)
 #+++++++++++++++++++++++++INSTALLATION++++++++++++++++++++++++++++++++++++++++
 #############################################################################
 
-INSTALL(TARGETS ${PROJECT_NAME} DESTINATION lib COMPONENT RuntimeLibraries)
+INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${LIB_INSTALL_DIR} COMPONENT RuntimeLibraries)
 
