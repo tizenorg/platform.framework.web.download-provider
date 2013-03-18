@@ -115,6 +115,7 @@ EXPORT_API int dp_interface_set_auto_download(const int id, int enable);
 EXPORT_API int dp_interface_get_auto_download(const int id, int *enable);
 EXPORT_API int dp_interface_add_http_header_field(const int id, const char *field, const char *value);
 EXPORT_API int dp_interface_get_http_header_field(const int id, const char *field, char **value);
+EXPORT_API int dp_interface_get_http_header_field_list(const int id, char ***fields, int *length);
 EXPORT_API int dp_interface_remove_http_header_field(const int id, const char *field);
 EXPORT_API int dp_interface_get_state(const int id, int *state);
 EXPORT_API int dp_interface_get_temp_path(const int id, char **temp_path);

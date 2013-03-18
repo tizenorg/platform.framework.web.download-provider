@@ -1026,16 +1026,18 @@ static dp_error_type __dp_interface_get_strings
 
 	errorcode = __ipc_send_command(fd, id, cmd);
 	if (errorcode == DP_ERROR_NONE) {
-		if (__ipc_send_int(fd, (int)length) == 0) {
-			for (i = 0; i < length; i++) {
-				// send string
-				TRACE_INFO("[SEND] %s", strings[i]);
-				errorcode = __ipc_send_string(fd, strings[i]);
-				if (errorcode != DP_ERROR_NONE)
-					break;
+		if (length > 0 && strings != NULL) {
+			if (__ipc_send_int(fd, (int)length) == 0) {
+				for (i = 0; i < length; i++) {
+					// send string
+					TRACE_INFO("[SEND] %s", strings[i]);
+					errorcode = __ipc_send_string(fd, strings[i]);
+					if (errorcode != DP_ERROR_NONE)
+						break;
+				}
+			} else {
+				errorcode = DP_ERROR_IO_ERROR;
 			}
-		} else {
-			errorcode = DP_ERROR_IO_ERROR;
 		}
 		if (errorcode == DP_ERROR_NONE) {
 			// return from provider.
@@ -1611,6 +1613,14 @@ int dp_interface_get_http_header_field(const int id, const char *field,
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
 	return __dp_interface_convert_errorcode(errorcode);
+}
+
+int dp_interface_get_http_header_field_list(const int id, char ***fields,
+	int *length)
+{
+	TRACE_INFO("");
+	return __dp_interface_get_strings(id, DP_CMD_GET_HTTP_HEADER_LIST,
+		NULL, 0, fields, length);
 }
 
 int dp_interface_remove_http_header_field(const int id,

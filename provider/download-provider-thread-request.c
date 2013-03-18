@@ -96,6 +96,8 @@ static char *__print_command(dp_command_type cmd)
 			return "GET_PROGRESS_CALLBACK";
 		case DP_CMD_GET_HTTP_HEADERS :
 			return "GET_HTTP_HEADERS";
+		case DP_CMD_GET_HTTP_HEADER_LIST:
+			return "GET_HTTP_HEADER_LIST";
 		case DP_CMD_ADD_EXTRA_PARAM :
 			return "ADD_EXTRA_PARAM";
 		case DP_CMD_GET_EXTRA_PARAM :
@@ -553,6 +555,56 @@ static int __dp_remove_extra_param(int fd, int id)
 	TRACE_ERROR
 		("[ERROR][%d][%s] key:%s", id, dp_print_errorcode(ret), key);
 	free(key);
+	return ret;
+}
+
+static int __dp_get_http_header_fields(int fd, int id, char ***values,
+		unsigned *count)
+{
+	dp_error_type ret = DP_ERROR_NONE;
+	int length = 0;
+	char **rows_array = NULL;
+
+	if (fd < 0) {
+		TRACE_ERROR("[CHECK] socket");
+		return DP_ERROR_IO_ERROR;
+	}
+	if (id < 0) {
+		TRACE_ERROR("[CHECK] ID");
+		return DP_ERROR_INVALID_PARAMETER;
+	}
+
+	db_conds_list_fmt conds_p;
+	conds_p.column = DP_DB_COL_ID;
+	conds_p.type = DP_DB_COL_TYPE_INT;
+	conds_p.value = &id;
+	conds_p.is_like = 0;
+	int check_rows = dp_db_get_conds_rows_count
+		(DP_DB_TABLE_HTTP_HEADERS, DP_DB_COL_HEADER_FIELD, "AND",
+		1, &conds_p);
+	if (check_rows <= 0) {
+		// NO_DATA
+		ret = DP_ERROR_NO_DATA;
+	} else {
+		rows_array = (char **)calloc(check_rows, sizeof(char *));
+		if (rows_array == NULL) {
+			ret = DP_ERROR_OUT_OF_MEMORY;
+		} else {
+			int rows_count =
+				dp_db_get_conds_list(DP_DB_TABLE_HTTP_HEADERS,
+					DP_DB_COL_HEADER_FIELD, DP_DB_COL_TYPE_TEXT,
+					(void **)rows_array, check_rows, -1, NULL, NULL,
+					"AND", 1, &conds_p);
+			if (rows_count <= 0) {
+				// NO_DATA
+				ret = DP_ERROR_NO_DATA;
+				free(rows_array);
+			} else {
+				*count = rows_count;
+				*values = rows_array;
+			}
+		}
+	}
 	return ret;
 }
 
@@ -1558,6 +1610,30 @@ void *dp_thread_requests_manager(void *arg)
 					if (errorcode == DP_ERROR_NONE)
 						dp_ipc_send_string(sock, read_str2);
 					break;
+				case DP_CMD_GET_HTTP_HEADER_LIST:
+				{
+					char **values = NULL;
+					unsigned rows_count = 0;
+					errorcode = __dp_get_http_header_fields(sock,
+							command.id, &values, &rows_count);
+					if (errorcode == DP_ERROR_NONE) {
+						__send_return_custom_type(sock, DP_ERROR_NONE,
+							&rows_count, sizeof(int));
+						// sending strings
+						int i = 0;
+						for (i = 0; i < rows_count; i++) {
+							if (dp_ipc_send_string(sock, values[i]) < 0)
+								break;
+						}
+						for (i = 0; i < rows_count; i++)
+							free(values[i]);
+					} else {
+						if (errorcode != DP_ERROR_IO_ERROR)
+							dp_ipc_send_errorcode(sock, errorcode);
+					}
+					free(values);
+					break;
+				}
 				case DP_CMD_ADD_EXTRA_PARAM:
 					errorcode = __dp_add_extra_param(sock, command.id);
 					if (errorcode != DP_ERROR_IO_ERROR)
