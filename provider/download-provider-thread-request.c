@@ -594,6 +594,7 @@ static int __dp_set_group_new(int clientfd, dp_group_slots *groups,
 	}
 	if ((pkg_len = strlen(pkgname)) <= 0) {
 		TRACE_ERROR("[CRITICAL] pkgname:%s", pkgname);
+		free(pkgname);
 		return -1;
 	}
 
