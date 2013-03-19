@@ -185,6 +185,9 @@ fi
 %{_libdir}/pkgconfig/download-provider-interface.pc
 
 %changelog
+* Tue Mar 19 2013 Kwangmin Bang <justine.bang@samsung.com>
+- new API : dp_interface_get_http_header_field_list()
+
 * Tue Mar 05 2013 Jungki Kwak <jungki.kwak@samsung.com>
 - Add function to handle credential URL
 - Add functions for notification extra list.
