@@ -24,6 +24,7 @@ BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(appsvc)
 BuildRequires:  pkgconfig(dbus-1)
+BuildRequires:  pkgconfig(wifi-direct)
 
 %description
 Description: download the contents in background
@@ -62,6 +63,9 @@ Description: download the contents in background (developement files)
 		-DDBUS_SERVICE_DIR:PATH=%{_dbusservicedir} \\\
 		-DLICENSE_DIR:PATH=%{_licensedir} \\\
 		-DSUPPORT_DBUS_SYSTEM:BOOL=ON \\\
+		-DSUPPORT_WIFI_DIRECT:BOOL=OFF \\\
+		-DSUPPORT_LOG_MESSAGE:BOOL=ON \\\
+		-DSUPPORT_CHECK_IPC:BOOL=ON \\\
 		%if "%{?_lib}" == "lib64" \
 		%{?_cmake_lib_suffix64} \\\
 		%endif \
@@ -174,7 +178,6 @@ fi
 %{_libdir}/libdownloadagent2.so.0.0.1
 %{_libdir}/libdownloadagent2.so
 %{_libdir}/libdownload-provider-interface.so
-%{_includedir}/download-provider/download-provider.h
 %{_includedir}/download-provider/download-provider-defs.h
 %{_includedir}/download-provider/download-provider-interface.h
 %{_bindir}/%{name}

@@ -15,6 +15,7 @@ pkg_check_modules(dp2_pkgs REQUIRED glib-2.0
 		sqlite3
 		capi-appfw-app-manager
 		capi-network-connection
+		wifi-direct
 		notification
 		appsvc
 		dbus-1
@@ -61,5 +62,4 @@ ADD_EXECUTABLE(${PROJECT_NAME}
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${dp2_pkgs_LDFLAGS} ${DP2_LINK_LIBRARIES})
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${BIN_INSTALL_DIR})
 
-INSTALL(FILES include/download-provider.h DESTINATION ${INCLUDE_INSTALL_DIR}/${PKG_NAME})
 INSTALL(FILES include/download-provider-defs.h DESTINATION ${INCLUDE_INSTALL_DIR}/${PKG_NAME})

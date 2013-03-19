@@ -115,7 +115,7 @@ int dp_ipc_send_string(int fd, const char *str)
 		TRACE_ERROR("[ERROR] CHECK FD[%d]", fd);
 		return -1;
 	}
-	if (!str) {
+	if (str == NULL) {
 		TRACE_ERROR("[ERROR] CHECK STRING FD[%d]", fd);
 		return -1;
 	}
@@ -142,7 +142,7 @@ int dp_ipc_send_custom_type(int fd, void *value, size_t type_size)
 		TRACE_ERROR("[ERROR] CHECK FD[%d]", fd);
 		return -1;
 	}
-	if (!value) {
+	if (value == NULL) {
 		TRACE_ERROR("[ERROR] CHECK VALUE FD[%d]", fd);
 		return -1;
 	}
@@ -157,6 +157,10 @@ int dp_ipc_read_custom_type(int fd, void *value, size_t type_size)
 {
 	if (fd < 0) {
 		TRACE_ERROR("[ERROR] CHECK FD[%d]", fd);
+		return -1;
+	}
+	if (value == NULL) {
+		TRACE_ERROR("[ERROR] CHECK VALUE FD[%d]", fd);
 		return -1;
 	}
 

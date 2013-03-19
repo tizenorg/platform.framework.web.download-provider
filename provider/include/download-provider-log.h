@@ -17,28 +17,8 @@
 #ifndef DOWNLOAD_PROVIDER2_LOG_H
 #define DOWNLOAD_PROVIDER2_LOG_H
 
-#include <string.h>
+#ifdef SUPPORT_LOG_MESSAGE
 #include <errno.h>
-
-#define DEBUG_MSG
-//#define DEBUG_PRINTF
-
-#ifdef DEBUG_MSG
-#ifdef DEBUG_PRINTF
-#include <stdio.h>
-#define TRACE_ERROR(format, ARG...)  \
-{ \
-fprintf(stderr,"[PROVIDER][%s:%d] "format"\n", __FUNCTION__, __LINE__, ##ARG); \
-}
-#define TRACE_STRERROR(format, ARG...)  \
-{ \
-fprintf(stderr,"[PROVIDER][%s:%d] "format" [%s]\n", __FUNCTION__, __LINE__, ##ARG, strerror(errno)); \
-}
-#define TRACE_INFO(format, ARG...)  \
-{ \
-fprintf(stderr,"[PROVIDER][%s:%d] "format"\n", __FUNCTION__, __LINE__, ##ARG); \
-}
-#else
 #include <dlog.h>
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -56,8 +36,10 @@ LOGE(format" [%s]", ##ARG, strerror(errno)); \
 { \
 LOGI(format, ##ARG); \
 }
-#endif
 #else
-#define TRACE_DEBUG_MSG(format, ARG...) ;
+#define TRACE_ERROR(format, ARG...) ;
+#define TRACE_STRERROR(format, ARG...) ;
+#define TRACE_INFO(format, ARG...) ;
 #endif
+
 #endif

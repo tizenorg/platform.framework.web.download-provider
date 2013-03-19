@@ -25,4 +25,8 @@ int dp_network_connection_init(dp_privates *privates);
 void dp_network_connection_destroy(connection_h connection);
 dp_network_type dp_get_network_connection_instant_status();
 
+#ifdef SUPPORT_WIFI_DIRECT
+int dp_network_wifi_direct_is_connected();
+#endif
+
 #endif

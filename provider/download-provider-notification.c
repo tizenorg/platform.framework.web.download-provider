@@ -193,13 +193,7 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 	int privId = 0;
 	bundle *b = NULL;
 
-#ifdef NOTI_NEW_VERSION_API
 	noti_handle = notification_create(NOTIFICATION_TYPE_ONGOING);
-#else
-	noti_handle = notification_new(NOTIFICATION_TYPE_ONGOING,
-		NOTIFICATION_GROUP_ID_NONE, NOTIFICATION_PRIV_ID_NONE);
-#endif
-
 	if (!noti_handle) {
 		TRACE_ERROR("[FAIL] create notification handle");
 		return -1;
@@ -300,12 +294,7 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 		}
 	}
 
-#ifdef NOTI_NEW_VERSION_API
 	noti_handle = notification_create(NOTIFICATION_TYPE_NOTI);
-#else
-	noti_handle = notification_new(NOTIFICATION_TYPE_NOTI,
-		NOTIFICATION_GROUP_ID_NONE, NOTIFICATION_PRIV_ID_NONE);
-#endif
 
 	if (!noti_handle) {
 		TRACE_ERROR("[FAIL] create notification handle");

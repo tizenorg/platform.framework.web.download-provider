@@ -36,6 +36,7 @@
 // Share the structure for all threads
 typedef struct {
 	int listen_fd;
+	int is_connected_wifi_direct;
 	connection_h connection;
 	dp_network_type network_status;
 	dp_group_slots *groups;

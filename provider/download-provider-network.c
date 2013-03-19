@@ -19,6 +19,10 @@
 #include "download-provider-pthread.h"
 #include "download-provider-network.h"
 
+#ifdef SUPPORT_WIFI_DIRECT
+#include <wifi-direct.h>
+#endif
+
 extern pthread_mutex_t g_dp_queue_mutex;
 extern pthread_cond_t g_dp_queue_cond;
 
@@ -122,9 +126,66 @@ static void __print_connection_errorcode_to_string(connection_error_e errorcode)
 #endif
 
 
+#ifdef SUPPORT_WIFI_DIRECT
+// support WIFI-Direct
+static void __dp_network_wifi_direct_connection_state_changed_cb(wifi_direct_error_e error_code, wifi_direct_connection_state_e connection_state, const char *mac_address, void *data)
+{
+	TRACE_INFO("");
 
+	dp_privates *privates = (dp_privates*)data;
+	if (privates == NULL) {
+		TRACE_ERROR("[CRITICAL] Invalid data");
+		return ;
+	}
 
+	if (connection_state == WIFI_DIRECT_CONNECTION_RSP) {
+		TRACE_INFO("WIFI_DIRECT_CONNECTION_RSP");
+		privates->is_connected_wifi_direct = 1;
+		return ;
+	}
+	privates->is_connected_wifi_direct = 0;
+}
 
+//return 0 : connected
+int dp_network_wifi_direct_is_connected()
+{
+	int is_connected = -1;
+	wifi_direct_state_e wifi_state = WIFI_DIRECT_STATE_DEACTIVATED;
+	if (wifi_direct_get_state(&wifi_state) == 0) {
+		switch (wifi_state)
+		{
+			case WIFI_DIRECT_STATE_DEACTIVATED :
+				TRACE_INFO("WIFI_DIRECT_STATE_DEACTIVATED");
+				break;
+			case WIFI_DIRECT_STATE_DEACTIVATING :
+				TRACE_INFO("WIFI_DIRECT_STATE_DEACTIVATING");
+				break;
+			case WIFI_DIRECT_STATE_ACTIVATING :
+				TRACE_INFO("WIFI_DIRECT_STATE_ACTIVATING");
+				break;
+			case WIFI_DIRECT_STATE_ACTIVATED :
+				TRACE_INFO("WIFI_DIRECT_STATE_ACTIVATED");
+				break;
+			case WIFI_DIRECT_STATE_DISCOVERING :
+				TRACE_INFO("WIFI_DIRECT_STATE_DISCOVERING");
+				break;
+			case WIFI_DIRECT_STATE_CONNECTING :
+				TRACE_INFO("WIFI_DIRECT_STATE_CONNECTING");
+				break;
+			case WIFI_DIRECT_STATE_DISCONNECTING :
+				TRACE_INFO("WIFI_DIRECT_STATE_DISCONNECTING");
+				break;
+			case WIFI_DIRECT_STATE_CONNECTED :
+				is_connected = 0;
+				TRACE_INFO("WIFI_DIRECT_STATE_CONNECTED");
+				break;
+			default :
+				break;
+		}
+	}
+	return is_connected;
+}
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -223,6 +284,16 @@ int dp_network_connection_init(dp_privates *privates)
 		TRACE_ERROR("[CRITICAL] Invalid data");
 		return -1;
 	}
+
+#ifdef SUPPORT_WIFI_DIRECT
+	if (wifi_direct_initialize() == 0) {
+		wifi_direct_set_connection_state_changed_cb
+			(__dp_network_wifi_direct_connection_state_changed_cb, privates);
+		if (dp_network_wifi_direct_is_connected() == 0)
+			privates->is_connected_wifi_direct = 1;
+	}
+#endif
+
 	if ((retcode = connection_create(&privates->connection)) !=
 			CONNECTION_ERROR_NONE) {
 		TRACE_ERROR("Failed connection_create [%d]", retcode);
@@ -252,6 +323,12 @@ int dp_network_connection_init(dp_privates *privates)
 void dp_network_connection_destroy(connection_h connection)
 {
 	TRACE_INFO("");
+
+#ifdef SUPPORT_WIFI_DIRECT
+	wifi_direct_unset_connection_state_changed_cb();
+	wifi_direct_deinitialize();
+#endif
+
 	connection_unset_type_changed_cb (connection);
 	connection_destroy(connection);
 }

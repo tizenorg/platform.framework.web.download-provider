@@ -181,13 +181,13 @@ dp_error_type dp_request_create(int id, dp_client_group *group, dp_request **emp
 		TRACE_ERROR("[CHECK PROTOCOL] ID not -1");
 		return DP_ERROR_INVALID_STATE;
 	}
-	if (!group || !empty_slot) {
+	if (group == NULL || empty_slot == NULL) {
 		TRACE_ERROR("[CHECK INTERNAL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_INVALID_PARAMETER;
 	}
 	// New allocation Slot
 	dp_request *new_request = dp_request_new();
-	if (!new_request) {
+	if (new_request == NULL) {
 		TRACE_STRERROR("[CHECK MEMORY][%d]", id);
 		return DP_ERROR_OUT_OF_MEMORY;
 	}
@@ -204,21 +204,27 @@ dp_error_type dp_request_create(int id, dp_client_group *group, dp_request **emp
 	}
 	new_request->state = DP_STATE_READY;
 	new_request->error = DP_ERROR_NONE;
-	if (dp_db_insert_column
-			(new_request->id, DP_DB_TABLE_LOG, DP_DB_COL_STATE,
-			DP_DB_COL_TYPE_INT, &new_request->state) < 0) {
-		TRACE_ERROR("[CHECK SQL][%d]", id);
+
+	int conds_count = 3; // id + state + pkgname
+	db_conds_list_fmt conds_p[conds_count];
+	memset(&conds_p, 0x00, conds_count * sizeof(db_conds_list_fmt));
+	conds_p[0].column = DP_DB_COL_ID;
+	conds_p[0].type = DP_DB_COL_TYPE_INT;
+	conds_p[0].value = &new_request->id;
+	conds_p[1].column = DP_DB_COL_STATE;
+	conds_p[1].type = DP_DB_COL_TYPE_INT;
+	conds_p[1].value = &new_request->state;
+	conds_p[2].column = DP_DB_COL_PACKAGENAME;
+	conds_p[2].type = DP_DB_COL_TYPE_TEXT;
+	conds_p[2].value = new_request->packagename;
+	if (dp_db_insert_columns(DP_DB_TABLE_LOG, conds_count, conds_p) < 0) {
 		dp_request_free(new_request);
 		return DP_ERROR_OUT_OF_MEMORY;
 	}
-	if (dp_db_set_column
-			(new_request->id, DP_DB_TABLE_LOG, DP_DB_COL_PACKAGENAME,
-			DP_DB_COL_TYPE_TEXT, new_request->packagename) < 0)
-		TRACE_ERROR("[CHECK SQL][%d]", id);
-	if (dp_db_update_date
-			(new_request->id, DP_DB_TABLE_LOG, DP_DB_COL_CREATE_TIME) < 0)
-		TRACE_ERROR("[CHECK SQL][%d]", id);
 
+	if (dp_db_update_date(new_request->id, DP_DB_TABLE_LOG,
+			DP_DB_COL_CREATE_TIME) < 0)
+		TRACE_ERROR("[CHECK SQL][%d]", id);
 	new_request->create_time = (int)time(NULL);
 
 	*empty_slot = new_request;
@@ -228,7 +234,7 @@ dp_error_type dp_request_create(int id, dp_client_group *group, dp_request **emp
 dp_error_type dp_request_set_url(int id, dp_request *request, char *url)
 {
 	int length = 0;
-	if (!url || (length = strlen(url)) <= 1)
+	if (url == NULL || (length = strlen(url)) <= 1)
 		return DP_ERROR_INVALID_URL;
 
 	if (request != NULL) {
@@ -243,15 +249,10 @@ dp_error_type dp_request_set_url(int id, dp_request *request, char *url)
 		// check id in logging table.
 		dp_state_type state =
 			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			return DP_ERROR_ID_NOT_FOUND;
-		}
 		// check again from logging table
 		if (state == DP_STATE_CONNECTING ||
-			state == DP_STATE_DOWNLOADING ||
-			state == DP_STATE_COMPLETED) {
+				state == DP_STATE_DOWNLOADING ||
+				state == DP_STATE_COMPLETED) {
 			TRACE_ERROR("[ERROR][%d] now[%s]", id, dp_print_state(state));
 			return DP_ERROR_INVALID_STATE;
 		}
@@ -261,7 +262,7 @@ dp_error_type dp_request_set_url(int id, dp_request *request, char *url)
 			(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_URL,
 			DP_DB_COL_TYPE_TEXT, url) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_OUT_OF_MEMORY;
 	}
 	return DP_ERROR_NONE;
 }
@@ -284,11 +285,6 @@ dp_error_type dp_request_set_destination(int id, dp_request *request, char *dest
 		// check id in logging table.
 		dp_state_type state =
 			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			return DP_ERROR_ID_NOT_FOUND;
-		}
 		// check again from logging table
 		if (state == DP_STATE_CONNECTING ||
 			state == DP_STATE_DOWNLOADING ||
@@ -302,7 +298,7 @@ dp_error_type dp_request_set_destination(int id, dp_request *request, char *dest
 			(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_DESTINATION,
 			DP_DB_COL_TYPE_TEXT, dest) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_OUT_OF_MEMORY;
 	}
 	return DP_ERROR_NONE;
 }
@@ -325,11 +321,6 @@ dp_error_type dp_request_set_filename(int id, dp_request *request, char *filenam
 		// check id in logging table.
 		dp_state_type state =
 			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			return DP_ERROR_ID_NOT_FOUND;
-		}
 		// check again from logging table
 		if (state == DP_STATE_CONNECTING ||
 			state == DP_STATE_DOWNLOADING ||
@@ -343,7 +334,7 @@ dp_error_type dp_request_set_filename(int id, dp_request *request, char *filenam
 			(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_FILENAME,
 			DP_DB_COL_TYPE_TEXT, filename) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_OUT_OF_MEMORY;
 	}
 
 	TRACE_INFO("ID [%d] Filename[%s]", id, filename);
@@ -362,11 +353,6 @@ dp_error_type dp_request_set_notification(int id, dp_request *request, unsigned 
 		// check id in logging table.
 		dp_state_type state =
 			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			return DP_ERROR_ID_NOT_FOUND;
-		}
 		// check again from logging table
 		if (state == DP_STATE_COMPLETED) {
 			TRACE_ERROR("[ERROR][%d] now[%s]", id, dp_print_state(state));
@@ -380,7 +366,7 @@ dp_error_type dp_request_set_notification(int id, dp_request *request, unsigned 
 			DP_DB_COL_NOTIFICATION_ENABLE, DP_DB_COL_TYPE_INT,
 			&enable) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_OUT_OF_MEMORY;
 	}
 	// update memory
 	if (request)
@@ -400,11 +386,6 @@ dp_error_type dp_request_set_auto_download(int id, dp_request *request, unsigned
 		// check id in logging table.
 		dp_state_type state =
 			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			return DP_ERROR_ID_NOT_FOUND;
-		}
 		// check again from logging table
 		if (state == DP_STATE_COMPLETED) {
 			TRACE_ERROR("[ERROR][%d] now[%s]", id, dp_print_state(state));
@@ -417,7 +398,7 @@ dp_error_type dp_request_set_auto_download(int id, dp_request *request, unsigned
 			(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_AUTO_DOWNLOAD,
 			DP_DB_COL_TYPE_INT, &enable) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_OUT_OF_MEMORY;
 	}
 	return DP_ERROR_NONE;
 }
@@ -429,9 +410,10 @@ dp_error_type dp_request_set_state_event(int id, dp_request *request, unsigned e
 		dp_state_type state =
 			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
 
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			return DP_ERROR_ID_NOT_FOUND;
+		if (state == DP_STATE_DOWNLOADING ||
+			state == DP_STATE_COMPLETED) {
+			TRACE_ERROR("[ERROR][%d] now[%s]", id, dp_print_state(state));
+			return DP_ERROR_INVALID_STATE;
 		}
 	}
 
@@ -440,7 +422,7 @@ dp_error_type dp_request_set_state_event(int id, dp_request *request, unsigned e
 			(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_STATE_EVENT,
 			DP_DB_COL_TYPE_INT, &enable) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_OUT_OF_MEMORY;
 	}
 	// update memory
 	if (request)
@@ -455,9 +437,10 @@ dp_error_type dp_request_set_progress_event(int id, dp_request *request, unsigne
 		dp_state_type state =
 			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
 
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			return DP_ERROR_ID_NOT_FOUND;
+		if (state == DP_STATE_DOWNLOADING ||
+			state == DP_STATE_COMPLETED) {
+			TRACE_ERROR("[ERROR][%d] now[%s]", id, dp_print_state(state));
+			return DP_ERROR_INVALID_STATE;
 		}
 	}
 
@@ -466,7 +449,7 @@ dp_error_type dp_request_set_progress_event(int id, dp_request *request, unsigne
 			(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_PROGRESS_EVENT,
 			DP_DB_COL_TYPE_INT, &enable) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_OUT_OF_MEMORY;
 	}
 	// update memory
 	if (request)
@@ -488,11 +471,6 @@ dp_error_type dp_request_set_network_type(int id, dp_request *request, int type)
 		// check id in logging table.
 		dp_state_type state =
 			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			return DP_ERROR_ID_NOT_FOUND;
-		}
 		// check again from logging table
 		if (state == DP_STATE_CONNECTING ||
 			state == DP_STATE_DOWNLOADING ||
@@ -507,7 +485,7 @@ dp_error_type dp_request_set_network_type(int id, dp_request *request, int type)
 			(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_NETWORK_TYPE,
 			DP_DB_COL_TYPE_INT, &type) < 0) {
 		TRACE_ERROR("[CHECK SQL][%d]", id);
-		return DP_ERROR_IO_ERROR;
+		return DP_ERROR_OUT_OF_MEMORY;
 	}
 	// update memory
 	if (request)
@@ -518,17 +496,6 @@ dp_error_type dp_request_set_network_type(int id, dp_request *request, int type)
 char *dp_request_get_url(int id, dp_request *request, dp_error_type *errorcode)
 {
 	char *url = NULL;
-
-	if (request == NULL) {
-		dp_state_type state =
-			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			*errorcode = DP_ERROR_ID_NOT_FOUND;
-			return NULL;
-		}
-	}
 	url = dp_db_get_text_column
 				(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_URL);
 	if (url == NULL) {
@@ -541,17 +508,6 @@ char *dp_request_get_url(int id, dp_request *request, dp_error_type *errorcode)
 char *dp_request_get_destination(int id, dp_request *request, dp_error_type *errorcode)
 {
 	char *dest = NULL;
-
-	if (request == NULL) {
-		dp_state_type state =
-			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			*errorcode = DP_ERROR_ID_NOT_FOUND;
-			return NULL;
-		}
-	}
 	dest = dp_db_get_text_column
 				(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_DESTINATION);
 	if (dest == NULL) {
@@ -564,17 +520,6 @@ char *dp_request_get_destination(int id, dp_request *request, dp_error_type *err
 char *dp_request_get_filename(int id, dp_request *request, dp_error_type *errorcode)
 {
 	char *filename = NULL;
-
-	if (request == NULL) {
-		dp_state_type state =
-			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			*errorcode = DP_ERROR_ID_NOT_FOUND;
-			return NULL;
-		}
-	}
 	filename = dp_db_get_text_column
 				(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_FILENAME);
 	if (filename == NULL) {
@@ -587,17 +532,6 @@ char *dp_request_get_filename(int id, dp_request *request, dp_error_type *errorc
 char *dp_request_get_contentname(int id, dp_request *request, dp_error_type *errorcode)
 {
 	char *content = NULL;
-
-	if (request == NULL) {
-		dp_state_type state =
-			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			*errorcode = DP_ERROR_ID_NOT_FOUND;
-			return NULL;
-		}
-	}
 	content = dp_db_get_text_column
 				(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_CONTENT_NAME);
 	if (content == NULL) {
@@ -610,17 +544,6 @@ char *dp_request_get_contentname(int id, dp_request *request, dp_error_type *err
 char *dp_request_get_etag(int id, dp_request *request, dp_error_type *errorcode)
 {
 	char *etag = NULL;
-
-	if (request == NULL) {
-		dp_state_type state =
-			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			*errorcode = DP_ERROR_ID_NOT_FOUND;
-			return NULL;
-		}
-	}
 	etag = dp_db_get_text_column
 				(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_ETAG);
 	if (etag == NULL) {
@@ -633,17 +556,6 @@ char *dp_request_get_etag(int id, dp_request *request, dp_error_type *errorcode)
 char *dp_request_get_savedpath(int id, dp_request *request, dp_error_type *errorcode)
 {
 	char *savedpath = NULL;
-
-	if (request == NULL) {
-		dp_state_type state =
-			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			*errorcode = DP_ERROR_ID_NOT_FOUND;
-			return NULL;
-		}
-	}
 	savedpath = dp_db_get_text_column
 				(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_SAVED_PATH);
 	if (savedpath == NULL) {
@@ -656,17 +568,6 @@ char *dp_request_get_savedpath(int id, dp_request *request, dp_error_type *error
 char *dp_request_get_tmpsavedpath(int id, dp_request *request, dp_error_type *errorcode)
 {
 	char *tmppath = NULL;
-
-	if (request == NULL) {
-		dp_state_type state =
-			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			*errorcode = DP_ERROR_ID_NOT_FOUND;
-			return NULL;
-		}
-	}
 	tmppath = dp_db_get_text_column
 				(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_TMP_SAVED_PATH);
 	if (tmppath == NULL) {
@@ -679,17 +580,6 @@ char *dp_request_get_tmpsavedpath(int id, dp_request *request, dp_error_type *er
 char *dp_request_get_mimetype(int id, dp_request *request, dp_error_type *errorcode)
 {
 	char *mimetype = NULL;
-
-	if (request == NULL) {
-		dp_state_type state =
-			dp_db_get_int_column(id, DP_DB_TABLE_LOG, DP_DB_COL_STATE);
-
-		if (state <= DP_STATE_NONE) {
-			TRACE_ERROR("[ERROR][%d] state[%s]", id, dp_print_state(state));
-			*errorcode = DP_ERROR_ID_NOT_FOUND;
-			return NULL;
-		}
-	}
 	mimetype = dp_db_get_text_column
 				(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_MIMETYPE);
 	if (mimetype == NULL) {

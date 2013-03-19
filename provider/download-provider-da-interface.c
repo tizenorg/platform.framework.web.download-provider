@@ -141,9 +141,9 @@ static void __download_info_cb(user_download_info_t *info, void *user_data)
 			if (info->file_size > 0) {
 				TRACE_INFO
 					("[FILE-SIZE][%d] [%lld]", request_id, info->file_size);
-				CLIENT_MUTEX_LOCK(&(request->mutex));
+				CLIENT_MUTEX_LOCK(&request->mutex);
 				request->file_size = info->file_size;
-				CLIENT_MUTEX_UNLOCK(&(request->mutex));
+				CLIENT_MUTEX_UNLOCK(&request->mutex);
 				if (dp_db_set_column
 						(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
 						DP_DB_COL_CONTENT_SIZE,
@@ -174,7 +174,7 @@ static void __download_info_cb(user_download_info_t *info, void *user_data)
 		}
 	}
 
-	CLIENT_MUTEX_LOCK(&(request->mutex));
+	CLIENT_MUTEX_LOCK(&request->mutex);
 
 	request->state = DP_STATE_DOWNLOADING;
 	if (dp_db_set_column(request->id, DP_DB_TABLE_LOG, DP_DB_COL_STATE,
@@ -191,7 +191,7 @@ static void __download_info_cb(user_download_info_t *info, void *user_data)
 			dp_set_downloadinginfo_notification
 				(request->id, request->packagename);
 
-	CLIENT_MUTEX_UNLOCK(&(request->mutex));
+	CLIENT_MUTEX_UNLOCK(&request->mutex);
 }
 
 static void __progress_cb(user_progress_info_t *info, void *user_data)
@@ -211,7 +211,7 @@ static void __progress_cb(user_progress_info_t *info, void *user_data)
 		return ;
 	}
 
-	CLIENT_MUTEX_LOCK(&(request->mutex));
+	CLIENT_MUTEX_LOCK(&request->mutex);
 	if (request->state == DP_STATE_DOWNLOADING) {
 		request->received_size = info->received_size;
 		time_t tt = time(NULL);
@@ -232,7 +232,7 @@ static void __progress_cb(user_progress_info_t *info, void *user_data)
 					(double)request->file_size);
 		}
 	}
-	CLIENT_MUTEX_UNLOCK(&(request->mutex));
+	CLIENT_MUTEX_UNLOCK(&request->mutex);
 }
 
 static void __finished_cb(user_finished_info_t *info, void *user_data)
@@ -254,10 +254,11 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 		return ;
 	}
 
-	CLIENT_MUTEX_LOCK(&(request->mutex));
+	CLIENT_MUTEX_LOCK(&request->mutex);
+
 	int request_id = request->id;
 	dp_credential cred = request->credential;
-	CLIENT_MUTEX_UNLOCK(&(request->mutex));
+	CLIENT_MUTEX_UNLOCK(&request->mutex);
 	dp_state_type state = DP_STATE_NONE;
 	dp_error_type errorcode = DP_ERROR_NONE;
 
@@ -316,7 +317,7 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 			errorcode = DP_ERROR_INVALID_DESTINATION;
 			state = DP_STATE_FAILED;
 		}
-		CLIENT_MUTEX_LOCK(&(request->mutex));
+		CLIENT_MUTEX_LOCK(&request->mutex);
 		if (request->file_size == 0) {
 			request->file_size = request->received_size;
 			if (dp_db_replace_column
@@ -325,7 +326,7 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 					DP_DB_COL_TYPE_INT64, &request->file_size ) < 0)
 				TRACE_ERROR("[ERROR][%d][SQL]", request_id);
 		}
-		CLIENT_MUTEX_UNLOCK(&(request->mutex));
+		CLIENT_MUTEX_UNLOCK(&request->mutex);
 	} else if (info->err == DA_RESULT_USER_CANCELED) {
 		state = DP_STATE_CANCELED;
 		errorcode = DP_ERROR_NONE;
@@ -350,7 +351,7 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 	}
 
 	// need MUTEX LOCK
-	CLIENT_MUTEX_LOCK(&(request->mutex));
+	CLIENT_MUTEX_LOCK(&request->mutex);
 
 	request->state = state;
 	request->error = errorcode;
@@ -378,7 +379,7 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 
 	request->stop_time = (int)time(NULL);
 
-	CLIENT_MUTEX_UNLOCK(&(request->mutex));
+	CLIENT_MUTEX_UNLOCK(&request->mutex);
 
 	dp_thread_queue_manager_wake_up();
 }
@@ -397,16 +398,16 @@ static void __paused_cb(user_paused_info_t *info, void *user_data)
 		return ;
 	}
 
-	CLIENT_MUTEX_LOCK(&(request->mutex));
+	CLIENT_MUTEX_LOCK(&request->mutex);
 	int request_id = request->id;
-	CLIENT_MUTEX_UNLOCK(&(request->mutex));
+	CLIENT_MUTEX_UNLOCK(&request->mutex);
 
 	if (dp_db_update_date
 			(request_id, DP_DB_TABLE_LOG, DP_DB_COL_ACCESS_TIME) < 0)
 		TRACE_ERROR("[ERROR][%d][SQL]", request_id);
 
 	// need MUTEX LOCK
-	CLIENT_MUTEX_LOCK(&(request->mutex));
+	CLIENT_MUTEX_LOCK(&request->mutex);
 
 	request->state = DP_STATE_PAUSED;
 
@@ -424,7 +425,7 @@ static void __paused_cb(user_paused_info_t *info, void *user_data)
 	if (request->group)
 		request->group->queued_count--;
 
-	CLIENT_MUTEX_UNLOCK(&(request->mutex));
+	CLIENT_MUTEX_UNLOCK(&request->mutex);
 
 	dp_thread_queue_manager_wake_up();
 }
@@ -450,12 +451,29 @@ void dp_deinit_agent()
 	da_deinit();
 }
 
+// 1 : alive
+// 0 : not alive
+int dp_is_alive_download(int req_id)
+{
+	int da_ret = 0;
+	if (req_id < 0) {
+		TRACE_ERROR("[NULL-CHECK] req_id");
+		return 0;
+	}
+	da_ret = da_is_valid_download_id(req_id);
+	return da_ret;
+}
+
 // 0 : success
 // -1 : failed
 dp_error_type dp_cancel_agent_download(int req_id)
 {
 	if (req_id < 0) {
 		TRACE_ERROR("[NULL-CHECK] req_id");
+		return -1;
+	}
+	if (dp_is_alive_download(req_id) == 0) {
+		TRACE_ERROR("[CHECK agent-id:%d] dead request", req_id);
 		return -1;
 	}
 	if (da_cancel_download(req_id) == DA_RESULT_OK)
@@ -469,6 +487,10 @@ dp_error_type dp_pause_agent_download(int req_id)
 {
 	if (req_id < 0) {
 		TRACE_ERROR("[NULL-CHECK] req_id");
+		return -1;
+	}
+	if (dp_is_alive_download(req_id) == 0) {
+		TRACE_ERROR("[CHECK agent-id:%d] dead request", req_id);
 		return -1;
 	}
 	if (da_suspend_download(req_id) == DA_RESULT_OK)
@@ -486,6 +508,7 @@ dp_error_type dp_start_agent_download(dp_request *request)
 	int req_dl_id = -1;
 	dp_error_type errorcode = DP_ERROR_NONE;
 	extension_data_t ext_data = {0,};
+	char *etag = NULL;
 
 	TRACE_INFO("");
 	if (!request) {
@@ -513,7 +536,7 @@ dp_error_type dp_start_agent_download(dp_request *request)
 	char *tmp_saved_path =
 		dp_request_get_tmpsavedpath(request->id, request, &errorcode);
 	if (tmp_saved_path) {
-		char *etag = dp_request_get_etag(request->id, request, &errorcode);
+		etag = dp_request_get_etag(request->id, request, &errorcode);
 		if (etag) {
 			TRACE_INFO("[RESUME][%d]", request->id);
 			ext_data.etag = etag;
@@ -529,7 +552,6 @@ dp_error_type dp_start_agent_download(dp_request *request)
 						("[ERROR][%d] remove file", request->id);
 		}
 	}
-
 	// get headers list from httpheaders table(DB)
 	int headers_count = dp_db_get_cond_rows_count
 			(request->id, DP_DB_TABLE_HTTP_HEADERS, NULL, 0, NULL);
@@ -557,9 +579,14 @@ dp_error_type dp_start_agent_download(dp_request *request)
 		free(ext_data.request_header);
 	}
 	free(url);
-	free(destination);
-	free(filename);
-	free(tmp_saved_path);
+	if (destination)
+		free(destination);
+	if (filename)
+		free(filename);
+	if (tmp_saved_path)
+		free(tmp_saved_path);
+	if (etag)
+		free(etag);
 
 	// if start_download() return error cause of maximun download limitation,
 	// set state to DOWNLOAD_STATE_PENDED.
@@ -590,18 +617,5 @@ dp_error_type dp_resume_agent_download(int req_id)
 	else if (da_ret == DA_ERR_INVALID_STATE)
 		return DP_ERROR_INVALID_STATE;
 	return __change_error(da_ret);
-}
-
-// 1 : alive
-// 0 : not alive
-int dp_is_alive_download(int req_id)
-{
-	int da_ret = 0;
-	if (req_id < 0) {
-		TRACE_ERROR("[NULL-CHECK] req_id");
-		return 0;
-	}
-	da_ret = da_is_valid_download_id(req_id);
-	return da_ret;
 }
 

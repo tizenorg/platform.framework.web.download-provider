@@ -99,13 +99,12 @@ static int __get_oldest_request_with_network(dp_request_slots *requests, dp_stat
 		return -1;
 
 	for (i = 0; i < DP_MAX_REQUEST; i++) {
-		if (requests[i].request) {
+		if (requests[i].request != NULL) {
 			if (requests[i].request->state == state &&
 				requests[i].request->start_time > 0 &&
 				requests[i].request->start_time < oldest_time &&
 				__is_matched_network
-					(now_state, requests[i].request->network_type)
-				== 0) {
+					(now_state, requests[i].request->network_type) == 0) {
 				oldest_time = requests[i].request->start_time;
 				oldest_index = i;
 			}
@@ -258,11 +257,22 @@ void *dp_thread_queue_manager(void *arg)
 			break;
 		}
 
+		// if failed to initialize the callback for checking connection
 		if (!privates->connection)
 			privates->network_status =
 				dp_get_network_connection_instant_status();
 
-		if (privates->network_status == DP_NETWORK_TYPE_OFF) {
+#ifdef SUPPORT_WIFI_DIRECT
+		if (privates->is_connected_wifi_direct == 0) {
+			if (dp_network_wifi_direct_is_connected() == 0) {
+				// wifi-direct activated. pass.
+				privates->is_connected_wifi_direct = 1;
+			}
+		}
+#endif
+
+		if (privates->network_status == DP_NETWORK_TYPE_OFF &&
+			privates->is_connected_wifi_direct == 0) {
 			TRACE_INFO("[CHECK NETWORK STATE]");
 			CLIENT_MUTEX_UNLOCK(&(g_dp_queue_mutex));
 			continue;
@@ -276,6 +286,7 @@ void *dp_thread_queue_manager(void *arg)
 		//    if no group, it will be started later.
 		// 3. most old last time : below conditions need max limitation.
 		// 4. match network connection type
+		// 5. wifi-direct on
 
 		// search group having 1 queued_count
 		// guarantee 1 instant download per 1 group
@@ -284,15 +295,19 @@ void *dp_thread_queue_manager(void *arg)
 				request = privates->requests[i].request;
 				if (request && request->state == DP_STATE_QUEUED) {
 					group = privates->requests[i].request->group;
-					if (group && group->queued_count == 1 &&
-							__is_matched_network(privates->network_status,
-									request->network_type) == 0 &&
-									__request_download_start_thread(request) ==
-											0) {
-						TRACE_INFO
-							("[Guarantee Intant Download] Group [%s]",
-							group->pkgname);
-						active_count++;
+					if (group && group->queued_count == 1) {
+						if (__is_matched_network
+							(privates->network_status,
+							request->network_type) == 0 ||
+							(privates->is_connected_wifi_direct == 1 &&
+								request->network_type ==
+									DP_NETWORK_TYPE_WIFI_DIRECT)) {
+							if (__request_download_start_thread(request) == 0) {
+								TRACE_INFO
+									("[Guarantee Intant Download] Group [%s]", group->pkgname);
+								active_count++;
+							}
+						}
 					}
 				}
 			}
@@ -308,17 +323,32 @@ void *dp_thread_queue_manager(void *arg)
 		// can start download more.
 		// search oldest request
 		while(active_count < DP_MAX_DOWNLOAD_AT_ONCE) {
+
+#ifdef SUPPORT_WIFI_DIRECT
+			// WIFI-Direct first
+			if (privates->is_connected_wifi_direct == 1) {
+				i = __get_oldest_request_with_network(privates->requests,
+						DP_STATE_QUEUED, DP_NETWORK_TYPE_WIFI_DIRECT);
+				if (i >= 0) {
+					TRACE_INFO("Found WIFI-Direct request %d", i);
+					request = privates->requests[i].request;
+					if (__request_download_start_thread(request) == 0)
+						active_count++;
+					continue;
+				}
+			}
+#endif
+
 			i = __get_oldest_request_with_network(privates->requests,
 					DP_STATE_QUEUED, privates->network_status);
 			if (i < 0) {
 				TRACE_INFO
-					("No Request to can start now Active[%d] Max[%d]",
+					("No Request now active[%d] max[%d]",
 					active_count, DP_MAX_DOWNLOAD_AT_ONCE);
 				break;
 			}
-			TRACE_INFO
-				("QUEUE Status now %d active %d/%d", i, active_count,
-				DP_MAX_DOWNLOAD_AT_ONCE);
+			TRACE_INFO("QUEUE Status now %d active %d/%d", i,
+				active_count, DP_MAX_DOWNLOAD_AT_ONCE);
 			request = privates->requests[i].request;
 			__request_download_start_thread(request);
 			active_count++;

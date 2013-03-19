@@ -26,8 +26,6 @@ extern "C" {
 #define DP_DBUS_SERVICE_DBUS		"org.download-provider"
 #endif
 
-#define DP_ECHO_TEST
-
 typedef enum {
 	DP_STATE_NONE = 0,
 	DP_STATE_READY = DP_STATE_NONE + 5, // created id, set some info.

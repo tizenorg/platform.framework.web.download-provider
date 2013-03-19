@@ -432,6 +432,7 @@ int dp_db_remove(int id, char *table)
 		__dp_finalize(stmt);
 		return 0;
 	}
+	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
 	__dp_finalize(stmt);
 	return -1;
 }
@@ -549,6 +550,7 @@ int dp_db_insert_column(int id, char *table, char *column,
 		__dp_finalize(stmt);
 		return 0;
 	}
+	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
 	__dp_finalize(stmt);
 	return -1;
 }
@@ -624,6 +626,7 @@ int dp_db_set_column(int id, char *table, char *column,
 		__dp_finalize(stmt);
 		return 0;
 	}
+	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
 	__dp_finalize(stmt);
 	return -1;
 }
@@ -705,6 +708,7 @@ char *dp_db_get_text_column(int id, char *table, char *column)
 		__dp_finalize(stmt);
 		return columntext;
 	}
+	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
 	__dp_finalize(stmt);
 	return NULL;
 }
@@ -799,6 +803,7 @@ long long dp_db_get_int64_column(int id, char *table, char *column)
 		__dp_finalize(stmt);
 		return columnvalue;
 	}
+	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
 	__dp_finalize(stmt);
 	return -1;
 }
@@ -1067,6 +1072,7 @@ char *dp_db_cond_get_text_column(int id, char *table, char *column,
 		__dp_finalize(stmt);
 		return columntext;
 	}
+	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
 	__dp_finalize(stmt);
 	return NULL;
 }
@@ -1156,6 +1162,7 @@ int dp_db_cond_remove(int id, char *table,
 		__dp_finalize(stmt);
 		return 0;
 	}
+	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
 	__dp_finalize(stmt);
 	return -1;
 }
@@ -1464,6 +1471,7 @@ int dp_db_insert_columns(char *table, int column_count,
 		__dp_finalize(stmt);
 		return 0;
 	}
+	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
 	__dp_finalize(stmt);
 	return -1;
 }

@@ -35,7 +35,7 @@
 #include <dbus/dbus.h>
 #endif
 
-#ifdef DP_ECHO_TEST
+#ifdef SUPPORT_CHECK_IPC
 #include <sys/ioctl.h>
 #endif
 
@@ -51,7 +51,7 @@
 	dp_error_type errorcode = DP_ERROR_NONE;\
 	errorcode = __ipc_check_ready_status(g_interface_info->cmd_socket);\
 	if (errorcode != DP_ERROR_NONE) {\
-		pthread_mutex_unlock((&g_interface_info->mutex));\
+		pthread_mutex_unlock(&g_interface_info->mutex);\
 		pthread_mutex_unlock(&g_function_mutex);\
 		if (errorcode == DP_ERROR_IO_ERROR)\
 			__disconnect_from_provider();\
@@ -68,9 +68,7 @@
 
 #define MAX_DOWNLOAD_HANDLE 5
 
-#define DEBUG_MSG
-
-#ifdef DEBUG_MSG
+#ifdef SUPPORT_LOG_MESSAGE
 #include <dlog.h>
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -89,7 +87,9 @@ LOGE(format" [%s]", ##ARG, strerror(errno)); \
 LOGI(format, ##ARG); \
 }
 #else
-#define TRACE_DEBUG_MSG(format, ARG...) ;
+#define TRACE_ERROR(format, ARG...) ;
+#define TRACE_STRERROR(format, ARG...) ;
+#define TRACE_INFO(format, ARG...) ;
 #endif
 
 // define type
@@ -560,7 +560,7 @@ static int __disconnect_from_provider()
 		shutdown(g_interface_info->event_socket, 0);
 		close(g_interface_info->event_socket);
 		g_interface_info->event_socket = -1;
-		pthread_mutex_destroy((&g_interface_info->mutex));
+		pthread_mutex_destroy(&g_interface_info->mutex);
 		free(g_interface_info);
 		g_interface_info = NULL;
 	}
@@ -573,7 +573,7 @@ static int __disconnect_from_provider()
 	return DP_ERROR_NONE;
 }
 
-#ifdef DP_ECHO_TEST
+#ifdef SUPPORT_CHECK_IPC
 // clear read buffer. call in head of API before calling IPC_SEND
 static void __clear_read_buffer(int fd)
 {
@@ -604,7 +604,7 @@ static dp_error_type __ipc_check_ready_status(int fd)
 {
 	dp_error_type errorcode = DP_ERROR_NONE;
 
-#ifdef DP_ECHO_TEST
+#ifdef SUPPORT_CHECK_IPC
 	// echo from provider
 	errorcode = __ipc_send_command_return(-1, DP_CMD_ECHO);
 	if (errorcode == DP_ERROR_NONE)
@@ -778,7 +778,7 @@ static int __connect_to_provider()
 		}
 #ifndef SO_PEERCRED
 		// send PID. Not support SO_PEERCRED
-		if (__ipc_send_int(g_interface_info->cmd_socket, get_pid()) < 0) {
+		if (__ipc_send_int(g_interface_info->cmd_socket, getpid()) < 0) {
 			close(g_interface_info->cmd_socket);
 			free(g_interface_info);
 			g_interface_info = NULL;
@@ -805,7 +805,7 @@ static int __connect_to_provider()
 #ifndef SO_PEERCRED
 		// send PID. Not support SO_PEERCRED
 		if (__ipc_send_int
-				(g_interface_info->event_socket, get_pid()) < 0) {
+				(g_interface_info->event_socket, getpid()) < 0) {
 			close(g_interface_info->cmd_socket);
 			close(g_interface_info->event_socket);
 			free(g_interface_info);
@@ -814,7 +814,7 @@ static int __connect_to_provider()
 		}
 #endif
 
-		int ret = pthread_mutex_init((&g_interface_info->mutex), NULL);
+		int ret = pthread_mutex_init(&g_interface_info->mutex, NULL);
 		if (ret != 0) {
 			TRACE_STRERROR("ERR:pthread_mutex_init FAIL with %d.", ret);
 			__disconnect_from_provider();
@@ -885,7 +885,7 @@ static dp_error_type __dp_interface_set_string
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -899,7 +899,7 @@ static dp_error_type __dp_interface_set_string
 			errorcode = __ipc_return(fd);
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -928,7 +928,7 @@ static dp_error_type __dp_interface_set_strings
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -952,7 +952,7 @@ static dp_error_type __dp_interface_set_strings
 			errorcode = __ipc_return(fd);
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -977,7 +977,7 @@ static dp_error_type __dp_interface_get_string
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -992,7 +992,7 @@ static dp_error_type __dp_interface_get_string
 			errorcode = __get_standard_errorcode(DP_ERROR_IO_ERROR);
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1020,7 +1020,7 @@ static dp_error_type __dp_interface_get_strings
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1074,7 +1074,7 @@ static dp_error_type __dp_interface_get_strings
 			free(recv_strings);
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1099,7 +1099,7 @@ static dp_error_type __dp_interface_get_int
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1113,7 +1113,7 @@ static dp_error_type __dp_interface_get_int
 			errorcode = __get_standard_errorcode(DP_ERROR_IO_ERROR);
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1132,7 +1132,7 @@ static dp_error_type __dp_interface_set_int
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1147,7 +1147,7 @@ static dp_error_type __dp_interface_set_int
 			errorcode = DP_ERROR_IO_ERROR;
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1174,7 +1174,7 @@ int dp_interface_create(int *id)
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1194,7 +1194,7 @@ int dp_interface_create(int *id)
 			errorcode = __get_standard_errorcode(DP_ERROR_IO_ERROR);
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1212,7 +1212,7 @@ int dp_interface_destroy(const int id)
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1231,7 +1231,7 @@ int dp_interface_destroy(const int id)
 		errorcode = __ipc_send_command
 			(g_interface_info->cmd_socket, id, DP_CMD_FREE);
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1248,12 +1248,12 @@ int dp_interface_start(const int id)
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
 	errorcode = __ipc_send_command_return(id, DP_CMD_START);
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1270,12 +1270,12 @@ int dp_interface_pause(const int id)
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
 	errorcode = __ipc_send_command_return(id, DP_CMD_PAUSE);
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1292,12 +1292,12 @@ int dp_interface_cancel(const int id)
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
 	errorcode = __ipc_send_command_return(id, DP_CMD_CANCEL);
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1403,7 +1403,7 @@ int dp_interface_set_notification_extra_param(const int id, char *key,
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1411,14 +1411,14 @@ int dp_interface_set_notification_extra_param(const int id, char *key,
 	if (__ipc_send_command
 		(g_interface_info->cmd_socket, id, DP_CMD_SET_EXTRA_PARAM)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
 	}
 	if (__ipc_send_string(g_interface_info->cmd_socket, key)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
@@ -1426,7 +1426,7 @@ int dp_interface_set_notification_extra_param(const int id, char *key,
 
 	if (__ipc_send_string(g_interface_info->cmd_socket, value)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
@@ -1434,7 +1434,7 @@ int dp_interface_set_notification_extra_param(const int id, char *key,
 
 	int errorcode =
 		__ipc_return(g_interface_info->cmd_socket);
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR) {
 		TRACE_ERROR("[CHECK IO] (%d)", id);
 		__disconnect_from_provider();
@@ -1459,13 +1459,13 @@ int dp_interface_get_notification_extra_param(const int id, char **key,
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
 	errorcode = __ipc_send_command_return(id, DP_CMD_GET_EXTRA_PARAM);
 	if (errorcode != DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		if (errorcode == DP_ERROR_IO_ERROR)
 			__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
@@ -1474,7 +1474,7 @@ int dp_interface_get_notification_extra_param(const int id, char **key,
 	// getting state with ID from provider.
 	key_str = __ipc_read_string(g_interface_info->cmd_socket);
 	if (key_str == NULL) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		errorcode = __get_standard_errorcode(DP_ERROR_IO_ERROR);
 		if (errorcode == DP_ERROR_IO_ERROR)
 			__disconnect_from_provider();
@@ -1483,7 +1483,7 @@ int dp_interface_get_notification_extra_param(const int id, char **key,
 	}
 
 	value_str = __ipc_read_string(g_interface_info->cmd_socket);
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (value_str == NULL) {
 		free(key_str);
 		errorcode = __get_standard_errorcode(DP_ERROR_IO_ERROR);
@@ -1517,7 +1517,7 @@ int dp_interface_add_http_header_field(const int id, const char *field,
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1525,7 +1525,7 @@ int dp_interface_add_http_header_field(const int id, const char *field,
 	if (__ipc_send_command
 		(g_interface_info->cmd_socket, id, DP_CMD_SET_HTTP_HEADER)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
@@ -1533,7 +1533,7 @@ int dp_interface_add_http_header_field(const int id, const char *field,
 
 	if (__ipc_send_string(g_interface_info->cmd_socket, field)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
@@ -1541,14 +1541,14 @@ int dp_interface_add_http_header_field(const int id, const char *field,
 
 	if (__ipc_send_string(g_interface_info->cmd_socket, value)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
 	}
 	// return from provider.
 	errorcode = __ipc_return(g_interface_info->cmd_socket);
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR) {
 		TRACE_ERROR("[CHECK IO] (%d)", id);
 		__disconnect_from_provider();
@@ -1574,14 +1574,14 @@ int dp_interface_get_http_header_field(const int id, const char *field,
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
 	if (__ipc_send_command
 		(g_interface_info->cmd_socket, id, DP_CMD_GET_HTTP_HEADER)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
@@ -1589,7 +1589,7 @@ int dp_interface_get_http_header_field(const int id, const char *field,
 
 	if (__ipc_send_string(g_interface_info->cmd_socket, field)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
@@ -1606,7 +1606,7 @@ int dp_interface_get_http_header_field(const int id, const char *field,
 			errorcode = __get_standard_errorcode(DP_ERROR_IO_ERROR);
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR || str == NULL)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
@@ -1629,7 +1629,7 @@ int dp_interface_remove_http_header_field(const int id,
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1637,21 +1637,21 @@ int dp_interface_remove_http_header_field(const int id,
 	if (__ipc_send_command
 		(g_interface_info->cmd_socket, id, DP_CMD_DEL_HTTP_HEADER)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
 	}
 	if (__ipc_send_string(g_interface_info->cmd_socket, field)
 		!= DP_ERROR_NONE) {
-		pthread_mutex_unlock((&g_interface_info->mutex));
+		pthread_mutex_unlock(&g_interface_info->mutex);
 		__disconnect_from_provider();
 		pthread_mutex_unlock(&g_function_mutex);
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
 	}
 	// return from provider.
 	errorcode = __ipc_return(g_interface_info->cmd_socket);
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR) {
 		TRACE_ERROR("[CHECK IO] (%d)", id);
 		__disconnect_from_provider();
@@ -1801,7 +1801,7 @@ int dp_interface_get_content_size(const int id,
 
 	DP_CHECK_CONNECTION;
 
-	pthread_mutex_lock((&g_interface_info->mutex));
+	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
 
@@ -1816,7 +1816,7 @@ int dp_interface_get_content_size(const int id,
 			TRACE_INFO("ID : %d content_size %lld", id, *content_size);
 		}
 	}
-	pthread_mutex_unlock((&g_interface_info->mutex));
+	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
