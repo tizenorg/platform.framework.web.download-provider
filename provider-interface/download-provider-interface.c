@@ -380,7 +380,7 @@ static char *__ipc_read_string(int fd)
 		TRACE_STRERROR("failed to read length [%d]", length);
 		return NULL;
 	}
-	if (length < 1 || length > DP_MAX_STR_LEN) {
+	if (length < 1 || length > DP_MAX_URL_LEN) {
 		TRACE_ERROR("[STRING LEGNTH] [%d]", length);
 		return NULL;
 	}
