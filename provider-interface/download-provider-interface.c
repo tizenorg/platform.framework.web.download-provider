@@ -348,6 +348,14 @@ static int __ipc_read_custom_type(int fd, void *value, size_t type_size)
 		TRACE_ERROR("[CHECK SOCKET]");
 		return -1;
 	}
+	if (value == NULL) {
+		TRACE_ERROR("[CHECK value]");
+		return -1;
+	}
+	if (type_size <= 0) {
+		TRACE_ERROR("[CHECK size]");
+		return -1;
+	}
 
 	if (read(fd, value, type_size) < 0) {
 		TRACE_STRERROR("[CRITICAL] read");
@@ -975,6 +983,10 @@ static dp_error_type __dp_interface_get_string
 		TRACE_ERROR("[CHECK SOCKET]");
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
 	}
+	if (value == NULL) {
+		TRACE_ERROR("[CHECK buffer]");
+		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
+	}
 
 	DP_PRE_CHECK_ID;
 
@@ -1015,6 +1027,10 @@ static dp_error_type __dp_interface_get_strings
 	if (fd < 0) {
 		TRACE_ERROR("[CHECK SOCKET]");
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
+	}
+	if (strings == NULL || values == NULL || count == NULL) {
+		TRACE_ERROR("[CHECK buffer]");
+		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
 	}
 
 	DP_PRE_CHECK_ID;
@@ -1095,6 +1111,10 @@ static dp_error_type __dp_interface_get_int
 		TRACE_ERROR("[CHECK SOCKET]");
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
 	}
+	if (value == NULL) {
+		TRACE_ERROR("[CHECK buffer]");
+		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
+	}
 
 	DP_PRE_CHECK_ID;
 
@@ -1165,6 +1185,11 @@ int dp_interface_create(int *id)
 	int errorcode = DP_ERROR_NONE;
 	int t_id = 0;
 	int index = -1;
+
+	if (id == NULL) {
+		TRACE_ERROR("[CHECK id variable]");
+		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
+	}
 
 	pthread_mutex_lock(&g_function_mutex);
 
@@ -1329,6 +1354,10 @@ int dp_interface_set_network_type(const int id, int net_type)
 int dp_interface_get_network_type(const int id, int *net_type)
 {
 	TRACE_INFO("");
+	if (net_type == NULL) {
+		TRACE_ERROR("[CHECK buffer]");
+		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
+	}
 	int network_type = DP_NETWORK_TYPE_ALL;
 	int ret = __dp_interface_get_int
 		(id, DP_CMD_GET_NETWORK_TYPE, &network_type);
@@ -1780,6 +1809,10 @@ int dp_interface_unset_progress_cb(const int id)
 int dp_interface_get_state(const int id, int *state)
 {
 	TRACE_INFO("");
+	if (state == NULL) {
+		TRACE_ERROR("[CHECK buffer]");
+		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
+	}
 	int statecode = DOWNLOAD_ADPATOR_STATE_NONE;
 	int ret = __dp_interface_get_int(id, DP_CMD_GET_STATE, &statecode);
 	if (ret == DOWNLOAD_ADAPTOR_ERROR_NONE)
@@ -1805,6 +1838,11 @@ int dp_interface_get_content_size(const int id,
 	unsigned long long *content_size)
 {
 	int errorcode = DP_ERROR_NONE;
+
+	if (content_size == NULL) {
+		TRACE_ERROR("[CHECK buffer content_size]");
+		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
+	}
 
 	DP_PRE_CHECK_ID;
 
@@ -1856,6 +1894,10 @@ int dp_interface_get_auto_download(const int id, int *enable)
 int dp_interface_get_error(const int id, int *error)
 {
 	TRACE_INFO("");
+	if (error == NULL) {
+		TRACE_ERROR("[CHECK buffer error]");
+		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
+	}
 	int errorcode = DP_ERROR_NONE;
 	int ret = __dp_interface_get_int(id, DP_CMD_GET_ERROR, &errorcode);
 	if (ret == DOWNLOAD_ADAPTOR_ERROR_NONE)
