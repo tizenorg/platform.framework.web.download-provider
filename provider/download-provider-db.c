@@ -1397,7 +1397,6 @@ static int __bind_value(sqlite3_stmt *stmt,
 	case DP_DB_COL_TYPE_TEXT:
 		errorcode =
 			sqlite3_bind_text(stmt, index, (char *)value, -1, SQLITE_STATIC);
-		TRACE_INFO("TEXT %s", value);
 		break;
 	default:
 		errorcode = SQLITE_ERROR;

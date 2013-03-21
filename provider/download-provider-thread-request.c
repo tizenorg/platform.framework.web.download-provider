@@ -167,7 +167,7 @@ static int __cmp_string(char *s1, char *s2)
 	}
 
 	if (strncmp(s1, s2, s1_len) != 0) {
-		TRACE_ERROR("[DIFF] cmp[%s:%s]", s1, s2);
+		TRACE_ERROR("[DIFF] cmp");
 		return -1;
 	}
 

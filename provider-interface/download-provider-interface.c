@@ -945,7 +945,6 @@ static dp_error_type __dp_interface_set_strings
 			int i = 0;
 			for (; i < count; i++) {
 				// send string
-				TRACE_INFO("[SEND] %s", strings[i]);
 				errorcode = __ipc_send_string(fd, strings[i]);
 				if (errorcode != DP_ERROR_NONE)
 					break;
@@ -991,12 +990,10 @@ static dp_error_type __dp_interface_get_string
 	if (errorcode == DP_ERROR_NONE) {
 		// getting state with ID from provider.
 		recv_str = __ipc_read_string(fd);
-		if (recv_str != NULL) {
+		if (recv_str != NULL)
 			*value = recv_str;
-			TRACE_INFO("ID : %d recv_str : %s", id, *value);
-		} else {
+		else
 			errorcode = __get_standard_errorcode(DP_ERROR_IO_ERROR);
-		}
 	}
 	pthread_mutex_unlock(&g_interface_info->mutex);
 	if (errorcode == DP_ERROR_IO_ERROR)
@@ -1036,7 +1033,6 @@ static dp_error_type __dp_interface_get_strings
 			if (__ipc_send_int(fd, (int)length) == 0) {
 				for (i = 0; i < length; i++) {
 					// send string
-					TRACE_INFO("[SEND] %s", strings[i]);
 					errorcode = __ipc_send_string(fd, strings[i]);
 					if (errorcode != DP_ERROR_NONE)
 						break;
@@ -1067,7 +1063,6 @@ static dp_error_type __dp_interface_get_strings
 						break;
 					} else {
 						recv_strings[recv_str_index++] = recv_str;
-						TRACE_INFO("[RECV] %s", recv_str);
 					}
 				}
 			}
