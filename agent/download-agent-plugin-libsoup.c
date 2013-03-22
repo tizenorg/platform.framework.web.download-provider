@@ -996,6 +996,11 @@ void _pi_http_gotchunk_cb(SoupMessage *msg, SoupBuffer *chunk, gpointer data)
 	if (SOUP_STATUS_IS_REDIRECTION(msg->status_code))
 		return;
 
+	if (msg->status_code == SOUP_STATUS_UNAUTHORIZED) {
+		DA_LOG(HTTPManager,"Ignore:Unauthorized");
+		return;
+	}
+
 	if (chunk->data && chunk->length > 0) {
 		_pi_http_store_read_data_to_queue(msg, chunk->data,
 				chunk->length);
