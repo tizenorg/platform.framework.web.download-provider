@@ -296,9 +296,8 @@ static void __clear_group(dp_privates *privates, dp_client_group *group)
 				DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_AUTO_DOWNLOAD);
 		if (auto_download <= 0) {
 			// cancel the requests which not setted auto-downloading
-			TRACE_INFO("[CLEAR][%d] no-auto state:%s pkg:%s sock:%d",
-				request->id, dp_print_state(request->state),
-				request->group->pkgname, request->group->cmd_socket);
+			TRACE_INFO("[CLEAR][%d] no-auto state:%s",
+				request->id, dp_print_state(request->state));
 
 			if (dp_db_set_column(request->id, DP_DB_TABLE_LOG,
 					DP_DB_COL_STATE, DP_DB_COL_TYPE_INT, &state) == 0) {
