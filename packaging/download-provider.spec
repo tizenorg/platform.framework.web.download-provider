@@ -2,7 +2,7 @@
 Name:       download-provider
 Summary:    download the contents in background.
 Version:    1.0.5
-Release:    2
+Release:    5
 Group:      Development/Libraries
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
@@ -185,7 +185,16 @@ fi
 %{_libdir}/pkgconfig/download-provider-interface.pc
 
 %changelog
-* Wed 20 2013 Kwangmin Bang <justine.bang@samsung.com>
+* Wed Mar 27 2013 Kwangmin Bang <justine.bang@samsung.com>
+- prevent defect : Explicit null dereferenced
+- smack for dbus service
+
+* Mon Mar 25 2013 Jungki Kwak <jungki.kwak@samsung.com>
+- Security coding : check all of parameters
+- Security & privacy : remove private info from log message
+- Missing errorcode
+
+* Wed Mar 20 2013 Kwangmin Bang <justine.bang@samsung.com>
 - increase the length limitation
 
 * Tue Mar 19 2013 Kwangmin Bang <justine.bang@samsung.com>
