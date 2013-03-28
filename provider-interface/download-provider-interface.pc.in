@@ -4,5 +4,5 @@ Name: @PROJECT_NAME@
 Description: @PACKAGE_DESCRIPTION@
 Version: @VERSION@
 Requires: @PC_REQUIRED@
-Libs: -L/usr/lib -l@PROJECT_NAME@
+Libs: -L@LIB_INSTALL_DIR@ -l@PROJECT_NAME@
 Cflags: -I/usr/include/@PKG_NAME@
