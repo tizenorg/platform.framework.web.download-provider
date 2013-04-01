@@ -1028,7 +1028,7 @@ static dp_error_type __dp_interface_get_strings
 		TRACE_ERROR("[CHECK SOCKET]");
 		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
 	}
-	if (strings == NULL || values == NULL || count == NULL) {
+	if (values == NULL || count == NULL) {
 		TRACE_ERROR("[CHECK buffer]");
 		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
 	}
