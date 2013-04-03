@@ -308,7 +308,7 @@ static void __clear_group(dp_privates *privates, dp_client_group *group)
 						request->id, dp_print_errorcode(errorcode));
 				}
 				// regardless errorcode, if success to update the state.
-				if (request->agent_id > 0) {
+				if (request->agent_id >= 0) {
 					TRACE_INFO("[%d]cancel_agent(%d) state:%s error:%s",
 						request->id, request->agent_id,
 						dp_print_state(state),
@@ -351,7 +351,7 @@ static int __dp_call_cancel_agent(dp_request *request)
 {
 	int ret = -1;
 	if (request != NULL) {
-		if (request->agent_id > 0) {
+		if (request->agent_id >= 0) {
 			TRACE_INFO("[%d]cancel_agent(%d) state:%s", request->id,
 				request->agent_id, dp_print_state(request->state));
 			if (dp_cancel_agent_download(request->agent_id) == 0)
