@@ -122,19 +122,16 @@ static void __download_info_cb(user_download_info_t *info, void *user_data)
 	int request_id = request->id;
 
 	// update info before sending event
-	if (info->file_type) {
-		TRACE_INFO("[STARTED][%d] [%s]", request_id, info->file_type);
+	if (info->tmp_saved_path) {
+		TRACE_INFO("[STARTED][%d] [%s]", request_id, info->tmp_saved_path);
 		if (dp_db_replace_column(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-				DP_DB_COL_MIMETYPE,
-				DP_DB_COL_TYPE_TEXT, info->file_type) == 0) {
-
-			if (info->tmp_saved_path) {
-				TRACE_INFO("[PATH][%d] being written to [%s]",
-					request_id, info->tmp_saved_path);
-				if (dp_db_set_column
-						(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-						DP_DB_COL_TMP_SAVED_PATH, DP_DB_COL_TYPE_TEXT,
-						info->tmp_saved_path) < 0)
+				DP_DB_COL_TMP_SAVED_PATH, DP_DB_COL_TYPE_TEXT,
+				info->tmp_saved_path) == 0) {
+			if (info->file_type) {
+				TRACE_INFO("[MIME-TYPE][%d] [%s]", request_id, info->file_type);
+				if (dp_db_set_column(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
+						DP_DB_COL_MIMETYPE, DP_DB_COL_TYPE_TEXT,
+						info->file_type) < 0)
 					TRACE_ERROR("[ERROR][%d][SQL]", request_id);
 			}
 
