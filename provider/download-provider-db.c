@@ -1331,6 +1331,7 @@ static char *__merge_strings(char *dest, const char *src, char sep)
 {
 	int dest_length = 0;
 	int src_length = 0;
+	char *temp_dest = NULL;
 
 	if (dest == NULL || src == NULL)
 		return NULL;
@@ -1338,10 +1339,14 @@ static char *__merge_strings(char *dest, const char *src, char sep)
 	dest_length = strlen(dest);
 	src_length = strlen(src);
 
-	dest = sqlite3_realloc(dest, dest_length + src_length + 1);
-	dest = strncat(dest, &sep, 1);
-	dest = strncat(dest, src, src_length);
-	return dest;
+	temp_dest = sqlite3_realloc(dest, dest_length + src_length + 1);
+	if (temp_dest == NULL) {
+		free(dest);
+		return NULL;
+	}
+	temp_dest = strncat(temp_dest, &sep, 1);
+	temp_dest = strncat(temp_dest, src, src_length);
+	return temp_dest;
 }
 
 static char *__get_conds_query(int count, db_conds_list_fmt *conds, char *op)
