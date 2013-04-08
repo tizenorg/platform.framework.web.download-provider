@@ -67,7 +67,6 @@ int dp_db_open()
 		}
 		sqlite3_exec(g_dp_db_handle, "PRAGMA journal_mode=PERSIST;", 0, 0, 0);
 		sqlite3_exec(g_dp_db_handle, "PRAGMA foreign_keys=ON;", 0, 0, 0);
-		sqlite3_exec(g_dp_db_handle, "PRAGMA synchronous=OFF;", 0, 0, 0); // do not ready to write to db
 	}
 	return g_dp_db_handle ? 0 : -1;
 }
