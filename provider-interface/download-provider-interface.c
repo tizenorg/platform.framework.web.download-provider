@@ -66,7 +66,7 @@
 	}\
 } while(0)
 
-#define MAX_DOWNLOAD_HANDLE 5
+#define MAX_DOWNLOAD_HANDLE 32
 
 #ifdef SUPPORT_LOG_MESSAGE
 #include <dlog.h>
