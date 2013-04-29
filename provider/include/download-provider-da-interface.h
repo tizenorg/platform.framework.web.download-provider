@@ -20,7 +20,7 @@
 int dp_is_file_exist(const char *file_path);
 int dp_init_agent();
 void dp_deinit_agent();
-dp_error_type dp_start_agent_download(dp_request *request);
+dp_error_type dp_start_agent_download(dp_request_slots *request);
 dp_error_type dp_resume_agent_download(int req_id);
 dp_error_type dp_pause_agent_download(int req_id);
 dp_error_type dp_cancel_agent_download(int req_id);

@@ -710,7 +710,7 @@ char *dp_db_get_text_column(int id, char *table, char *column)
 		__dp_finalize(stmt);
 		return columntext;
 	}
-	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
+	TRACE_INFO("[No DATA]");
 	__dp_finalize(stmt);
 	return NULL;
 }
@@ -758,6 +758,7 @@ int dp_db_get_int_column(int id, char *table, char *column)
 		__dp_finalize(stmt);
 		return columnvalue;
 	}
+	TRACE_INFO("[No DATA]");
 	__dp_finalize(stmt);
 	return -1;
 }
@@ -805,7 +806,7 @@ long long dp_db_get_int64_column(int id, char *table, char *column)
 		__dp_finalize(stmt);
 		return columnvalue;
 	}
-	TRACE_ERROR("[SQL] [%s]", sqlite3_errmsg(g_dp_db_handle));
+	TRACE_INFO("[No DATA]");
 	__dp_finalize(stmt);
 	return -1;
 }

@@ -108,11 +108,12 @@ static void __download_info_cb(user_download_info_t *info, void *user_data)
 		TRACE_ERROR("[NULL-CHECK] Agent info");
 		return ;
 	}
-	if (!user_data) {
-		TRACE_ERROR("[NULL-CHECK] user_data");
+	dp_request_slots *request_slot = (dp_request_slots *) user_data;
+	if (request_slot == NULL || request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
 		return ;
 	}
-	dp_request *request = (dp_request *) user_data;
+	dp_request *request = request_slot->request;
 	if (request->id < 0 || (request->agent_id != info->download_id)) {
 		TRACE_ERROR("[NULL-CHECK] agent_id : %d req_id %d",
 			request->agent_id, info->download_id);
@@ -197,14 +198,15 @@ static void __progress_cb(user_progress_info_t *info, void *user_data)
 		TRACE_ERROR("[NULL-CHECK] Agent info");
 		return ;
 	}
-	if (!user_data) {
-		TRACE_ERROR("[NULL-CHECK] user_data");
+	dp_request_slots *request_slot = (dp_request_slots *) user_data;
+	if (request_slot == NULL || request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
 		return ;
 	}
-	dp_request *request = (dp_request *) user_data;
+	dp_request *request = request_slot->request;
 	if (request->id < 0 || (request->agent_id != info->download_id)) {
-		TRACE_ERROR("[NULL-CHECK][%d] agent_id : %d req_id %d",
-			request->id, request->agent_id, info->download_id);
+		TRACE_ERROR("[NULL-CHECK] agent_id : %d req_id %d",
+			request->agent_id, info->download_id);
 		return ;
 	}
 
@@ -240,14 +242,15 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 	}
 	TRACE_INFO("Agent ID[%d] err[%d] http_status[%d]",
 		info->download_id, info->err, info->http_status);
-	if (!user_data) {
-		TRACE_ERROR("[NULL-CHECK] user_data");
+	dp_request_slots *request_slot = (dp_request_slots *) user_data;
+	if (request_slot == NULL || request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
 		return ;
 	}
-	dp_request *request = (dp_request *) user_data;
+	dp_request *request = request_slot->request;
 	if (request->id < 0 || (request->agent_id != info->download_id)) {
-		TRACE_ERROR("[NULL-CHECK][%d] agent_id : %d req_id %d",
-			request->id, request->agent_id, info->download_id);
+		TRACE_ERROR("[NULL-CHECK] agent_id : %d req_id %d",
+			request->agent_id, info->download_id);
 		return ;
 	}
 
@@ -384,14 +387,15 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 static void __paused_cb(user_paused_info_t *info, void *user_data)
 {
 	TRACE_INFO("");
-	dp_request *request = (dp_request *) user_data;
-	if (!request) {
-		TRACE_ERROR("[NULL-CHECK] request");
+	dp_request_slots *request_slot = (dp_request_slots *) user_data;
+	if (request_slot == NULL || request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
 		return ;
 	}
+	dp_request *request = request_slot->request;
 	if (request->id < 0 || (request->agent_id != info->download_id)) {
-		TRACE_ERROR("[NULL-CHECK][%d] agent_id : %d req_id %d",
-			request->id, request->agent_id, info->download_id);
+		TRACE_ERROR("[NULL-CHECK] agent_id : %d req_id %d",
+			request->agent_id, info->download_id);
 		return ;
 	}
 
@@ -499,7 +503,7 @@ dp_error_type dp_pause_agent_download(int req_id)
 // 0 : success
 // -1 : failed
 // -2 : pended
-dp_error_type dp_start_agent_download(dp_request *request)
+dp_error_type dp_start_agent_download(dp_request_slots *request_slot)
 {
 	int da_ret = -1;
 	int req_dl_id = -1;
@@ -508,14 +512,17 @@ dp_error_type dp_start_agent_download(dp_request *request)
 	char *etag = NULL;
 
 	TRACE_INFO("");
-	if (!request) {
+	if (request_slot == NULL || request_slot->request == NULL) {
 		TRACE_ERROR("[NULL-CHECK] download_clientinfo_slot");
 		return DP_ERROR_INVALID_PARAMETER;
 	}
+	dp_request *request = request_slot->request;
+	CLIENT_MUTEX_LOCK(&(request->mutex));
 
 	char *url = dp_request_get_url(request->id, request, &errorcode);
 	if (url == NULL) {
 		TRACE_ERROR("[ERROR][%d] URL is NULL", request->id);
+		CLIENT_MUTEX_UNLOCK(&(request->mutex));
 		return DP_ERROR_INVALID_URL;
 	}
 	char *destination =
@@ -560,7 +567,7 @@ dp_error_type dp_start_agent_download(dp_request *request)
 		}
 	}
 
-	ext_data.user_data = (void *)request;
+	ext_data.user_data = (void *)request_slot;
 
 	// call start API of agent lib
 	da_ret =
@@ -590,14 +597,17 @@ dp_error_type dp_start_agent_download(dp_request *request)
 	if (da_ret == DA_ERR_ALREADY_MAX_DOWNLOAD) {
 		TRACE_INFO("[PENDING][%d] DA_ERR_ALREADY_MAX_DOWNLOAD [%d]",
 			request->id, da_ret);
+		CLIENT_MUTEX_UNLOCK(&(request->mutex));
 		return DP_ERROR_TOO_MANY_DOWNLOADS;
 	} else if (da_ret != DA_RESULT_OK) {
 		TRACE_ERROR("[ERROR][%d] DP_ERROR_CONNECTION_FAILED [%d]",
 			request->id, da_ret);
+		CLIENT_MUTEX_UNLOCK(&(request->mutex));
 		return __change_error(da_ret);
 	}
 	TRACE_INFO("[SUCCESS][%d] agent_id [%d]", request->id, req_dl_id);
 	request->agent_id = req_dl_id;
+	CLIENT_MUTEX_UNLOCK(&(request->mutex));
 	return DP_ERROR_NONE;
 }
 
