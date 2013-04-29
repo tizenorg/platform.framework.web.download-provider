@@ -1650,7 +1650,7 @@ int dp_interface_get_http_header_field_list(const int id, char ***fields,
 {
 	TRACE_INFO("");
 	return __dp_interface_get_strings(id, DP_CMD_GET_HTTP_HEADER_LIST,
-		NULL, 0, fields, length);
+		NULL, 0, fields, (unsigned *)length);
 }
 
 int dp_interface_remove_http_header_field(const int id,

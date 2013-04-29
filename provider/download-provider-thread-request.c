@@ -210,16 +210,6 @@ static int __get_same_request_index(dp_request_slots *slots, int id)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief	return string via IPC
-static void __send_return_string(int fd, dp_error_type errcode, char* str)
-{
-	if (fd < 0 || !str)
-		return ;
-	dp_ipc_send_errorcode(fd, errcode);
-	dp_ipc_send_string(fd, str);
-}
-
-//////////////////////////////////////////////////////////////////////////
 /// @brief	return custom value via IPC
 static void __send_return_custom_type(int fd, dp_error_type errcode, void *value, size_t type_size)
 {
@@ -561,7 +551,6 @@ static int __dp_get_http_header_fields(int fd, int id, char ***values,
 		unsigned *count)
 {
 	dp_error_type ret = DP_ERROR_NONE;
-	int length = 0;
 	char **rows_array = NULL;
 
 	if (fd < 0) {
@@ -1809,7 +1798,7 @@ void *dp_thread_requests_manager(void *arg)
 						dp_print_state(request->state),
 						request->start_time);
 					if (request->group != NULL &&
-							request->state_cb != NULL &&
+							request->state_cb == 1 &&
 							request->group->event_socket >= 0)
 						dp_ipc_send_event(request->group->event_socket,
 							download_id, state, errorcode, 0);
