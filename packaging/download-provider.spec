@@ -85,9 +85,9 @@ ln -s %{_sysconfdir}/rc.d/init.d/download-provider-service  %{buildroot}%{_sysco
 mkdir -p  %{buildroot}%{_sysconfdir}/rc.d/rc5.d
 ln -s %{_sysconfdir}/rc.d/init.d/download-provider-service  %{buildroot}%{_sysconfdir}/rc.d/rc5.d/S70download-provider-service
 
-mkdir -p %{buildroot}%{_libdir}/systemd/user/tizen-middleware.target.wants
-install %{SOURCE1} %{buildroot}%{_libdir}/systemd/user/
-ln -s ../download-provider.service %{buildroot}%{_libdir}/systemd/user/tizen-middleware.target.wants/
+mkdir -p %{buildroot}/usr/lib/systemd/user/tizen-middleware.target.wants
+install %{SOURCE1} %{buildroot}/usr/lib/systemd/user/
+ln -s ../download-provider.service %{buildroot}/usr/lib/systemd/user/tizen-middleware.target.wants/
 
 mkdir -p %{buildroot}/opt/data/%{name}
 mkdir -p %{buildroot}%{_databasedir}
@@ -160,8 +160,8 @@ fi
 %{_imagedir}/*.png
 %{_libdir}/libdownloadagent2.so.0.0.1
 %{_libdir}/libdownloadagent2.so
-%{_libdir}/systemd/user/download-provider.service
-%{_libdir}/systemd/user/tizen-middleware.target.wants/download-provider.service
+/usr/lib/systemd/user/download-provider.service
+/usr/lib/systemd/user/tizen-middleware.target.wants/download-provider.service
 %{_libdir}/libdownload-provider-interface.so.%{version}
 %{_libdir}/libdownload-provider-interface.so.0
 %{_bindir}/%{name}
