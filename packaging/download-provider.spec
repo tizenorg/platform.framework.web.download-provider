@@ -1,6 +1,6 @@
 
 Name:       download-provider
-Summary:    download the contents in background.
+Summary:    Download the contents in background
 Version:    1.0.5
 Release:    9
 Group:      Development/Libraries
@@ -25,12 +25,13 @@ BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(appsvc)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(wifi-direct)
-
+Requires(post): /sbin/ldconfig
+Requires(postun): /sbin/ldconfig
 %description
 Description: download the contents in background
 
 %package devel
-Summary:    download-provider
+Summary:    Download-provider
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 
@@ -152,6 +153,21 @@ FOREIGN KEY(id) REFERENCES logging(id) ON DELETE CASCADE
 CREATE UNIQUE INDEX requests_index ON logging (id, state, errorcode, packagename, createtime, accesstime);
 '
 fi
+
+
+%post devel
+/sbin/ldconfig
+
+%postun  devel
+/sbin/ldconfig
+
+
+%post
+/sbin/ldconfig
+
+%postun
+/sbin/ldconfig
+
 
 %files
 %defattr(-,root,root,-)
