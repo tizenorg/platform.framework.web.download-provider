@@ -2,7 +2,7 @@
 Name:       download-provider
 Summary:    download the contents in background.
 Version:    1.0.5
-Release:    6
+Release:    7
 Group:      Development/Libraries
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
@@ -185,6 +185,18 @@ fi
 %{_libdir}/pkgconfig/download-provider-interface.pc
 
 %changelog
+* Thu May 09 2013 Jungki Kwak <jungki.kwak@samsung.com>
+- pthread_join for ending of queue-manager thread
+- fix the segmentation fault if call download_get_url() without calling download_create()
+- download_get_url() return wrong error with invalid id
+- use dp_request_slots as user_data of da_agent
+- remove warning message in build time
+- Resolve a prevent issue
+- PRAGMA synchronous=FULL
+- Change to check mandatory value in started callback
+- Resolve a bug about checking agent id
+- Fix for 64 bit compatibility
+
 * Wed Mar 27 2013 Kwangmin Bang <justine.bang@samsung.com>
 - prevent defect : Explicit null dereferenced
 - smack for dbus service
