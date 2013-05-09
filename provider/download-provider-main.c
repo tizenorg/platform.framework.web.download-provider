@@ -39,6 +39,7 @@
 // declare functions
 int dp_lock_pid(char *path);
 void *dp_thread_requests_manager(void *arg);
+static pthread_t g_dp_thread_queue_manager_pid = 0;
 
 // declare global variables
 // need for libsoup, decided the life-time by mainloop.
@@ -105,7 +106,7 @@ static gboolean __dp_idle_start_service(void *data)
 
 	// create thread for managing QUEUEs
 	if (pthread_create
-		(&thread_pid, &thread_attr, dp_thread_queue_manager,
+		(&g_dp_thread_queue_manager_pid, NULL, dp_thread_queue_manager,
 		data) != 0) {
 		TRACE_STRERROR
 			("failed to create pthread for run_manage_download_server");
@@ -299,6 +300,15 @@ DOWNLOAD_EXIT :
 			dp_socket_free(privates->listen_fd);
 			privates->listen_fd = -1;
 		}
+		if (g_dp_thread_queue_manager_pid > 0 &&
+				pthread_kill(g_dp_thread_queue_manager_pid, 0) != ESRCH) {
+			//pthread_cancel(g_dp_thread_queue_manager_pid);
+			//send signal to queue thread
+			dp_thread_queue_manager_wake_up();
+			int status;
+			pthread_join(g_dp_thread_queue_manager_pid, (void **)&status);
+			g_dp_thread_queue_manager_pid = 0;
+		}
 		dp_request_slots_free(privates->requests, DP_MAX_REQUEST);
 		privates->requests = NULL;
 		dp_client_group_slots_free(privates->groups, DP_MAX_GROUP);
@@ -307,9 +317,6 @@ DOWNLOAD_EXIT :
 		privates = NULL;
 	}
 	dp_db_close();
-
-	//send signal to queue thread
-	dp_thread_queue_manager_wake_up();
 
 	// if exit socket file, delete it
 	if (access(DP_IPC, F_OK) == 0) {
