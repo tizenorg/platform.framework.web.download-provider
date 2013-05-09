@@ -974,7 +974,7 @@ void *dp_thread_requests_manager(void *arg)
 				if (request == NULL) {
 					int check_id = dp_db_get_int_column(command.id,
 							DP_DB_TABLE_LOG, DP_DB_COL_ID);
-					if (check_id != command.id) {
+					if (check_id < 0 || check_id != command.id) {
 						errorcode = DP_ERROR_ID_NOT_FOUND;
 						TRACE_ERROR("[ERROR][%d][%s]", command.id,
 							dp_print_errorcode(errorcode));
@@ -1155,6 +1155,8 @@ void *dp_thread_requests_manager(void *arg)
 					break;
 				}
 				if (is_checked == 1) {
+					if (read_str == NULL || strlen(read_str) < 1)
+						errorcode = DP_ERROR_NO_DATA;
 					dp_ipc_send_errorcode(sock, errorcode);
 					if (errorcode == DP_ERROR_NONE) {
 						dp_ipc_send_string(sock, read_str);
