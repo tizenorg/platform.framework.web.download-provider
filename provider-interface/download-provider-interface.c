@@ -882,12 +882,6 @@ static dp_error_type __dp_interface_set_string
 	(const int id, const dp_command_type cmd, const char *value)
 {
 	dp_error_type errorcode = DP_ERROR_NONE;
-	int fd = g_interface_info->cmd_socket;
-
-	if (fd < 0) {
-		TRACE_ERROR("[CHECK SOCKET]");
-		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
-	}
 	if (value == NULL || strlen(value) <= 0) {
 		TRACE_ERROR("[CHECK url]");
 		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
@@ -902,6 +896,8 @@ static dp_error_type __dp_interface_set_string
 	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
+
+	int fd = g_interface_info->cmd_socket;
 
 	// send commnad with ID
 	errorcode = __ipc_send_command(fd, id, cmd);
@@ -925,12 +921,6 @@ static dp_error_type __dp_interface_set_strings
 	const unsigned count)
 {
 	dp_error_type errorcode = DP_ERROR_NONE;
-	int fd = g_interface_info->cmd_socket;
-
-	if (fd < 0) {
-		TRACE_ERROR("[CHECK SOCKET]");
-		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
-	}
 	if (strings == NULL || count == 0) {
 		TRACE_ERROR("[CHECK strings]");
 		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
@@ -945,6 +935,8 @@ static dp_error_type __dp_interface_set_strings
 	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
+
+	int fd = g_interface_info->cmd_socket;
 
 	// send commnad with ID
 	errorcode = __ipc_send_command(fd, id, cmd);
@@ -976,13 +968,8 @@ static dp_error_type __dp_interface_get_string
 	(const int id, const dp_command_type cmd, char **value)
 {
 	int errorcode = DP_ERROR_NONE;
-	int fd = g_interface_info->cmd_socket;
 	char *recv_str = NULL;
 
-	if (fd < 0) {
-		TRACE_ERROR("[CHECK SOCKET]");
-		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
-	}
 	if (value == NULL) {
 		TRACE_ERROR("[CHECK buffer]");
 		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
@@ -997,6 +984,8 @@ static dp_error_type __dp_interface_get_string
 	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
+
+	int fd = g_interface_info->cmd_socket;
 
 	errorcode = __ipc_send_command_return(id, cmd);
 	if (errorcode == DP_ERROR_NONE) {
@@ -1019,15 +1008,10 @@ static dp_error_type __dp_interface_get_strings
 	const unsigned length, char ***values, unsigned *count)
 {
 	int errorcode = DP_ERROR_NONE;
-	int fd = g_interface_info->cmd_socket;
 	int i = 0;
 	int recv_str_index = 0;
 	char **recv_strings = NULL;
 
-	if (fd < 0) {
-		TRACE_ERROR("[CHECK SOCKET]");
-		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
-	}
 	if (values == NULL || count == NULL) {
 		TRACE_ERROR("[CHECK buffer]");
 		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
@@ -1042,6 +1026,8 @@ static dp_error_type __dp_interface_get_strings
 	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
+
+	int fd = g_interface_info->cmd_socket;
 
 	errorcode = __ipc_send_command(fd, id, cmd);
 	if (errorcode == DP_ERROR_NONE) {
@@ -1105,12 +1091,7 @@ static dp_error_type __dp_interface_get_int
 {
 	int errorcode = DP_ERROR_NONE;
 	int recv_int = -1;
-	int fd = g_interface_info->cmd_socket;
 
-	if (fd < 0) {
-		TRACE_ERROR("[CHECK SOCKET]");
-		return DOWNLOAD_ADAPTOR_ERROR_IO_ERROR;
-	}
 	if (value == NULL) {
 		TRACE_ERROR("[CHECK buffer]");
 		return DOWNLOAD_ADAPTOR_ERROR_INVALID_PARAMETER;
@@ -1125,6 +1106,8 @@ static dp_error_type __dp_interface_get_int
 	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
+
+	int fd = g_interface_info->cmd_socket;
 
 	errorcode = __ipc_send_command_return(id, cmd);
 	if (errorcode == DP_ERROR_NONE) {
@@ -1147,7 +1130,6 @@ static dp_error_type __dp_interface_set_int
 	(const int id, dp_command_type cmd, const int value)
 {
 	int errorcode = DP_ERROR_NONE;
-	int fd = g_interface_info->cmd_socket;
 
 	DP_PRE_CHECK_ID;
 
@@ -1158,6 +1140,8 @@ static dp_error_type __dp_interface_set_int
 	pthread_mutex_lock(&g_interface_info->mutex);
 
 	DP_CHECK_PROVIDER_STATUS;
+
+	int fd = g_interface_info->cmd_socket;
 
 	// send commnad with ID
 	errorcode = __ipc_send_command(fd, id, cmd);
