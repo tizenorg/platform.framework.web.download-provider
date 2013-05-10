@@ -2,7 +2,7 @@
 Name:       download-provider
 Summary:    download the contents in background.
 Version:    1.0.5
-Release:    7
+Release:    8
 Group:      Development/Libraries
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
@@ -185,6 +185,9 @@ fi
 %{_libdir}/pkgconfig/download-provider-interface.pc
 
 %changelog
+* Fri May 10 2013 Kwangmin Bang <justine.bang@samsung.com>
+- raise the limitaion regarding the number of downloads which a process can make : 5 => 32
+
 * Thu May 09 2013 Jungki Kwak <jungki.kwak@samsung.com>
 - pthread_join for ending of queue-manager thread
 - fix the segmentation fault if call download_get_url() without calling download_create()
