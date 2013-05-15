@@ -55,29 +55,6 @@ static da_result_t __file_write_buf_directly_write(stage_info *stage,
 		file_info *file_storage, char *body, int body_len);
 
 
-da_result_t create_saved_dir(void)
-{
-	da_result_t ret = DA_RESULT_OK;
-	char *tmp_default_path = DA_NULL;
-
-	DA_LOG_FUNC_START(FileManager);
-
-	ret = get_default_install_dir(&tmp_default_path);
-	if (ret != DA_RESULT_OK)
-		goto ERR;
-
-	if (!is_dir_exist(tmp_default_path)) {
-		ret = create_dir(tmp_default_path);
-	}
-
-ERR:
-	if (tmp_default_path) {
-		free(tmp_default_path);
-		tmp_default_path = DA_NULL;
-	}
-	return ret;
-}
-
 da_result_t clean_files_from_dir(char *dir_path)
 {
 	da_result_t ret = DA_RESULT_OK;
@@ -1177,6 +1154,10 @@ da_result_t create_dir(const char *install_dir)
 		ret = DA_ERR_FAIL_TO_ACCESS_STORAGE;
 	} else {
 		DA_LOG(FileManager, "[%s] is created!", install_dir);
+		if (chown(install_dir, 5000, 5000) < 0) {
+			DA_LOG_ERR(FileManager, "Fail to chown");
+			ret = DA_ERR_FAIL_TO_ACCESS_STORAGE;
+		}
 	}
 	return ret;
 }
@@ -1239,6 +1220,9 @@ da_result_t get_default_install_dir(char **out_path)
 
 	*out_path = default_path;
 
+	if (!is_dir_exist(default_path)) {
+		ret = create_dir(default_path);
+	}
 	DA_LOG_VERBOSE(FileManager, "default temp path = [%s]", *out_path);
 	return DA_RESULT_OK;
 }

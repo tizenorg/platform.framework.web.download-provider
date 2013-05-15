@@ -56,10 +56,6 @@ int da_init(
 	if (ret != DA_RESULT_OK)
 		goto ERR;
 
-	ret = create_saved_dir();
-	if (ret != DA_RESULT_OK)
-		goto ERR;
-
 ERR:
 	if (DA_RESULT_OK != ret)
 		da_deinit();
