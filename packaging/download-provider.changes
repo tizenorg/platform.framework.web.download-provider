@@ -1,0 +1,4 @@
+* Tue May 21 2013 Rusty Lynch <rusty.lynch@intel.com> accepted/tizen/20130520.101559@b4e2464
+- Fix spec file according to RPMLINT rules
+- Fix build for 64 bits arch
+
