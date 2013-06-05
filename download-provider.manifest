@@ -1,22 +1,5 @@
 <manifest>
-	<define>
-		<domain name="download-provider" />
-		<provide>
-			<label name="download-provider::db" />
-		</provide>
-		<request>
-			<smack request="download-provider::db" type="rw" />
-		</request>
-	</define>
 	<request>
 		<domain name="download-provider" />
 	</request>
-	<assign>
-		<filesystem path="/usr/lib/libdownload-provider-interface.so*" label="_" exec_label="none" />
-		<filesystem path="/usr/lib/libdownloadagent2.so*" label="_" exec_label="none" />
-		<filesystem path="/etc/rc.d/init.d/download-provider-service" label="_" exec_label="none" />
-		<filesystem path="/etc/rc.d/rc3.d/S70download-provider-service" label="_" exec_label="none" />
-		<filesystem path="/etc/rc.d/rc5.d/S70download-provider-service" label="_" exec_label="none" />
-		<filesystem path="/usr/share/dbus-1/services/org.download-provider.service" label="_" exec_label="none" />
-	</assign>
 </manifest>
