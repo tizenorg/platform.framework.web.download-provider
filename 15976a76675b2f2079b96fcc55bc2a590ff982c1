@@ -1,0 +1,8 @@
+Change-Id: I1cc7ada08ace66c99d8dbc9d70ee07eec5edbdb8
+Code-Review+2: Anas Nashif <anas.nashif@intel.com>
+Verified+1: Xavier Roche <xavier.roche@eurogiciel.fr>
+Submitted-by: Anas Nashif <anas.nashif@intel.com>
+Submitted-at: Wed, 12 Jun 2013 05:14:21 -0700
+Reviewed-on: https://review.tizen.org/gerrit/3837
+Project: platform/framework/web/download-provider
+Branch: refs/heads/tizen
