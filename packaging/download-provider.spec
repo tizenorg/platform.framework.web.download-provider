@@ -7,6 +7,7 @@ Group:      Development/Libraries
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
 Source1:    download-provider.service
+Source1001: 	download-provider.manifest
 Requires(post): /usr/bin/sqlite3
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(glib-2.0)
@@ -40,6 +41,7 @@ Description: download the contents in background (developement files)
 
 %prep
 %setup -q
+cp %{SOURCE1001} .
 
 %define _imagedir /usr/share/download-provider
 %define _databasedir /opt/usr/dbspace
@@ -163,6 +165,7 @@ fi
 
 
 %files
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %dir %attr(0775,root,app) /opt/data/%{name}
 %manifest download-provider.manifest
@@ -183,6 +186,7 @@ fi
 %attr(660,root,app) /opt/usr/dbspace/.download-provider.db-journal
 
 %files devel
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libdownloadagent2.so
 %{_libdir}/libdownload-provider-interface.so
