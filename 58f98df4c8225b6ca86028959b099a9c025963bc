@@ -1,0 +1,8 @@
+Change-Id: I58f98df4c8225b6ca86028959b099a9c025963bc
+Code-Review+2: Ryan Ware <ware@linux.intel.com>
+Verified+1: Ryan Ware <ware@linux.intel.com>
+Submitted-by: Ryan Ware <ware@linux.intel.com>
+Submitted-at: Mon, 08 Jul 2013 09:37:41 -0700
+Reviewed-on: https://review.tizen.org/gerrit/5176
+Project: platform/framework/web/download-provider
+Branch: refs/heads/tizen
