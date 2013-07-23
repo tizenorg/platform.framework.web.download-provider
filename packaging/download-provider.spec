@@ -2,7 +2,7 @@
 Name:       download-provider
 Summary:    Download the contents in background
 Version:    1.0.5
-Release:    9
+Release:    10
 Group:      Development/Libraries
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz

@@ -44,6 +44,7 @@ da_result_t init_client_app_mgr()
 	client_app_mgr.is_init = DA_TRUE;
 	client_app_mgr.client_app_info.client_user_agent = DA_NULL;
 	client_app_mgr.is_thread_init = DA_FALSE;
+	client_app_mgr.thread_id = 0;
 
 	return DA_RESULT_OK;
 }
@@ -104,7 +105,7 @@ da_result_t dereg_client_app(void)
 	_da_thread_mutex_lock(&(client_app_mgr.mutex_client_mgr));
 	if (client_app_mgr.is_thread_init != DA_TRUE) {
 		DA_LOG_CRITICAL(ClientNoti, "try to cancel client mgr thread id[%lu]", client_app_mgr.thread_id);
-		if (pthread_cancel(client_app_mgr.thread_id) < 0) {
+		if (client_app_mgr.thread_id && pthread_cancel(client_app_mgr.thread_id) < 0) {
 			DA_LOG_ERR(ClientNoti, "cancel thread is failed!!!");
 		}
 		free(client_noti);
@@ -113,7 +114,7 @@ da_result_t dereg_client_app(void)
 		DA_LOG_VERBOSE(ClientNoti, "pushing Q_CLIENT_NOTI_TYPE_TERMINATE");
 		push_client_noti(client_noti);
 		DA_LOG_CRITICAL(Thread, "===try to join client mgr thread id[%lu]===", client_app_mgr.thread_id);
-		if (pthread_join(client_app_mgr.thread_id, &t_return) < 0) {
+		if (client_app_mgr.thread_id && pthread_join(client_app_mgr.thread_id, &t_return) < 0) {
 			DA_LOG_ERR(Thread, "join client thread is failed!!!");
 		}
 		DA_LOG_CRITICAL(Thread, "===thread join return[%d]===", (char*)t_return);
@@ -332,7 +333,7 @@ da_result_t  send_client_finished_info (
 
 da_result_t  __launch_client_thread(void)
 {
-	pthread_t thread_id = DA_NULL;
+	pthread_t thread_id = 0;
 
 	DA_LOG_FUNC_START(Thread);
 
