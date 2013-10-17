@@ -1,4 +1,4 @@
 [D-BUS Service]
 Name=org.download-provider
-Exec=/bin/sh -c 'if [ -x /usr/bin/download-provider ]; then /usr/bin/download-provider service & fi'
+Exec=/usr/bin/download-provider service
 User=root

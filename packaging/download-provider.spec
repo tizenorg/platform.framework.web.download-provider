@@ -46,7 +46,7 @@ cp %{SOURCE1001} .
 %define _imagedir /usr/share/download-provider
 %define _databasedir /opt/usr/dbspace
 %define _databasefile %{_databasedir}/.download-provider.db
-%define _dbusservicedir /usr/share/dbus-1/services
+%define _dbusservicedir /usr/share/dbus-1/system-services
 %define _licensedir /usr/share/license
 
 %define cmake \
