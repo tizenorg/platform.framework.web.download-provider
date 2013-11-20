@@ -7,6 +7,7 @@ Group:      Development/Libraries
 License:    Apache License, Version 2.0
 Source0:    %{name}-%{version}.tar.gz
 Source1:    download-provider.service
+Source101:  org.download-provider.conf
 Source1001: 	download-provider.manifest
 Requires(post): /usr/bin/sqlite3
 BuildRequires:  cmake
@@ -41,12 +42,14 @@ Description: download the contents in background (developement files)
 
 %prep
 %setup -q
+cp %{SOURCE101} .
 cp %{SOURCE1001} .
 
 %define _imagedir /usr/share/download-provider
 %define _databasedir /opt/usr/dbspace
 %define _databasefile %{_databasedir}/.download-provider.db
 %define _dbusservicedir /usr/share/dbus-1/system-services
+%define _dbuspolicydir /etc/dbus-1/system.d
 %define _licensedir /usr/share/license
 
 %define cmake \
@@ -82,6 +85,10 @@ make %{?jobs:-j%jobs}
 %install
 rm -rf %{buildroot}
 %make_install
+
+install -d -m 755 %{buildroot}%{_dbuspolicydir}
+install -m 644 %{SOURCE101} %{buildroot}%{_dbuspolicydir}
+
 mkdir -p %{buildroot}%{_licensedir}
 mkdir -p  %{buildroot}%{_sysconfdir}/rc.d/rc3.d
 ln -s %{_sysconfdir}/rc.d/init.d/download-provider-service  %{buildroot}%{_sysconfdir}/rc.d/rc3.d/S70download-provider-service
@@ -181,6 +188,7 @@ fi
 %{_sysconfdir}/rc.d/rc5.d/S70download-provider-service
 %{_licensedir}/%{name}
 %{_dbusservicedir}/org.download-provider.service
+%{_dbuspolicydir}/org.download-provider.conf
 %attr(660,root,app) /opt/usr/dbspace/.download-provider.db
 %attr(660,root,app) /opt/usr/dbspace/.download-provider.db-journal
 
