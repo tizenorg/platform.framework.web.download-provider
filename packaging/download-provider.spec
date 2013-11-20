@@ -165,10 +165,9 @@ fi
 
 
 %files
-%manifest %{name}.manifest
 %defattr(-,root,root,-)
+%manifest %{name}.manifest
 %dir %attr(0775,root,app) /opt/data/%{name}
-%manifest download-provider.manifest
 %{_imagedir}/*.png
 %{_libdir}/libdownloadagent2.so.0.0.1
 %{_libdir}/libdownloadagent2.so
