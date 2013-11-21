@@ -1,0 +1,9 @@
+Code-Review+1: Chengwei Yang <chengwei.yang@intel.com>
+Code-Review+2: Baptiste DURAND <baptiste.durand@eurogiciel.fr>
+Verified+1: Baptiste DURAND <baptiste.durand@eurogiciel.fr>
+Verified+1: corentin lecouvey <corentin.lecouvey@eurogiciel.fr>
+Submitted-by: Baptiste DURAND <baptiste.durand@eurogiciel.fr>
+Submitted-at: Thu, 21 Nov 2013 06:15:40 -0800
+Reviewed-on: https://review.tizen.org/gerrit/12642
+Project: platform/framework/web/download-provider
+Branch: refs/heads/tizen
