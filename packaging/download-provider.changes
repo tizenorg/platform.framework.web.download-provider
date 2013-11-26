@@ -1,3 +1,9 @@
+* Tue Nov 26 2013 Baptiste DURAND <baptiste.durand@eurogiciel.fr> ivi_oct_m2@db80c75
+- Fix TIVI-2045 : move systemd service from user directory to system directory
+- add dbus policy conf file
+- keep only one %manifest entry in spec file
+- Fix and install .service files into dbus system service directory
+
 * Wed Jun 05 2013 Xavier Roche <xavrock.os@gmail.com> submit/tizen/20130523.172942@a691ed7
 - Replace manifest with default floor
 
