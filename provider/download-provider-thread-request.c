@@ -843,8 +843,8 @@ void *dp_thread_requests_manager(void *arg)
 				continue;
 			}
 			credential.pid = client_pid;
-			credential.uid = 5000;
-			credential.gid = 5000;
+			credential.uid = tzplatform_getuid(TZ_USER_NAME);
+			credential.gid = tzplatform_getuid(TZ_SYS_USER_GROUP);
 #endif
 
 			switch(connect_cmd) {

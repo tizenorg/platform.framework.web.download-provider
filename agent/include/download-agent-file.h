@@ -24,9 +24,9 @@
 #include "download-agent-type.h"
 #include "download-agent-dl-mgr.h"
 
-#define DA_DEFAULT_FILE_DIR_PATH	"/opt/usr/media/.tmp_download"
-#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE "/opt/usr/media/Downloads"
-#define DA_DEFAULT_INSTALL_PATH_FOR_MMC "/opt/storage/sdcard/Downloads"
+#define DA_DEFAULT_FILE_DIR_PATH	tzplatform_mkpath(TZ_USER_CONTENT,".tmp_download")
+#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE tzplatform_getenv(TZ_USER_DOWNLOADS)
+#define DA_DEFAULT_INSTALL_PATH_FOR_MMC tzplatform_mkpath(TZ_SYS_STORAGE,"sdcard/Downloads")
 
 da_bool_t is_file_exist(const char *file_path);
 da_bool_t is_dir_exist(const char *dir_path);

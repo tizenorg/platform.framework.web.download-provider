@@ -18,12 +18,18 @@
 
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <tzplatform_config.h>
 
 #include "download-provider-config.h"
 #include "download-provider-db.h"
 #include "download-provider-slots.h"
 #include "download-provider-log.h"
 #include "download-provider-pthread.h"
+
+#define DATABASE_FILE tzplatform_mkpath(TZ_USER_DB,".download-provider.db")
+#define SCRIPT_INIT_DB         IMAGE_DIR"/init-DB.sh"
 
 //BASIC
 #define DP_DB_BASIC_GET_QUERY_FORMAT "SELECT %s FROM %s WHERE id = ?"
@@ -57,6 +63,18 @@ void dp_db_close()
 // called when launching process or in every API
 int dp_db_open()
 {
+
+	// init of db
+	struct stat sts;
+	int ret;
+
+	/* Check if the DB exists; if not, create it and initialize it */
+	ret = stat(DATABASE_FILE, &sts);
+	if (ret == -1 && errno == ENOENT)
+	{
+		system(SCRIPT_INIT_DB);
+	}
+
 	if (g_dp_db_handle == 0) {
 		if (db_util_open(DATABASE_FILE, &g_dp_db_handle,
 				DB_UTIL_REGISTER_HOOK_METHOD) != SQLITE_OK) {
