@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <tzplatform_config.h>
 
 #include <stdlib.h>
 #include <sqlite3.h>
@@ -26,6 +27,8 @@
 #include "download-provider-slots.h"
 #include "download-provider-log.h"
 #include "download-provider-pthread.h"
+
+#define DATABASE_FILE tzplatform_mkpath(TZ_USER_DB,".download-provider.db")
 
 //BASIC
 #define DP_DB_BASIC_GET_QUERY_FORMAT "SELECT %s FROM %s WHERE id = ?"

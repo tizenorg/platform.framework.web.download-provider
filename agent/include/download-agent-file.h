@@ -24,7 +24,7 @@
 #include "download-agent-type.h"
 #include "download-agent-dl-mgr.h"
 
-#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE "/opt/usr/media/Downloads"
+#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE tzplatform_getenv(TZ_USER_DOWNLOADS)
 
 da_bool_t is_file_exist(const char *file_path);
 da_bool_t is_dir_exist(const char *dir_path);

@@ -32,6 +32,8 @@ BuildRequires:  pkgconfig(wifi-direct)
 BuildRequires:  pkgconfig(libsmack)
 BuildRequires:  gettext-devel
 BuildRequires:  pkgconfig(libsystemd-daemon)
+BuildRequires: pkgconfig(libtzplatform-config)
+Requires:      libtzplatform-config
 
 %description
 Description: download the contents in background
@@ -47,15 +49,13 @@ Description: download the contents in background (development files)
 %prep
 %setup -q
 
-%define _data_install_path /usr/share/%{name}
+%define _data_install_path %{_datadir}/%{name}
 %define _imagedir %{_data_install_path}/images
 %define _localedir %{_data_install_path}/locales
 %define _sqlschemadir %{_data_install_path}/sql
-%define _databasedir /opt/usr/dbspace
-%define _databasefile %{_databasedir}/.download-provider.db
 %define _sqlschemafile %{_sqlschemadir}/download-provider-schema.sql
 %define _licensedir /usr/share/license
-%define _smackruledir /opt/etc/smack/accesses.d
+%define _smackruledir %{TZ_SYS_SMACK}/accesses.d
 
 %define cmake \
 	CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -fvisibility=hidden"; export CFLAGS \
@@ -72,7 +72,6 @@ Description: download the contents in background (development files)
 		-DIMAGE_DIR:PATH=%{_imagedir} \\\
 		-DLOCALE_DIR:PATH=%{_localedir} \\\
 		-DDATABASE_SCHEMA_DIR=%{_sqlschemadir} \\\
-		-DDATABASE_FILE:PATH=%{_databasefile} \\\
 		-DDATABASE_SCHEMA_FILE=%{_sqlschemafile} \\\
 		-DLICENSE_DIR:PATH=%{_licensedir} \\\
 		-DSMACK_RULE_DIR:PATH=%{_smackruledir} \\\
@@ -114,15 +113,7 @@ ln -s ../download-provider.socket %{buildroot}%{_libdir}/systemd/system/sockets.
 /sbin/ldconfig
 
 %post
-mkdir -p %{_databasedir}
 /sbin/ldconfig
-
-if [ ! -f %{_databasefile} ];
-then
-sqlite3 %{_databasefile} '.read %{_sqlschemafile}'
-chmod 660 %{_databasefile}
-chmod 660 %{_databasefile}-journal
-fi
 
 %files
 %defattr(-,root,root,-)

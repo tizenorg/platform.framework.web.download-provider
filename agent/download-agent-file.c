@@ -19,6 +19,8 @@
 #include <unistd.h>
 #include <math.h>
 #include <errno.h>
+#include <tzplatform_config.h>
+
 #include "download-agent-client-mgr.h"
 #include "download-agent-debug.h"
 #include "download-agent-utils.h"
@@ -1152,7 +1154,7 @@ da_result_t create_dir(const char *install_dir)
 		ret = DA_ERR_FAIL_TO_ACCESS_STORAGE;
 	} else {
 		DA_SECURE_LOGD("[%s] is created!", install_dir);
-		if (chown(install_dir, 5000, 5000) < 0) {
+		if (chown(install_dir, tzplatform_getuid(TZ_USER_NAME),tzplatform_getuid(TZ_SYS_USER_GROUP)) < 0) {
 			DA_LOG_ERR(FileManager, "Fail to chown");
 			ret = DA_ERR_FAIL_TO_ACCESS_STORAGE;
 		}

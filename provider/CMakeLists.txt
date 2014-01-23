@@ -19,8 +19,9 @@ pkg_check_modules(dp2_pkgs REQUIRED glib-2.0
 		appsvc
 		bundle
 		libsmack
-		dlog
-		libsystemd-daemon)
+		libsystemd-daemon
+		libtzplatform-config
+		dlog)
 
 FOREACH(flag ${dp2_pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
@@ -37,10 +38,6 @@ set(DP2_LINK_LIBRARIES ${GLIB-2_LIBRARIES}
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS}")
 SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -Wall")
-
-IF(DEFINED DATABASE_FILE)
-	ADD_DEFINITIONS(-DDATABASE_FILE=\"${DATABASE_FILE}\")
-ENDIF(DEFINED DATABASE_FILE)
 
 IF(DEFINED DATABASE_SCHEMA_FILE)
 	ADD_DEFINITIONS(-DDATABASE_SCHEMA_FILE=\"${DATABASE_SCHEMA_FILE}\")

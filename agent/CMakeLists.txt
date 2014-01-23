@@ -21,6 +21,7 @@ pkg_check_modules(subpkgs REQUIRED
 	capi-network-connection
 	glib-2.0
 	dlog
+	libtzplatform-config
 )
 
 FOREACH(flag ${subpkgs_CFLAGS})
