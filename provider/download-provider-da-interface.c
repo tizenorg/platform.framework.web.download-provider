@@ -21,7 +21,10 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
+#include <dlfcn.h> // dlopen
 
+#include <sys/smack.h>
 #include "download-provider.h"
 #include "download-provider-log.h"
 #include "download-provider-pthread.h"
@@ -30,9 +33,23 @@
 #include "download-provider-queue.h"
 #include "download-provider-notification.h"
 #include "download-provider-request.h"
+#include "download-provider-network.h"
+#include "download-provider-da-interface.h"
 
 #include "download-agent-defs.h"
 #include "download-agent-interface.h"
+
+#define DP_SDCARD_MNT_POINT "/opt/storage/sdcard"
+
+static void *g_da_handle = NULL;
+static int (*download_agent_init)(da_client_cb_t *) = NULL; // int da_init(da_client_cb_t *da_client_callback);
+static int (*download_agent_deinit)() = NULL; //  int da_deinit();
+static int (*download_agent_is_alive)(int) = NULL;  // int da_is_valid_download_id(int download_id);
+static int (*download_agent_suspend)(int) = NULL; // int da_suspend_download(int download_id);
+static int (*download_agent_resume)(int) = NULL; // int da_resume_download(int download_id);
+static int (*download_agent_cancel)(int) = NULL; // int da_cancel_download(int download_id);
+static int (*download_agent_start)(const char *, extension_data_t *, int *) = NULL; // int da_start_download_with_extension(const char *url, extension_data_t *ext_data, int *download_id);
+
 
 int dp_is_file_exist(const char *file_path)
 {
@@ -109,87 +126,102 @@ static void __download_info_cb(user_download_info_t *info, void *user_data)
 		return ;
 	}
 	dp_request_slots *request_slot = (dp_request_slots *) user_data;
-	if (request_slot == NULL || request_slot->request == NULL) {
+	if (request_slot == NULL) {
 		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
+		return ;
+	}
+	CLIENT_MUTEX_LOCK(&request_slot->mutex);
+	if (request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 		return ;
 	}
 	dp_request *request = request_slot->request;
 	if (request->id < 0 || (request->agent_id != info->download_id)) {
 		TRACE_ERROR("[NULL-CHECK] agent_id : %d req_id %d",
 			request->agent_id, info->download_id);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 		return ;
 	}
 
 	int request_id = request->id;
 
 	// update info before sending event
-	if (info->tmp_saved_path) {
-		TRACE_INFO("[STARTED][%d] [%s]", request_id, info->tmp_saved_path);
-		if (dp_db_replace_column(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-				DP_DB_COL_TMP_SAVED_PATH, DP_DB_COL_TYPE_TEXT,
-				info->tmp_saved_path) == 0) {
-			if (info->file_type) {
-				TRACE_INFO("[MIME-TYPE][%d] [%s]", request_id, info->file_type);
-				if (dp_db_set_column(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-						DP_DB_COL_MIMETYPE, DP_DB_COL_TYPE_TEXT,
-						info->file_type) < 0)
-					TRACE_ERROR("[ERROR][%d][SQL]", request_id);
-			}
+	if (info->tmp_saved_path != NULL) {
 
-			if (info->file_size > 0) {
-				TRACE_INFO
-					("[FILE-SIZE][%d] [%lld]", request_id, info->file_size);
-				CLIENT_MUTEX_LOCK(&request->mutex);
-				request->file_size = info->file_size;
-				CLIENT_MUTEX_UNLOCK(&request->mutex);
-				if (dp_db_set_column
-						(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-						DP_DB_COL_CONTENT_SIZE,
-						DP_DB_COL_TYPE_INT64, &info->file_size) < 0)
-					TRACE_ERROR("[ERROR][%d][SQL]", request_id);
-			}
+		TRACE_SECURE_DEBUG("[STARTED][%d] [%s]", request_id, info->tmp_saved_path);
+		int conds_count = 6; // id + tmp_saved_path + file_size + content_name + etag
+		int conds_index = 0;
+		db_conds_list_fmt conds_p[conds_count];
+		memset(&conds_p, 0x00, conds_count * sizeof(db_conds_list_fmt));
 
-			if (info->content_name) {
-				TRACE_INFO
-					("[CONTENTNAME][%d] [%s]", request_id, info->content_name);
-				if (dp_db_set_column
-						(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-						DP_DB_COL_CONTENT_NAME,
-						DP_DB_COL_TYPE_TEXT, info->content_name) < 0)
-					TRACE_ERROR("[ERROR][%d][SQL]", request_id);
-			}
-			if (info->etag) {
-				TRACE_INFO("[ETAG][%d] [%s]", request_id, info->etag);
-				if (dp_db_replace_column
-						(request_id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_ETAG,
-						DP_DB_COL_TYPE_TEXT, info->etag) < 0)
-					TRACE_ERROR("[ERROR][%d][SQL]", request_id);
-			}
-		} else {
-			TRACE_ERROR
-				("[ERROR][%d][SQL] failed to insert downloadinfo",
-				request_id);
+		conds_p[conds_index].column = DP_DB_COL_TMP_SAVED_PATH;
+		conds_p[conds_index].type = DP_DB_COL_TYPE_TEXT;
+		conds_p[conds_index].value = info->tmp_saved_path;
+		conds_index++;
+		if (info->file_type != NULL) {
+			conds_p[conds_index].column = DP_DB_COL_MIMETYPE;
+			conds_p[conds_index].type = DP_DB_COL_TYPE_TEXT;
+			conds_p[conds_index].value = info->file_type;
+			conds_index++;
 		}
+		if (info->content_name != NULL) {
+			conds_p[conds_index].column = DP_DB_COL_CONTENT_NAME;
+			conds_p[conds_index].type = DP_DB_COL_TYPE_TEXT;
+			conds_p[conds_index].value = info->content_name;
+			conds_index++;
+		}
+		if (info->etag != NULL) {
+			conds_p[conds_index].column = DP_DB_COL_ETAG;
+			conds_p[conds_index].type = DP_DB_COL_TYPE_TEXT;
+			conds_p[conds_index].value = info->etag;
+			conds_index++;
+		}
+		if (info->file_size > 0) {
+			request->file_size = info->file_size;
+			conds_p[conds_index].column = DP_DB_COL_CONTENT_SIZE;
+			conds_p[conds_index].type = DP_DB_COL_TYPE_INT64;
+			conds_p[conds_index].value = &info->file_size;
+			conds_index++;
+		}
+
+		int check_id = dp_db_get_int_column(request_id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_ID);
+		if (check_id == request_id) { // update
+			if (dp_db_update_columns(request_id, DP_DB_TABLE_DOWNLOAD_INFO, conds_index, conds_p) < 0) {
+				if (dp_db_is_full_error() == 0) {
+					request->error = DP_ERROR_NO_SPACE;
+					TRACE_ERROR("[SQLITE_FULL][%d]", request_id);
+					if (dp_cancel_agent_download(request->agent_id) < 0)
+						TRACE_ERROR("[fail][%d]cancel_agent", request_id);
+					CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
+					return ;
+				}
+			}
+		} else { // insert
+			conds_p[conds_index].column = DP_DB_COL_ID;
+			conds_p[conds_index].type = DP_DB_COL_TYPE_INT;
+			conds_p[conds_index].value = &request_id;
+			conds_index++;
+			if (dp_db_insert_columns(DP_DB_TABLE_DOWNLOAD_INFO, conds_index, conds_p) < 0) {
+				if (dp_db_is_full_error() == 0) {
+					request->error = DP_ERROR_NO_SPACE;
+					TRACE_ERROR("[SQLITE_FULL][%d]", request_id);
+					if (dp_cancel_agent_download(request->agent_id) < 0)
+						TRACE_ERROR("[fail][%d]cancel_agent", request_id);
+					CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
+					return ;
+				}
+			}
+		}
+
 	}
 
-	CLIENT_MUTEX_LOCK(&request->mutex);
-
+	request->ip_changed = 0;
 	request->state = DP_STATE_DOWNLOADING;
-	if (dp_db_set_column(request->id, DP_DB_TABLE_LOG, DP_DB_COL_STATE,
-			DP_DB_COL_TYPE_INT, &request->state) < 0)
-		TRACE_ERROR("[ERROR][%d][SQL]", request->id);
+	request->error = DP_ERROR_NONE;
+	dp_request_state_response(request);
 
-	if (request->group && request->group->event_socket >= 0 &&
-		request->state_cb)
-		dp_ipc_send_event(request->group->event_socket,
-			request->id, DP_STATE_DOWNLOADING, DP_ERROR_NONE, 0);
-
-	if (request->auto_notification)
-		request->noti_priv_id =
-			dp_set_downloadinginfo_notification
-				(request->id, request->packagename);
-
-	CLIENT_MUTEX_UNLOCK(&request->mutex);
+	CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 }
 
 static void __progress_cb(user_progress_info_t *info, void *user_data)
@@ -199,18 +231,24 @@ static void __progress_cb(user_progress_info_t *info, void *user_data)
 		return ;
 	}
 	dp_request_slots *request_slot = (dp_request_slots *) user_data;
-	if (request_slot == NULL || request_slot->request == NULL) {
+	if (request_slot == NULL) {
 		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
+		return ;
+	}
+	CLIENT_MUTEX_LOCK(&request_slot->mutex);
+	if (request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 		return ;
 	}
 	dp_request *request = request_slot->request;
 	if (request->id < 0 || (request->agent_id != info->download_id)) {
 		TRACE_ERROR("[NULL-CHECK] agent_id : %d req_id %d",
 			request->agent_id, info->download_id);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 		return ;
 	}
 
-	CLIENT_MUTEX_LOCK(&request->mutex);
 	if (request->state == DP_STATE_DOWNLOADING) {
 		request->received_size = info->received_size;
 		time_t tt = time(NULL);
@@ -218,20 +256,148 @@ static void __progress_cb(user_progress_info_t *info, void *user_data)
 		// send event every 1 second.
 		if (request->progress_lasttime != localTime->tm_sec) {
 			request->progress_lasttime = localTime->tm_sec;
-			if (request->progress_cb && request->group &&
-				request->group->event_socket >= 0 &&
-				request->received_size > 0)
-				dp_ipc_send_event(request->group->event_socket,
-					request->id, request->state, request->error,
-					request->received_size);
-			if (request->auto_notification)
+			if (request->auto_notification) {
 				dp_update_downloadinginfo_notification
 					(request->noti_priv_id,
 					(double)request->received_size,
 					(double)request->file_size);
+			} else {
+				int noti_type = dp_db_get_int_column(request->id, DP_DB_TABLE_NOTIFICATION, DP_DB_COL_NOTI_TYPE);
+				if(noti_type == DP_NOTIFICATION_TYPE_ALL)
+					dp_update_downloadinginfo_notification
+						(request->noti_priv_id,
+						(double)request->received_size,
+						(double)request->file_size);
+			}
+
+			if (request->progress_cb && request->group != NULL &&
+					request->group->event_socket >= 0 &&
+					request->received_size > 0)
+				dp_ipc_send_event(request->group->event_socket,
+					request->id, request->state, request->error,
+					request->received_size);
 		}
 	}
-	CLIENT_MUTEX_UNLOCK(&request->mutex);
+	CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
+}
+
+static int __is_transmute_smack(char *path)
+{
+	char *dir_label = NULL;
+	int ret = -1;
+	if (smack_getlabel(path, &dir_label, SMACK_LABEL_TRANSMUTE) == 0 &&
+			dir_label != NULL) {
+		if (strncmp(dir_label, "TRUE", strlen(dir_label)) == 0)
+			ret = 0;
+	}
+	free(dir_label);
+	return ret;
+}
+
+static dp_error_type __set_dir_smack_label(char *smack_label, char *dir_path, char *saved_path)
+{
+	if (smack_label == NULL || dir_path== NULL || saved_path == NULL)
+		return DP_ERROR_PERMISSION_DENIED;
+
+	int is_setted_dir_label = 0;
+	dp_error_type errorcode = DP_ERROR_NONE;
+
+	TRACE_SECURE_INFO("[PARSE] dir path [%s]", dir_path);
+	if (__is_transmute_smack(dir_path) < 0) {
+		TRACE_DEBUG("[SMACK] no transmute");
+	} else {
+		char *dir_label = NULL;
+		if (smack_getlabel(dir_path, &dir_label,
+				SMACK_LABEL_ACCESS) == 0) {
+			if (smack_have_access(smack_label, dir_label, "t") > 0) {
+				if (smack_setlabel(saved_path, dir_label,
+						SMACK_LABEL_ACCESS) != 0) {
+					TRACE_SECURE_ERROR("[SMACK ERROR] label:%s",
+						dir_label);
+					errorcode = DP_ERROR_PERMISSION_DENIED;
+				} else {
+					is_setted_dir_label = 1;
+				}
+			} else {
+				TRACE_SECURE_ERROR("[SMACK ERROR] access:%s/%s",
+					smack_label, dir_label);
+				errorcode = DP_ERROR_PERMISSION_DENIED;
+			}
+		} else {
+			TRACE_SECURE_ERROR("[SMACK ERROR] no label:", dir_path);
+			errorcode = DP_ERROR_PERMISSION_DENIED;
+		}
+		free(dir_label);
+	}
+	if (is_setted_dir_label == 0 &&
+			smack_setlabel(saved_path, smack_label,
+				SMACK_LABEL_ACCESS) != 0) {
+		TRACE_SECURE_ERROR("[SMACK ERROR] label:%s", smack_label);
+		errorcode = DP_ERROR_PERMISSION_DENIED;
+		// remove file.
+		if (dp_is_file_exist(saved_path) == 0)
+			unlink(saved_path);
+	}
+	return errorcode;
+}
+
+static dp_error_type __set_file_permission_to_client(dp_request *request, char *saved_path)
+{
+	dp_error_type errorcode = DP_ERROR_NONE;
+	char *str = NULL;
+	char *smack_label = NULL;
+	str = strrchr(saved_path, '/');
+	dp_credential cred;
+	if (request->group == NULL) {
+		cred.uid = dp_db_cond_get_int(DP_DB_TABLE_GROUPS,
+					DP_DB_GROUPS_COL_UID,
+					DP_DB_GROUPS_COL_PKG,
+					DP_DB_COL_TYPE_TEXT, request->packagename);
+		cred.gid = dp_db_cond_get_int(DP_DB_TABLE_GROUPS,
+					DP_DB_GROUPS_COL_GID,
+					DP_DB_GROUPS_COL_PKG,
+					DP_DB_COL_TYPE_TEXT, request->packagename);
+	} else {
+		cred = request->group->credential;
+	}
+	TRACE_DEBUG
+		("[chown][%d] [%d][%d]", request->id, cred.uid, cred.gid);
+	if (chown(saved_path, cred.uid, cred.gid) < 0)
+		TRACE_STRERROR("[ERROR][%d] chown", request->id);
+	if (chmod(saved_path,
+			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) < 0)
+		TRACE_STRERROR("[ERROR][%d] chmod", request->id);
+	if (dp_is_smackfs_mounted() == 1) {
+		if (request->group == NULL) {
+			// get smack_label from sql
+			smack_label =
+				dp_db_cond_get_text(DP_DB_TABLE_GROUPS,
+					DP_DB_GROUPS_COL_SMACK_LABEL,
+					DP_DB_GROUPS_COL_PKG,
+					DP_DB_COL_TYPE_TEXT, request->packagename);
+		} else {
+			smack_label = dp_strdup(request->group->smack_label);
+		}
+		if (smack_label == NULL) {
+			TRACE_SECURE_ERROR("[SMACK][%d] no label", request->id);
+			errorcode = DP_ERROR_PERMISSION_DENIED;
+		} else {
+			size_t len = str - (saved_path);
+			char *dir_path = (char *)calloc(len + 1, sizeof(char));
+			if (dir_path != NULL) {
+				strncpy(dir_path, saved_path, len);
+				errorcode =
+					__set_dir_smack_label(smack_label, dir_path,
+						saved_path);
+				free(dir_path);
+			} else {
+				TRACE_SECURE_ERROR("[ERROR] calloc");
+				errorcode = DP_ERROR_OUT_OF_MEMORY;
+			}
+			free(smack_label);
+		}
+	}
+	return errorcode;
 }
 
 static void __finished_cb(user_finished_info_t *info, void *user_data)
@@ -240,32 +406,28 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 		TRACE_ERROR("[NULL-CHECK] Agent info");
 		return ;
 	}
-	TRACE_INFO("Agent ID[%d] err[%d] http_status[%d]",
-		info->download_id, info->err, info->http_status);
 	dp_request_slots *request_slot = (dp_request_slots *) user_data;
-	if (request_slot == NULL || request_slot->request == NULL) {
+	if (request_slot == NULL) {
 		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
+		return ;
+	}
+	CLIENT_MUTEX_LOCK(&request_slot->mutex);
+	if (request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 		return ;
 	}
 	dp_request *request = request_slot->request;
 	if (request->id < 0 || (request->agent_id != info->download_id)) {
 		TRACE_ERROR("[NULL-CHECK] agent_id : %d req_id %d",
 			request->agent_id, info->download_id);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 		return ;
 	}
 
-	CLIENT_MUTEX_LOCK(&request->mutex);
-
 	int request_id = request->id;
-	dp_credential cred = request->credential;
-	CLIENT_MUTEX_UNLOCK(&request->mutex);
 	dp_state_type state = DP_STATE_NONE;
 	dp_error_type errorcode = DP_ERROR_NONE;
-
-	// update info before sending event
-	if (dp_db_update_date
-			(request_id, DP_DB_TABLE_LOG, DP_DB_COL_ACCESS_TIME) < 0)
-		TRACE_ERROR("[ERROR][%d][SQL]", request_id);
 
 	if (info->http_status > 0)
 		if (dp_db_replace_column(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
@@ -274,173 +436,269 @@ static void __finished_cb(user_finished_info_t *info, void *user_data)
 			TRACE_ERROR("[ERROR][%d][SQL]", request_id);
 
 	if (info->err == DA_RESULT_OK) {
-		if (info->saved_path) {
-			char *str = NULL;
-			char *content_name = NULL;
 
+		int conds_count = 5; // id + saved_path + content_name + http_status + file_size
+		int conds_index = 0;
+		db_conds_list_fmt conds_p[conds_count];
+		memset(&conds_p, 0x00, conds_count * sizeof(db_conds_list_fmt));
+
+		char *content_name = NULL;
+		if (info->saved_path != NULL) {
+			char *str = NULL;
+			if(!(strncmp(DP_SDCARD_MNT_POINT, info->saved_path,
+				strlen(DP_SDCARD_MNT_POINT)) == 0)) {
+				errorcode = __set_file_permission_to_client(request,
+					info->saved_path);
+			}
 			str = strrchr(info->saved_path, '/');
-			if (str) {
+			if (str != NULL) {
 				str++;
 				content_name = dp_strdup(str);
-				TRACE_INFO("[PARSE][%d] content_name [%s]",
+				TRACE_SECURE_DEBUG("[PARSE][%d] content_name [%s]",
 					request_id, content_name);
 			}
-			TRACE_INFO
-				("[chown][%d] [%d][%d]", request_id, cred.uid, cred.gid);
-			if (chown(info->saved_path, cred.uid, cred.gid) < 0)
-				TRACE_STRERROR("[ERROR][%d] chown", request_id);
-			if (dp_db_replace_column
-					(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-					DP_DB_COL_SAVED_PATH,
-					DP_DB_COL_TYPE_TEXT, info->saved_path) == 0) {
-				if (content_name != NULL) {
-					if (dp_db_set_column
-							(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-							DP_DB_COL_CONTENT_NAME,
-							DP_DB_COL_TYPE_TEXT, content_name) < 0)
-						TRACE_ERROR("[ERROR][%d][SQL]", request_id);
-				}
-			} else {
-				TRACE_ERROR("[ERROR][%d][SQL]", request_id);
+
+			conds_p[conds_index].column = DP_DB_COL_SAVED_PATH;
+			conds_p[conds_index].type = DP_DB_COL_TYPE_TEXT;
+			conds_p[conds_index].value = info->saved_path;
+			conds_index++;
+			if (content_name != NULL) {
+				conds_p[conds_index].column = DP_DB_COL_CONTENT_NAME;
+				conds_p[conds_index].type = DP_DB_COL_TYPE_TEXT;
+				conds_p[conds_index].value = content_name;
+				conds_index++;
 			}
-			if (content_name != NULL)
-				free(content_name);
 
-			errorcode = DP_ERROR_NONE;
-			state = DP_STATE_COMPLETED;
-
-			TRACE_INFO("[COMPLETED][%d] saved to [%s]",
+			if (errorcode == DP_ERROR_NONE) {
+				state = DP_STATE_COMPLETED;
+				TRACE_SECURE_INFO("[COMPLETED][%d] saved to [%s]",
 					request_id, info->saved_path);
+			} else {
+				state = DP_STATE_FAILED;
+				TRACE_SECURE_INFO("[FAILED][%d] saved to [%s]",
+					request_id, info->saved_path);
+			}
 		} else {
 			TRACE_ERROR("Cannot enter here");
 			TRACE_ERROR("[ERROR][%d] No SavedPath", request_id);
 			errorcode = DP_ERROR_INVALID_DESTINATION;
 			state = DP_STATE_FAILED;
 		}
-		CLIENT_MUTEX_LOCK(&request->mutex);
 		if (request->file_size == 0) {
 			request->file_size = request->received_size;
-			if (dp_db_replace_column
-					(request_id, DP_DB_TABLE_DOWNLOAD_INFO,
-					DP_DB_COL_CONTENT_SIZE,
-					DP_DB_COL_TYPE_INT64, &request->file_size ) < 0)
-				TRACE_ERROR("[ERROR][%d][SQL]", request_id);
+			conds_p[conds_index].column = DP_DB_COL_CONTENT_SIZE;
+			conds_p[conds_index].type = DP_DB_COL_TYPE_INT64;
+			conds_p[conds_index].value = &request->file_size;
+			conds_index++;
 		}
-		CLIENT_MUTEX_UNLOCK(&request->mutex);
-	} else if (info->err == DA_RESULT_USER_CANCELED) {
-		state = DP_STATE_CANCELED;
-		errorcode = DP_ERROR_NONE;
-		TRACE_INFO("[CANCELED][%d]", request_id);
+
+		int check_id = dp_db_get_int_column(request_id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_ID);
+		if (check_id == request_id) { // update
+			if (dp_db_update_columns(request_id, DP_DB_TABLE_DOWNLOAD_INFO, conds_index, conds_p) < 0) {
+				if (dp_db_is_full_error() == 0) {
+					request->error = DP_ERROR_NO_SPACE;
+					TRACE_ERROR("[SQLITE_FULL][%d]", request_id);
+					if (dp_cancel_agent_download(request->agent_id) < 0)
+						TRACE_ERROR("[fail][%d]cancel_agent", request_id);
+					CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
+					return ;
+				}
+			}
+		} else { // insert
+			conds_p[conds_index].column = DP_DB_COL_ID;
+			conds_p[conds_index].type = DP_DB_COL_TYPE_INT;
+			conds_p[conds_index].value = &request_id;
+			conds_index++;
+			if (dp_db_insert_columns(DP_DB_TABLE_DOWNLOAD_INFO, conds_index, conds_p) < 0) {
+				if (dp_db_is_full_error() == 0) {
+					request->error = DP_ERROR_NO_SPACE;
+					TRACE_ERROR("[SQLITE_FULL][%d]", request_id);
+					if (dp_cancel_agent_download(request->agent_id) < 0)
+						TRACE_ERROR("[fail][%d]cancel_agent", request_id);
+					CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
+					return ;
+				}
+			}
+		}
+		free(content_name);
 	} else {
-		state = DP_STATE_FAILED;
-		errorcode = __change_error(info->err);
-		TRACE_INFO("[FAILED][%d][%s]", request_id,
-				dp_print_errorcode(errorcode));
+		char *tmp_saved_path =
+			dp_request_get_tmpsavedpath(request_id, request, &errorcode);
+
+		if (tmp_saved_path != NULL) {
+			errorcode = __set_file_permission_to_client(request, tmp_saved_path);
+			free(tmp_saved_path);
+		} else {
+			TRACE_ERROR("Cannot enter here");
+			TRACE_ERROR("[ERROR][%d] No SavedPath", request_id);
+		}
+
+		if (info->err == DA_RESULT_USER_CANCELED) {
+			state = DP_STATE_CANCELED;
+			errorcode = request->error;
+			TRACE_INFO("[CANCELED][%d]", request_id);
+		} else {
+			state = DP_STATE_FAILED;
+			errorcode = __change_error(info->err);
+			TRACE_ERROR("[FAILED][%d][%s]", request_id,
+					dp_print_errorcode(errorcode));
+		}
 	}
-
-	if (dp_db_set_column
-			(request_id, DP_DB_TABLE_LOG, DP_DB_COL_STATE,
-			DP_DB_COL_TYPE_INT, &state) < 0)
-		TRACE_ERROR("[ERROR][%d][SQL]", request_id);
-
-	if (errorcode != DP_ERROR_NONE) {
-		if (dp_db_set_column(request_id, DP_DB_TABLE_LOG,
-				DP_DB_COL_ERRORCODE, DP_DB_COL_TYPE_INT,
-				&errorcode) < 0)
-			TRACE_ERROR("[ERROR][%d][SQL]", request_id);
-	}
-
-	// need MUTEX LOCK
-	CLIENT_MUTEX_LOCK(&request->mutex);
 
 	request->state = state;
 	request->error = errorcode;
 
-	// stay on memory till called destroy by client or timeout
-	if (request->group != NULL && request->group->event_socket >= 0) {
-		/* update the received file size.
-		* The last received file size cannot update
-		* because of reducing update algorithm*/
-		if (request->received_size > 0)
-			dp_ipc_send_event(request->group->event_socket,
-				request->id, DP_STATE_DOWNLOADING, request->error,
-				request->received_size);
-		if (request->state_cb)
-			dp_ipc_send_event(request->group->event_socket,
-				request->id, request->state, request->error, 0);
-		request->group->queued_count--;
+	// auto resume when failed by ip_changed.
+	if (state == DP_STATE_FAILED && info->err == DA_ERR_NETWORK_FAIL &&
+			request->network_type != DP_NETWORK_TYPE_WIFI_DIRECT) {
+		if (request->ip_changed == 1 &&
+				dp_get_network_connection_instant_status() !=
+				DP_NETWORK_TYPE_OFF) {
+			// resume
+			TRACE_DEBUG("[RESUME][%d] will be queued", request_id);
+			request->state = DP_STATE_QUEUED;
+			request->error = DP_ERROR_NONE;
+		} else {
+			TRACE_DEBUG("[CHECK][%d] check again in timeout", request_id);
+		}
+	} else {
+		// stay on memory till called destroy by client or timeout
+		if (request->group != NULL &&
+				request->group->event_socket >= 0) {
+			/* update the received file size.
+			* The last received file size cannot update
+			* because of reducing update algorithm*/
+			if (request->received_size > 0) {
+				dp_ipc_send_event(request->group->event_socket,
+					request->id, DP_STATE_DOWNLOADING, request->error,
+					request->received_size);
+			}
+		}
+		dp_request_state_response(request);
 	}
 
-	// to prevent the crash . check packagename of request
-	if (request->auto_notification && request->packagename != NULL)
-		request->noti_priv_id =
-			dp_set_downloadedinfo_notification(request->noti_priv_id,
-				request->id, request->packagename, request->state);
-
-	request->stop_time = (int)time(NULL);
-
-	CLIENT_MUTEX_UNLOCK(&request->mutex);
+	CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 
 	dp_thread_queue_manager_wake_up();
 }
 
 static void __paused_cb(user_paused_info_t *info, void *user_data)
 {
-	TRACE_INFO("");
 	dp_request_slots *request_slot = (dp_request_slots *) user_data;
-	if (request_slot == NULL || request_slot->request == NULL) {
+	if (request_slot == NULL) {
 		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
+		return ;
+	}
+	CLIENT_MUTEX_LOCK(&request_slot->mutex);
+	if (request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] request req_id:%d", info->download_id);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 		return ;
 	}
 	dp_request *request = request_slot->request;
 	if (request->id < 0 || (request->agent_id != info->download_id)) {
 		TRACE_ERROR("[NULL-CHECK] agent_id : %d req_id %d",
 			request->agent_id, info->download_id);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 		return ;
 	}
 
-	CLIENT_MUTEX_LOCK(&request->mutex);
+	if (request->state != DP_STATE_PAUSE_REQUESTED) {
+		TRACE_ERROR("[CHECK] now status:%d", request->state);
+		CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
+		return ;
+	}
+
 	int request_id = request->id;
-	CLIENT_MUTEX_UNLOCK(&request->mutex);
 
 	if (dp_db_update_date
 			(request_id, DP_DB_TABLE_LOG, DP_DB_COL_ACCESS_TIME) < 0)
 		TRACE_ERROR("[ERROR][%d][SQL]", request_id);
 
-	// need MUTEX LOCK
-	CLIENT_MUTEX_LOCK(&request->mutex);
-
 	request->state = DP_STATE_PAUSED;
+	request->error = DP_ERROR_NONE;
+	dp_request_state_response(request);
 
-	if (dp_db_set_column
-			(request->id, DP_DB_TABLE_LOG, DP_DB_COL_STATE,
-			DP_DB_COL_TYPE_INT, &request->state) < 0) {
-		TRACE_ERROR("[ERROR][%d][SQL]", request->id);
-	}
-
-	if (request->group &&
-		request->group->event_socket >= 0 && request->state_cb)
-		dp_ipc_send_event(request->group->event_socket,
-			request->id, request->state, request->error, 0);
-
-	if (request->group)
-		request->group->queued_count--;
-
-	CLIENT_MUTEX_UNLOCK(&request->mutex);
+	CLIENT_MUTEX_UNLOCK(&request_slot->mutex);
 
 	dp_thread_queue_manager_wake_up();
 }
 
 int dp_init_agent()
 {
-	int da_ret = 0;
+
+	g_da_handle = dlopen("/usr/lib/libdownloadagent2.so", RTLD_LAZY | RTLD_GLOBAL);
+	if (!g_da_handle) {
+		TRACE_ERROR("[dlopen] %s", dlerror());
+		g_da_handle = NULL;
+		return DP_ERROR_OUT_OF_MEMORY;
+	}
+	dlerror();    /* Clear any existing error */
+
+	*(void **) (&download_agent_init) = dlsym(g_da_handle, "da_init");
+	if (download_agent_init == NULL ) {
+		TRACE_ERROR("[dlsym] da_init:%s", dlerror());
+		dlclose(g_da_handle);
+		g_da_handle = NULL;
+		return DP_ERROR_OUT_OF_MEMORY;
+	}
+
+	*(void **) (&download_agent_deinit)  = dlsym(g_da_handle, "da_deinit");
+	if (download_agent_deinit == NULL ) {
+		TRACE_ERROR("[dlsym] da_deinit:%s", dlerror());
+		dlclose(g_da_handle);
+		g_da_handle = NULL;
+		return DP_ERROR_OUT_OF_MEMORY;
+	}
+
+	*(void **) (&download_agent_is_alive)  = dlsym(g_da_handle, "da_is_valid_download_id");
+	if (download_agent_is_alive == NULL ) {
+		TRACE_ERROR("[dlsym] da_is_valid_download_id:%s", dlerror());
+		dlclose(g_da_handle);
+		g_da_handle = NULL;
+		return DP_ERROR_OUT_OF_MEMORY;
+	}
+
+	*(void **) (&download_agent_suspend)  = dlsym(g_da_handle, "da_suspend_download");
+	if (download_agent_suspend == NULL ) {
+		TRACE_ERROR("[dlsym] da_suspend_download:%s", dlerror());
+		dlclose(g_da_handle);
+		g_da_handle = NULL;
+		return DP_ERROR_OUT_OF_MEMORY;
+	}
+
+	*(void **) (&download_agent_resume)  = dlsym(g_da_handle, "da_resume_download");
+	if (download_agent_resume == NULL ) {
+		TRACE_ERROR("[dlsym] da_resume_download:%s", dlerror());
+		dlclose(g_da_handle);
+		g_da_handle = NULL;
+		return DP_ERROR_OUT_OF_MEMORY;
+	}
+
+	*(void **) (&download_agent_cancel)  = dlsym(g_da_handle, "da_cancel_download");
+	if (download_agent_cancel == NULL ) {
+		TRACE_ERROR("[dlsym] da_cancel_download:%s", dlerror());
+		dlclose(g_da_handle);
+		g_da_handle = NULL;
+		return DP_ERROR_OUT_OF_MEMORY;
+	}
+
+	*(void **) (&download_agent_start)  = dlsym(g_da_handle, "da_start_download_with_extension");
+	if (download_agent_start == NULL ) {
+		TRACE_ERROR("[dlsym] da_start_download_with_extension:%s", dlerror());
+		dlclose(g_da_handle);
+		g_da_handle = NULL;
+		return DP_ERROR_OUT_OF_MEMORY;
+	}
+
+	int da_ret = -1;
 	da_client_cb_t da_cb = {
 		__download_info_cb,
 		__progress_cb,
 		__finished_cb,
 		__paused_cb
 	};
-	da_ret = da_init(&da_cb);
+	da_ret = (*download_agent_init)(&da_cb);
 	if (da_ret != DA_RESULT_OK) {
 		return DP_ERROR_OUT_OF_MEMORY;
 	}
@@ -449,7 +707,13 @@ int dp_init_agent()
 
 void dp_deinit_agent()
 {
-	da_deinit();
+	if (g_da_handle != NULL) {
+		if (download_agent_deinit != NULL)
+			(*download_agent_deinit)();
+
+		dlclose(g_da_handle);
+		g_da_handle = NULL;
+	}
 }
 
 // 1 : alive
@@ -461,7 +725,8 @@ int dp_is_alive_download(int req_id)
 		TRACE_ERROR("[NULL-CHECK] req_id");
 		return 0;
 	}
-	da_ret = da_is_valid_download_id(req_id);
+	if (download_agent_is_alive != NULL)
+		da_ret = (*download_agent_is_alive)(req_id);
 	return da_ret;
 }
 
@@ -477,8 +742,10 @@ dp_error_type dp_cancel_agent_download(int req_id)
 		TRACE_ERROR("[CHECK agent-id:%d] dead request", req_id);
 		return -1;
 	}
-	if (da_cancel_download(req_id) == DA_RESULT_OK)
-		return 0;
+	if (download_agent_cancel != NULL) {
+		if ((*download_agent_cancel)(req_id) == DA_RESULT_OK)
+			return 0;
+	}
 	return -1;
 }
 
@@ -494,8 +761,10 @@ dp_error_type dp_pause_agent_download(int req_id)
 		TRACE_ERROR("[CHECK agent-id:%d] dead request", req_id);
 		return -1;
 	}
-	if (da_suspend_download(req_id) == DA_RESULT_OK)
-		return 0;
+	if (download_agent_suspend != NULL) {
+		if ((*download_agent_suspend)(req_id) == DA_RESULT_OK)
+			return 0;
+	}
 	return -1;
 }
 
@@ -511,18 +780,21 @@ dp_error_type dp_start_agent_download(dp_request_slots *request_slot)
 	extension_data_t ext_data = {0,};
 	char *etag = NULL;
 
-	TRACE_INFO("");
-	if (request_slot == NULL || request_slot->request == NULL) {
+	if (request_slot == NULL) {
 		TRACE_ERROR("[NULL-CHECK] download_clientinfo_slot");
 		return DP_ERROR_INVALID_PARAMETER;
 	}
-	dp_request *request = request_slot->request;
-	CLIENT_MUTEX_LOCK(&(request->mutex));
 
-	char *url = dp_request_get_url(request->id, request, &errorcode);
+	if (request_slot->request == NULL) {
+		TRACE_ERROR("[NULL-CHECK] download_clientinfo_slot");
+		return DP_ERROR_INVALID_PARAMETER;
+	}
+
+	dp_request *request = request_slot->request;
+
+	char *url = dp_request_get_url(request->id, &errorcode);
 	if (url == NULL) {
 		TRACE_ERROR("[ERROR][%d] URL is NULL", request->id);
-		CLIENT_MUTEX_UNLOCK(&(request->mutex));
 		return DP_ERROR_INVALID_URL;
 	}
 	char *destination =
@@ -542,13 +814,13 @@ dp_error_type dp_start_agent_download(dp_request_slots *request_slot)
 	if (tmp_saved_path) {
 		etag = dp_request_get_etag(request->id, request, &errorcode);
 		if (etag) {
-			TRACE_INFO("[RESUME][%d]", request->id);
+			TRACE_DEBUG("[RESUME][%d]", request->id);
 			ext_data.etag = etag;
 			ext_data.temp_file_path = tmp_saved_path;
 		} else {
 			/* FIXME later : It is better to handle the unlink function in download agaent module
 			 * or in upload the request data to memory after the download provider process is restarted */
-			TRACE_INFO("[RESTART][%d] try to remove tmp file [%s]",
+			TRACE_SECURE_INFO("[RESTART][%d] try to remove tmp file [%s]",
 				request->id, tmp_saved_path);
 			if (dp_is_file_exist(tmp_saved_path) == 0)
 				if (unlink(tmp_saved_path) != 0)
@@ -556,6 +828,9 @@ dp_error_type dp_start_agent_download(dp_request_slots *request_slot)
 						("[ERROR][%d] remove file", request->id);
 		}
 	}
+	char *pkg_name = dp_request_get_pkg_name(request->id, request, &errorcode);
+	if (pkg_name != NULL)
+		ext_data.pkg_name = pkg_name;
 	// get headers list from httpheaders table(DB)
 	int headers_count = dp_db_get_cond_rows_count
 			(request->id, DP_DB_TABLE_HTTP_HEADERS, NULL, 0, NULL);
@@ -570,8 +845,8 @@ dp_error_type dp_start_agent_download(dp_request_slots *request_slot)
 	ext_data.user_data = (void *)request_slot;
 
 	// call start API of agent lib
-	da_ret =
-		da_start_download_with_extension(url, &ext_data, &req_dl_id);
+	if (download_agent_start != NULL)
+		da_ret = (*download_agent_start)(url, &ext_data, &req_dl_id);
 	if (ext_data.request_header_count > 0) {
 		int len = 0;
 		int i = 0;
@@ -591,23 +866,22 @@ dp_error_type dp_start_agent_download(dp_request_slots *request_slot)
 		free(tmp_saved_path);
 	if (etag)
 		free(etag);
+	if (pkg_name)
+		free(pkg_name);
 
 	// if start_download() return error cause of maximun download limitation,
 	// set state to DOWNLOAD_STATE_PENDED.
 	if (da_ret == DA_ERR_ALREADY_MAX_DOWNLOAD) {
-		TRACE_INFO("[PENDING][%d] DA_ERR_ALREADY_MAX_DOWNLOAD [%d]",
+		TRACE_DEBUG("[PENDING][%d] DA_ERR_ALREADY_MAX_DOWNLOAD [%d]",
 			request->id, da_ret);
-		CLIENT_MUTEX_UNLOCK(&(request->mutex));
 		return DP_ERROR_TOO_MANY_DOWNLOADS;
 	} else if (da_ret != DA_RESULT_OK) {
 		TRACE_ERROR("[ERROR][%d] DP_ERROR_CONNECTION_FAILED [%d]",
 			request->id, da_ret);
-		CLIENT_MUTEX_UNLOCK(&(request->mutex));
 		return __change_error(da_ret);
 	}
-	TRACE_INFO("[SUCCESS][%d] agent_id [%d]", request->id, req_dl_id);
+	TRACE_DEBUG("[SUCCESS][%d] agent_id [%d]", request->id, req_dl_id);
 	request->agent_id = req_dl_id;
-	CLIENT_MUTEX_UNLOCK(&(request->mutex));
 	return DP_ERROR_NONE;
 }
 
@@ -618,7 +892,8 @@ dp_error_type dp_resume_agent_download(int req_id)
 		TRACE_ERROR("[NULL-CHECK] req_id");
 		return DP_ERROR_INVALID_PARAMETER;
 	}
-	da_ret = da_resume_download(req_id);
+	if (download_agent_resume != NULL)
+		da_ret = (*download_agent_resume)(req_id);
 	if (da_ret == DA_RESULT_OK)
 		return DP_ERROR_NONE;
 	else if (da_ret == DA_ERR_INVALID_STATE)

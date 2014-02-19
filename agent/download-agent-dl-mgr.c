@@ -32,7 +32,7 @@ da_result_t requesting_download(stage_info *stage)
 	da_result_t ret = DA_RESULT_OK;
 	req_dl_info *request_session = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (!stage) {
 		DA_LOG_ERR(Default, "stage is null..");
@@ -47,7 +47,7 @@ da_result_t requesting_download(stage_info *stage)
 	request_session = GET_STAGE_TRANSACTION_INFO(stage);
 	ret = request_http_download(stage);
 	if (DA_RESULT_OK == ret) {
-		DA_LOG(Default, "Http download is complete.");
+		DA_LOG_VERBOSE(Default, "Http download is complete.");
 	} else {
 		DA_LOG_ERR(Default, "Http download is failed. ret = %d", ret);
 		goto ERR;
@@ -61,7 +61,7 @@ da_result_t handle_after_download(stage_info *stage)
 	da_result_t ret = DA_RESULT_OK;
 	da_mime_type_id_t mime_type = DA_MIME_TYPE_NONE;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	mime_type = get_mime_type_id(
 	                GET_CONTENT_STORE_CONTENT_TYPE(GET_STAGE_CONTENT_STORE_INFO(stage)));
@@ -85,7 +85,7 @@ static da_result_t __cancel_download_with_slot_id(int slot_id)
 	download_state_t download_state;
 	stage_info *stage = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	_da_thread_mutex_lock (&mutex_download_state[slot_id]);
 	download_state = GET_DL_STATE_ON_ID(slot_id);
@@ -117,7 +117,7 @@ da_result_t cancel_download(int dl_id)
 
 	int slot_id = DA_INVALID_ID;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	ret = get_slot_id_for_dl_id(dl_id, &slot_id);
 	if (ret != DA_RESULT_OK) {
@@ -144,7 +144,7 @@ static da_result_t __suspend_download_with_slot_id(int slot_id)
 	download_state_t download_state;
 	stage_info *stage = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	_da_thread_mutex_lock (&mutex_download_state[slot_id]);
 	download_state = GET_DL_STATE_ON_ID(slot_id);
@@ -168,7 +168,7 @@ da_result_t suspend_download(int dl_id, da_bool_t is_enable_cb)
 	da_result_t ret = DA_RESULT_OK;
 	int slot_id = DA_INVALID_ID;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	ret = get_slot_id_for_dl_id(dl_id, &slot_id);
 	if (ret != DA_RESULT_OK) {
@@ -195,7 +195,7 @@ static da_result_t __resume_download_with_slot_id(int slot_id)
 	download_state_t download_state;
 	stage_info *stage = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	_da_thread_mutex_lock (&mutex_download_state[slot_id]);
 	download_state = GET_DL_STATE_ON_ID(slot_id);
@@ -217,7 +217,7 @@ da_result_t resume_download(int dl_id)
 	da_result_t ret = DA_RESULT_OK;
 	int slot_id = DA_INVALID_ID;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	ret = get_slot_id_for_dl_id(dl_id, &slot_id);
 	if (ret != DA_RESULT_OK)
@@ -239,14 +239,14 @@ da_result_t send_user_noti_and_finish_download_flow(
 		int slot_id, char *installed_path, char *etag)
 {
 	da_result_t ret = DA_RESULT_OK;
-	download_state_t download_state = DA_NULL;
+	download_state_t download_state = HTTP_STATE_READY_TO_DOWNLOAD;
 	da_bool_t need_destroy_download_info = DA_FALSE;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	_da_thread_mutex_lock (&mutex_download_state[slot_id]);
 	download_state = GET_DL_STATE_ON_ID(slot_id);
-	DA_LOG(Default, "state = %d", download_state);
+	DA_LOG_DEBUG(Default, "state = %d", download_state);
 	_da_thread_mutex_unlock (&mutex_download_state[slot_id]);
 
 	switch (download_state) {

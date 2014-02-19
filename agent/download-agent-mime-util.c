@@ -23,13 +23,9 @@
 #include "download-agent-mime-util.h"
 #include "download-agent-pthread.h"
 
-#define IS_PROHIBITED_CHAR(c)  ((c) == ';' || (c) == '\\' || (c) == '/' || (c) == ':' || (c) == '*' || (c) == '?' || (c) == '"' || (c) == '>' || (c) == '<' || (c) == '|' || (c) == '(' || (c) == ')')
-#define IS_SPACE_CHARACTER(c)		((c) == ' ' || (c) == '\t')
+#define IS_PROHIBITED_CHAR(c)	((c) == ';' || (c) == '\\' || (c) == '/' || (c) == ':' || (c) == '*' || (c) == '?' || (c) == '"' || (c) == '>' || (c) == '<' || (c) == '|' || (c) == '(' || (c) == ')')
+#define IS_SPACE_CHARACTER(c)	((c) == '\t')
 
-#define DD_MIME_STR "application/vnd.oma.dd+xml"
-#define DD_EXT_STR "*.dd"
-#define DRM_MIME_STR "application/vnd.oma.drm.message"
-#define DRM_EXT_STR "*.dcf"
 #define MAX_EXT_TABLE_INDEX 16
 Ext_translation_table ext_trans_table [MAX_EXT_TABLE_INDEX] = {
 		{"*.xla",			"*.xls"},
@@ -73,7 +69,7 @@ pthread_mutex_t mutex_for_xdgmime = PTHREAD_MUTEX_INITIALIZER;
 
 da_bool_t is_ambiguous_MIME_Type(const char *in_mime_type)
 {
-//	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (!in_mime_type)
 		return DA_FALSE;
@@ -83,7 +79,7 @@ da_bool_t is_ambiguous_MIME_Type(const char *in_mime_type)
 	for (index = 0 ; index < list_size ; index++) {
 		if (0 == strncmp(in_mime_type, ambiguous_MIME_Type_list[index],
 				strlen(ambiguous_MIME_Type_list[index]))) {
-			DA_LOG(Default,"It is ambiguous! [%s]", ambiguous_MIME_Type_list[index]);
+			DA_SECURE_LOGD("It is ambiguous! [%s]", ambiguous_MIME_Type_list[index]);
 			return DA_TRUE;
 		}
 	}
@@ -99,14 +95,14 @@ da_result_t da_mime_get_ext_name(char *mime, char **ext)
 	char ext_temp[DA_MAX_STR_LEN] = {0,};
 	char *temp = NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (DA_NULL == mime || DA_NULL == ext) {
 		ret = DA_ERR_INVALID_ARGUMENT;
 		DA_LOG_ERR(Default,"Invalid mime type");
 		goto ERR;
 	}
-	DA_LOG_VERBOSE(Default,"mime str[%s]ptr[%p]len[%d]",mime,mime,strlen(mime));
+//	DA_SECURE_LOGD("mime str[%s]ptr[%p]len[%d]",mime,mime,strlen(mime));
 	/* unaliased_mimetype means representative mime among similar types */
 	_da_thread_mutex_lock(&mutex_for_xdgmime);
 	unaliased_mimetype = xdg_mime_unalias_mime_type(mime);
@@ -117,7 +113,7 @@ da_result_t da_mime_get_ext_name(char *mime, char **ext)
 		DA_LOG_ERR(Default,"Invalid mime type : No unsaliased mime type");
 		goto ERR;
 	}
-	DA_LOG(Default,"unaliased_mimetype[%s]\n",unaliased_mimetype);
+	DA_SECURE_LOGD("unaliased_mimetype[%s]\n",unaliased_mimetype);
 
 	/* Get extension name from shared-mime-info */
 	_da_thread_mutex_lock(&mutex_for_xdgmime);
@@ -138,7 +134,7 @@ da_result_t da_mime_get_ext_name(char *mime, char **ext)
 		}
 #endif
 	} else { /* For drm case, this else statement is needed */
-		DA_LOG(Default,"extlist[%s]\n",*extlist);
+		DA_SECURE_LOGD("extlist[%s]\n",*extlist);
 		strncpy(ext_temp, *extlist, DA_MAX_STR_LEN);
 		/* If only one extension name is existed, don't enter here */
 		while (*extlist != NULL) {
@@ -155,25 +151,26 @@ da_result_t da_mime_get_ext_name(char *mime, char **ext)
 					break;
 				}
 			}
-			DA_LOG(Default,"index[%d]\n",i);
+			DA_LOG_VERBOSE(Default,"index[%d]\n",i);
 			/* If there is a mime at extension transform table */
 			if (i < MAX_EXT_TABLE_INDEX) {
 				break;
 			}
-			DA_LOG(Default,"extlist[%s]\n",*extlist);
+			DA_SECURE_LOGD("extlist[%s]\n",*extlist);
 			extlist++;
 		}
-		DA_LOG(Default,"extension from shared mime info[%s]",ext_temp);
+//		DA_SECURE_LOGD("extension from shared mime info[%s]",ext_temp);
 	}
 
 	if (strlen(ext_temp) < 1) {
-		/* If there is no mime string for OMD descriptor mime type */
-		if (strncmp(DD_MIME_STR,mime,strlen(DD_MIME_STR)) == 0) {
+		/* If there is no mime string for OMA descriptor mime type */
+		if (strncmp(DD_MIME_STR, mime, strlen(DD_MIME_STR)) == 0) {
 			strncpy(ext_temp, DD_EXT_STR, DA_MAX_STR_LEN-1);
 			ret = DA_RESULT_OK;
 			/* If there is no extension name for "applicaion/vnd.oma.drm.messeages"
 			 *  at shared-mime-info*/
-		} else if (strncmp(DRM_MIME_STR,mime,strlen(DD_MIME_STR)) == 0) {
+		} else if (strncmp(DRM_MIME_MSG_STR, mime,
+				strlen(DRM_MIME_MSG_STR)) == 0) {
 			strncpy(ext_temp, DRM_EXT_STR, DA_MAX_STR_LEN-1);
 			/* If there is extension name at extlist, the return value can have an error.*/
 			ret = DA_RESULT_OK;
@@ -191,7 +188,6 @@ da_result_t da_mime_get_ext_name(char *mime, char **ext)
 	else
 		temp++;
 
-	DA_LOG(Default,"final extension name:[%s]",temp);
 	*ext = (char*)calloc(1, strlen(temp) + 1);
 	if (*ext != DA_NULL) {
 		strncpy(*ext, temp,strlen(temp));
@@ -210,7 +206,7 @@ da_bool_t da_get_extension_name_from_url(char *url, char **ext)
 	char *temp_str = DA_NULL;
 	int buf_len = 0;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (DA_NULL == url || DA_NULL == ext) {
 		ret = DA_FALSE;
@@ -237,7 +233,7 @@ da_bool_t da_get_extension_name_from_url(char *url, char **ext)
 				goto ERR;
 			}
 			strncpy(*ext,buff,buf_len);
-			DA_LOG(Default,"extention name[%s]",*ext);
+			DA_SECURE_LOGD("extention name[%s]",*ext);
 			return ret;
 		}
 	}
@@ -262,7 +258,7 @@ da_bool_t da_get_file_name_from_url(char *url, char **name)
 	int len_name = 0;
 	char name_buff[DA_MAX_FILE_PATH_LEN] = {0,};
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (DA_NULL == url || DA_NULL == name) {
 		ret = DA_FALSE;
@@ -341,16 +337,16 @@ da_bool_t da_get_file_name_from_url(char *url, char **name)
 		if (End != NULL) {
 			*End = '\0';
 		}
-		DA_LOG(Default,"file name BEFORE removing prohibited character = %s", name_buff);
+//		DA_SECURE_LOGD("file name BEFORE removing prohibited character = %s", name_buff);
 		delete_prohibited_char(name_buff, strlen(name_buff));
-		DA_LOG(Default,"file name AFTER removing prohibited character = %s", name_buff);
+//		DA_SECURE_LOGD("file name AFTER removing prohibited character = %s", name_buff);
 		len_name = strlen(name_buff);
 		*name = (char*) calloc(1, len_name + 1);
 		if (*name) {
 			strncpy(*name, name_buff,len_name);
 		}
 	}
-	DA_LOG(Default,"Extracted file name : %s", *name);
+//	DA_SECURE_LOGD("Extracted file name : %s", *name);
 ERR:
 	if (buff) {
 		free (buff);

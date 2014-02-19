@@ -24,22 +24,35 @@
 #undef LOG_TAG
 #endif
 #define LOG_TAG "DOWNLOAD_PROVIDER"
-#define TRACE_ERROR(format, ARG...)  \
-{ \
-LOGE(format, ##ARG); \
-}
-#define TRACE_STRERROR(format, ARG...)  \
-{ \
-LOGE(format" [%s]", ##ARG, strerror(errno)); \
-}
-#define TRACE_INFO(format, ARG...)  \
-{ \
-LOGI(format, ##ARG); \
-}
+#define TRACE_DEBUG(format, ARG...) LOGD(format, ##ARG)
+#define TRACE_ERROR(format, ARG...) LOGE(format, ##ARG)
+#define TRACE_STRERROR(format, ARG...) LOGE(format" [%s]", ##ARG, strerror(errno))
+#define TRACE_INFO(format, ARG...) LOGI(format, ##ARG)
+
+#ifdef SECURE_LOGD
+#define TRACE_SECURE_DEBUG(format, ARG...) SECURE_LOGD(format, ##ARG)
 #else
-#define TRACE_ERROR(format, ARG...) ;
-#define TRACE_STRERROR(format, ARG...) ;
-#define TRACE_INFO(format, ARG...) ;
+#define TRACE_SECURE_DEBUG(...) do { } while(0)
+#endif
+#ifdef SECURE_LOGI
+#define TRACE_SECURE_INFO(format, ARG...) SECURE_LOGI(format, ##ARG)
+#else
+#define TRACE_SECURE_INFO(...) do { } while(0)
+#endif
+#ifdef SECURE_LOGE
+#define TRACE_SECURE_ERROR(format, ARG...) SECURE_LOGE(format, ##ARG)
+#else
+#define TRACE_SECURE_ERROR(...) do { } while(0)
+#endif
+
+#else
+#define TRACE_DEBUG(...) do { } while(0)
+#define TRACE_ERROR(...) do { } while(0)
+#define TRACE_STRERROR(...) do { } while(0)
+#define TRACE_INFO(...) do { } while(0)
+#define TRACE_SECURE_DEBUG(...) do { } while(0)
+#define TRACE_SECURE_INFO(...) do { } while(0)
+#define TRACE_SECURE_ERROR(...) do { } while(0)
 #endif
 
 #endif

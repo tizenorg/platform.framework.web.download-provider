@@ -29,7 +29,7 @@ int da_init(
 {
 	da_result_t ret = DA_RESULT_OK;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	if (!da_client_callback) {
 		ret = DA_ERR_INVALID_ARGUMENT;
@@ -70,7 +70,7 @@ int da_deinit()
 {
 	da_result_t ret = DA_RESULT_OK;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	deinit_http_mgr();
 	deinit_download_mgr();
@@ -89,14 +89,14 @@ int da_start_download(
 {
 	da_result_t ret = DA_RESULT_OK;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	*download_id = DA_INVALID_ID;
 
 	if (DA_FALSE == is_valid_url(url, &ret))
 		goto ERR;
 
-	DA_LOG(Default, "url = %s", url);
+	DA_SECURE_LOGI("url = %s", url);
 
 	ret = start_download(url, download_id);
 	if (ret != DA_RESULT_OK)
@@ -117,14 +117,14 @@ int da_start_download_with_extension(
 	int req_header_count = 0;
 	int i = 0;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	*download_id = DA_INVALID_ID;
 
 	if (DA_FALSE == is_valid_url(url, &ret))
 		goto ERR;
 
-	DA_LOG(Default, "url = %s", url);
+	DA_SECURE_LOGI("url = %s", url);
 
 	if (ret != DA_RESULT_OK)
 		goto ERR;
@@ -139,11 +139,11 @@ int da_start_download_with_extension(
 		for (i = 0; i < extension_data->request_header_count; i++) {
 			if (extension_data->request_header[i]) {
 				req_header_count++;
-				DA_LOG_VERBOSE(Default, "request_header = [%s]",
+				DA_SECURE_LOGI("request_header = [%s]",
 					extension_data->request_header[i]);
 			}
 		}
-		DA_LOG(Default, "actual request_header_count = [%d]", req_header_count);
+		DA_LOG_VERBOSE(Default, "actual request_header_count = [%d]", req_header_count);
 		if (extension_data->request_header_count != req_header_count) {
 			DA_LOG_ERR(Default, "Request header count is not matched with number of request header array");
 			extension_data->request_header = NULL;
@@ -156,16 +156,17 @@ int da_start_download_with_extension(
 	if (extension_data->install_path) {
 		if (!is_dir_exist(extension_data->install_path))
 			return DA_ERR_INVALID_INSTALL_PATH;
-		DA_LOG_VERBOSE(Default, "install_path = [%s]", extension_data->install_path);
+		DA_SECURE_LOGI("install_path = [%s]", extension_data->install_path);
 	}
 
 	if (extension_data->file_name)
-		DA_LOG_VERBOSE(Default, "file_name = [%s]", extension_data->file_name);
+		DA_SECURE_LOGI("file_name = [%s]", extension_data->file_name);
 	if (extension_data->temp_file_path)
-		DA_LOG_VERBOSE(Default, "temp_file_path = [%s]", extension_data->temp_file_path);
+		DA_SECURE_LOGI("temp_file_path = [%s]", extension_data->temp_file_path);
 	if (extension_data->etag)
-		DA_LOG_VERBOSE(Default, "etag = [%s]", extension_data->etag);
-
+		DA_SECURE_LOGI("etag = [%s]", extension_data->etag);
+	if (extension_data->pkg_name)
+		DA_SECURE_LOGI("pkg_name = [%s]", extension_data->pkg_name);
 	if (extension_data->user_data)
 		DA_LOG_VERBOSE(Default, "user_data = [%p]", extension_data->user_data);
 

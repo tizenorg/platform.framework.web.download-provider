@@ -36,7 +36,7 @@ static da_result_t __download_content(stage_info *stage);
 
 da_result_t start_download(const char *url , int *dl_id)
 {
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 	return start_download_with_extension(url, dl_id, NULL);
 }
 
@@ -52,6 +52,7 @@ da_result_t start_download_with_extension(
 	const char *file_name = DA_NULL;
 	const char *etag = DA_NULL;
 	const char *temp_file_path = DA_NULL;
+	const char *pkg_name = DA_NULL;
 	int request_header_count = 0;
 	void *user_data = DA_NULL;
 	client_input_t *client_input = DA_NULL;
@@ -59,7 +60,7 @@ da_result_t start_download_with_extension(
 	download_thread_input *thread_info = DA_NULL;
 	pthread_attr_t thread_attr;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (extension_data) {
 		request_header = extension_data->request_header;
@@ -70,6 +71,7 @@ da_result_t start_download_with_extension(
 		user_data = extension_data->user_data;
 		etag = extension_data->etag;
 		temp_file_path = extension_data->temp_file_path;
+		pkg_name = extension_data->pkg_name;
 	}
 
 	ret = get_available_slot_id(&slot_id);
@@ -114,6 +116,11 @@ da_result_t start_download_with_extension(
 				strncpy(client_input->temp_file_path, temp_file_path, strlen(temp_file_path));
 		}
 
+		if (pkg_name) {
+			client_input->pkg_name = (char *)calloc(strlen(pkg_name)+1, sizeof(char));
+			if (client_input->pkg_name)
+				strncpy(client_input->pkg_name, pkg_name, strlen(pkg_name));
+		}
 		client_input_basic = &(client_input->client_input_basic);
 		client_input_basic->req_url = (char *)calloc(strlen(url)+1, sizeof(char));
 		if(DA_NULL == client_input_basic->req_url) {
@@ -172,7 +179,7 @@ da_result_t start_download_with_extension(
 			goto ERR;
 		}
 	}
-	DA_LOG_CRITICAL(Thread, "download thread create slot_id[%d] thread id[%lu]",
+	DA_LOG_DEBUG(Thread, "download thread create slot_id[%d] thread id[%lu]",
 			slot_id,GET_DL_THREAD_ID(slot_id));
 
 ERR:
@@ -200,7 +207,7 @@ da_result_t __make_source_info_basic_download(
 	source_info_t *source_info = DA_NULL;
 	source_info_basic_t *source_info_basic = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (!stage) {
 		DA_LOG_ERR(Default, "no stage; DA_ERR_INVALID_ARGUMENT");
@@ -239,8 +246,8 @@ da_result_t __make_source_info_basic_download(
 
 	source_info->source_info_type.source_info_basic = source_info_basic;
 
-	DA_LOG(Default, "BASIC HTTP STARTED: URL=%s",
-			source_info->source_info_type.source_info_basic->url);
+//	DA_SECURE_LOGI("BASIC HTTP STARTED: URL=%s",
+//			source_info->source_info_type.source_info_basic->url);
 ERR:
 	return ret;
 }
@@ -260,7 +267,7 @@ static void *__thread_start_download(void *data)
 
 	int slot_id = DA_INVALID_ID;
 
-	DA_LOG_FUNC_START(Thread);
+	DA_LOG_FUNC_LOGV(Thread);
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, DA_NULL);
 
@@ -299,7 +306,7 @@ static void *__thread_start_download(void *data)
 		DA_LOG_ERR(Default, "STAGE ADDITION FAIL!");
 		goto ERR;
 	}
-	DA_LOG(Default, "new added Stage : %p", stage);
+	DA_LOG_VERBOSE(Default, "new added Stage : %p", stage);
 
 	GET_DL_USER_DATA(slot_id) = client_input->user_data;
 	client_input->user_data = DA_NULL;
@@ -311,17 +318,23 @@ static void *__thread_start_download(void *data)
 	client_input->etag = DA_NULL;
 	GET_DL_USER_TEMP_FILE_PATH(slot_id) = client_input->temp_file_path;
 	client_input->temp_file_path = DA_NULL;
+
 	ret = __make_source_info_basic_download(stage, client_input);
-	/* to save memory */
-	if (client_input) {
-		clean_up_client_input_info(client_input);
-		free(client_input);
-		client_input = DA_NULL;
-	}
 
-	if (ret == DA_RESULT_OK)
+	if (ret == DA_RESULT_OK) {
+		/* to save memory */
+		if (client_input) {
+			clean_up_client_input_info(client_input);
+			free(client_input);
+			client_input = DA_NULL;
+		}
+
 		ret = __download_content(stage);
-
+		if (stage != GET_DL_CURRENT_STAGE(slot_id)) {
+			DA_LOG_ERR(Default,"Playready download case. The next stage is present stage");
+			stage = GET_DL_CURRENT_STAGE(slot_id);
+		}
+	}
 ERR:
 	if (client_input) {
 		clean_up_client_input_info(client_input);
@@ -334,7 +347,7 @@ ERR:
 		char *etag = DA_NULL;
 		req_dl_info *request_info = NULL;
 		file_info *file_storage = NULL;
-		DA_LOG_CRITICAL(Default, "Whole download flow is finished.");
+		DA_LOG_VERBOSE(Default, "Whole download flow is finished.");
 		_da_thread_mutex_lock (&mutex_download_state[GET_STAGE_DL_ID(stage)]);
 		download_state = GET_DL_STATE_ON_STAGE(stage);
 		_da_thread_mutex_unlock (&mutex_download_state[GET_STAGE_DL_ID(stage)]);
@@ -367,7 +380,7 @@ ERR:
 	}
 
 	pthread_cleanup_pop(0);
-	DA_LOG_CRITICAL(Thread, "=====thread_start_download - EXIT=====");
+	DA_LOG_CRITICAL(Thread, "==thread_start_download - EXIT==");
 	pthread_exit((void *)NULL);
 	return DA_NULL;
 }
@@ -379,7 +392,7 @@ da_result_t __download_content(stage_info *stage)
 	da_bool_t isDownloadComplete = DA_FALSE;
 	int slot_id = DA_INVALID_ID;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	slot_id = GET_STAGE_DL_ID(stage);
 	CHANGE_DOWNLOAD_STATE(DOWNLOAD_STATE_NEW_DOWNLOAD, stage);
@@ -388,7 +401,7 @@ da_result_t __download_content(stage_info *stage)
 		stage = GET_DL_CURRENT_STAGE(slot_id);
 		_da_thread_mutex_lock (&mutex_download_state[GET_STAGE_DL_ID(stage)]);
 		download_state = GET_DL_STATE_ON_STAGE(stage);
-		DA_LOG(Default, "download_state to - [%d] ", download_state);
+		DA_LOG_VERBOSE(Default, "download_state to - [%d] ", download_state);
 		_da_thread_mutex_unlock (&mutex_download_state[GET_STAGE_DL_ID(stage)]);
 
 		switch(download_state) {

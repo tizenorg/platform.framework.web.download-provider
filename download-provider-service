@@ -1,9 +1,0 @@
-#!/bin/sh
-
-### A script for running download daemon in booting time.
-#dlogutil -v long -f /var/log/download-capi.log -r 100 -n 10 TIZEN_N_URL_DOWNLOAD &
-#dlogutil -v long -f /var/log/download-daemon.log -r 1000 -n 10 download-provider DownloadAgent &
-
-if [ -x /usr/bin/download-provider ]; then
-/usr/bin/download-provider &
-fi

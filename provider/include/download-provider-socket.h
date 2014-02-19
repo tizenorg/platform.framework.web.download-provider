@@ -17,6 +17,7 @@
 #ifndef DOWNLOAD_PROVIDER2_SOCKET_H
 #define DOWNLOAD_PROVIDER2_SOCKET_H
 
+#include <bundle.h>
 #include "download-provider.h"
 #include "download-provider-slots.h"
 
@@ -31,7 +32,9 @@ int dp_ipc_send_stateinfo(int fd, int id, dp_state_type state,
 	dp_error_type errorcode);
 #endif
 char *dp_ipc_read_string(int fd);
+unsigned dp_ipc_read_bundle(int fd, int *type, bundle_raw **b);
 int dp_ipc_send_string(int fd, const char *str);
+int dp_ipc_send_bundle(int fd, bundle_raw *b, unsigned length);
 int dp_ipc_send_custom_type(int fd, void *value, size_t type_size);
 int dp_ipc_read_custom_type(int fd, void *value, size_t type_size);
 int dp_accept_socket_new();

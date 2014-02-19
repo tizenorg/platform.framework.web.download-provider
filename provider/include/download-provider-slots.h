@@ -39,6 +39,7 @@ typedef struct {
 	// fill by app-manager
 	char *pkgname;
 	dp_credential credential;
+	char *smack_label;
 } dp_client_group;
 
 typedef struct {
@@ -53,6 +54,7 @@ typedef struct {
 	unsigned progress_cb; // set : 1 unset : 0
 	unsigned startcount;
 	unsigned auto_notification;
+	unsigned ip_changed;
 	dp_state_type state; // downloading state
 	dp_error_type error;
 	dp_network_type network_type;
@@ -60,9 +62,7 @@ typedef struct {
 	unsigned long long received_size; // progress
 	unsigned long long file_size;
 	char *packagename;
-	dp_credential credential;
 	dp_client_group *group; // indicate dp_client_group included this request
-	pthread_mutex_t mutex;
 } dp_request;
 
 typedef struct {
@@ -70,6 +70,7 @@ typedef struct {
 } dp_group_slots;
 
 typedef struct {
+	pthread_mutex_t mutex;
 	dp_request *request;
 } dp_request_slots;
 
@@ -82,6 +83,7 @@ int dp_client_group_slots_free(dp_group_slots *slots, int size);
 dp_request *dp_request_new();
 void dp_request_init(dp_request *request);
 int dp_request_free(dp_request *request);
+int dp_request_slot_free(dp_request_slots *request_slot);
 int dp_request_slots_free(dp_request_slots *slots, int size);
 int dp_get_request_count(dp_request_slots *slots);
 
