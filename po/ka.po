@@ -1,0 +1,3 @@
+msgid "IDS_DM_HEADER_DOWNLOAD_COMPLETE"
+msgstr "ჩამოტვირთვა დასრულდა"
+

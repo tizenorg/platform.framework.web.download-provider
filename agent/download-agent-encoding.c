@@ -47,14 +47,14 @@ da_bool_t is_base64_encoded_word(const char *in_str)
 		snprintf(second_needle, sizeof(second_needle), "%s", "?=");	// ?=
 	}
 
-//	DA_LOG(Default, "needle = [%s], haystack = [%s]", first_needle, haystack);
+//	DA_SECURE_LOGD("needle = [%s], haystack = [%s]", first_needle, haystack);
 
 	found_str = strstr(haystack, first_needle);
 	if (found_str) {
 		if (found_str == haystack) {
-//			DA_LOG(Default, "Input string is starting with %s", needle);
+//			DA_SECURE_LOGD("Input string is starting with %s", needle);
 			haystack = haystack + strlen(haystack) - strlen(second_needle);
-//			DA_LOG(Default, "second haystack is [%s]", haystack);
+//			DA_SECURE_LOGD("second haystack is [%s]", haystack);
 			if(!strcmp(haystack, second_needle))
 				return DA_TRUE;
 		}
@@ -76,7 +76,7 @@ da_result_t decode_base64_encoded_str(const char *in_encoded_str,
 	guchar *g_decoded_text = NULL;
 	gsize g_decoded_text_len = 0;
 
-	DA_LOG(Default, "input str = [%s]", in_encoded_str);
+	DA_SECURE_LOGD("input str = [%s]", in_encoded_str);
 
 	org_str = in_encoded_str;
 	if(!org_str) {
@@ -91,7 +91,7 @@ da_result_t decode_base64_encoded_str(const char *in_encoded_str,
 		goto ERR;
 	}
 
-//	DA_LOG(Default, "charset = [%s], encoding = [%c], raw = [%s]", charset_type, encoding_type, raw_encoded_str);
+//	DA_SECURE_LOGD("charset = [%s], encoding = [%c], raw = [%s]", charset_type, encoding_type, raw_encoded_str);
 
 	if(encoding_type != 'B') {
 		DA_LOG_ERR(Default, "Encoded Word is not encoded with Base64, but %c. We can only handle Base64.", encoding_type);
@@ -109,7 +109,7 @@ da_result_t decode_base64_encoded_str(const char *in_encoded_str,
 	g_decoded_text = g_base64_decode(g_encoded_text, &g_decoded_text_len);
 
 	if(g_decoded_text) {
-		DA_LOG(Default, "g_decoded_text = [%s]", g_decoded_text);
+		DA_SECURE_LOGD("g_decoded_text = [%s]", g_decoded_text);
 		decoded_str = (char*)calloc(1, g_decoded_text_len+1);
 		if(!decoded_str) {
 			DA_LOG_ERR(Default, "DA_ERR_FAIL_TO_MEMALLOC");
@@ -119,7 +119,7 @@ da_result_t decode_base64_encoded_str(const char *in_encoded_str,
 			memcpy(decoded_str, g_decoded_text, g_decoded_text_len);
 		}
 	}
-	DA_LOG(Default, "decoded_str = [%s]", decoded_str);
+	DA_SECURE_LOGD("decoded_str = [%s]", decoded_str);
 
 ERR:
 	*out_decoded_ascii_str = decoded_str;
@@ -179,7 +179,7 @@ da_result_t _parsing_base64_encoded_str(const char *in_encoded_str,
 		goto ERR;
 	} else {
 		wanted_str = wanted_str_end + strlen(needle);
-		DA_LOG(Default, "strip [%s]", wanted_str);
+		DA_SECURE_LOGD("strip [%s]", wanted_str);
 	}
 
 	// for charset
@@ -232,7 +232,7 @@ da_result_t _parsing_base64_encoded_str(const char *in_encoded_str,
 			wanted_str = NULL;
 		}
 
-		DA_LOG(Default, "raw encoded str [%s]", raw_encoded_str);
+		DA_SECURE_LOGD("raw encoded str [%s]", raw_encoded_str);
 	}
 
 ERR:

@@ -17,10 +17,13 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "bundle.h"
 #include "notification.h"
 #include "appsvc.h"
+
+#include "download-provider-defs.h"
 
 #include "download-provider-notification.h"
 #include "download-provider-request.h"
@@ -29,8 +32,12 @@
 
 #include <libintl.h>
 #define S_(s) dgettext("sys_string", s)
+#define __(s) dgettext(PKG_NAME, s)
 
-#define DP_NOTIFICATION_ICON_PATH IMAGE_DIR"/Q02_Notification_Download_failed.png"
+#define DP_NOTIFICATION_ICON_PATH IMAGE_DIR"/Q02_Notification_download_complete.png"
+#define DP_NOTIFICATION_ONGOING_ICON_PATH IMAGE_DIR"/Notification_download_animation.gif"
+#define DP_NOTIFICATION_DOWNLOADING_ICON_PATH "reserved://indicator/ani/downloading"
+#define DP_NOTIFICATION_FAILED_ICON_PATH IMAGE_DIR"/Q02_Notification_download_failed.png"
 
 static const char *__noti_error_str(
 		notification_error_e err)
@@ -54,136 +61,101 @@ static const char *__noti_error_str(
 	return "Unknown error";
 }
 
+static char *__get_string_sender(char *url)
+{
+	char *temp = NULL;
+	char *found = NULL;
+	char *found1 = NULL;
+	char *sender = NULL;
+	char *credential_sender = NULL;
+
+	if (url == NULL)
+		return NULL;
+
+	found = strstr(url, "://");
+	if (found) {
+		temp = found + 3;
+	} else {
+		temp = url;
+	}
+	found = strchr(temp, '/');
+	if (found) {
+		int len = 0;
+		len = found - temp;
+		sender = calloc(len + 1, sizeof(char));
+		if (sender == NULL)
+			return NULL;
+		snprintf(sender, len + 1, "%s", temp);
+	} else {
+		sender = dp_strdup(temp);
+	}
+
+	// For credential URL
+	found = strchr(sender, '@');
+	found1 = strchr(sender, ':');
+	if (found && found1 && found1 < found) {
+		int len = 0;
+		found = found + 1;
+		len = strlen(found);
+		credential_sender = calloc(len + 1, sizeof(char));
+		if (credential_sender == NULL) {
+			free(sender);
+			return NULL;
+		}
+		snprintf(credential_sender, len + 1, "%s", found);
+		free(sender);
+		return credential_sender;
+	} else {
+		return sender;
+	}
+}
+
+static char *__get_string_size(long long file_size)
+{
+	const char *unitStr[4] = {"B", "KB", "MB", "GB"};
+	double doubleTypeBytes = 0.0;
+	int unit = 0;
+	long long bytes = file_size;
+	long long unitBytes = bytes;
+	char *temp = NULL;
+
+	/* using bit operation to avoid floating point arithmetic */
+	for (unit = 0; (unitBytes > 1024 && unit < 4); unit++) {
+		unitBytes = unitBytes >> 10;
+	}
+	unitBytes = 1 << (10 * unit);
+
+	if (unit > 3)
+		unit = 3;
+
+	char str[64] = {0};
+	if (unit == 0) {
+		snprintf(str, sizeof(str), "%lld %s", bytes, unitStr[unit]);
+	} else {
+		doubleTypeBytes = ((double)bytes / (double)unitBytes);
+		snprintf(str, sizeof(str), "%.2f %s", doubleTypeBytes, unitStr[unit]);
+	}
+
+	str[63] = '\0';
+	temp = dp_strdup(str);
+	return temp;
+}
+
 static char *__get_string_status(dp_state_type state)
 {
 	char *message = NULL;
 	switch (state) {
 	case DP_STATE_COMPLETED:
-		//message = S_("IDS_COM_POP_SUCCESS");
-		message = "Completed";
+		message = __("IDS_DM_HEADER_DOWNLOAD_COMPLETE");
 		break;
 	case DP_STATE_CANCELED:
-		//message = S_("IDS_COM_POP_CANCELLED");
-		message = "Canceled";
-		break;
 	case DP_STATE_FAILED:
-		//message = S_("IDS_COM_POP_FAILED");
-		message = "Failed";
+		message = S_("IDS_COM_POP_DOWNLOAD_FAILED");
 		break;
 	default:
 		break;
 	}
 	return message;
-}
-static void __free_char_pointer_array(char **array, int count)
-{
-	int i = 0;
-	if (count < 0)
-		count = 0;
-	for (i = 0; i < count; i++) {
-		if (array[i])
-			free(array[i]);
-	}
-	free(array);
-}
-
-static int __set_extra_data(bundle *b, int id)
-{
-	db_conds_list_fmt conds_p;
-	int conds_count = 0;
-	int count = 0;
-	// get count of key list.
-	conds_count = 1;
-	memset(&conds_p, 0x00, sizeof(db_conds_list_fmt));
-	conds_p.column = DP_DB_COL_ID;
-	conds_p.type = DP_DB_COL_TYPE_INT;
-	conds_p.value = &id;
-	count = dp_db_get_conds_rows_count(DP_DB_TABLE_NOTIFICATION,
-			DP_DB_COL_DISTINCT_EXTRA_KEY, "AND", 1, &conds_p);
-	if (count > 0) {
-		char **keys_array = NULL;
-		int i = 0;
-		keys_array = (char **)calloc(count, sizeof(char *));
-		if (keys_array == NULL) {
-			TRACE_ERROR("[FAIL] calloc failed");
-			return -1;
-		}
-		// get key list
-		int keys_count =
-			dp_db_get_conds_list(DP_DB_TABLE_NOTIFICATION,
-					DP_DB_COL_DISTINCT_EXTRA_KEY , DP_DB_COL_TYPE_TEXT,
-					(void **)keys_array, count, -1, NULL, NULL,
-					"AND", 1, &conds_p);
-		if (keys_count <= 0) {
-			TRACE_ERROR("[FAIL] Wrong db data");
-			__free_char_pointer_array(keys_array, 0);
-			return -1;
-		}
-		for (i = 0; i < keys_count; i++) {
-			db_conds_list_fmt conds_p2[2];
-			int conds_count2 = 2;
-			char **values_array = NULL;
-			int check_rows = 0;
-			int values_count = 0;
-
-			memset(conds_p2, 0x00, conds_count2 * sizeof(db_conds_list_fmt));
-			conds_p2[0].column = DP_DB_COL_ID;
-			conds_p2[0].type = DP_DB_COL_TYPE_INT;
-			conds_p2[0].value = &id;
-			conds_p2[1].column = DP_DB_COL_EXTRA_KEY;
-			conds_p2[1].type = DP_DB_COL_TYPE_TEXT;
-			conds_p2[1].value = (void *)(keys_array[i]);
-			// get value list
-			check_rows = dp_db_get_conds_rows_count(
-					DP_DB_TABLE_NOTIFICATION, DP_DB_COL_EXTRA_VALUE, "AND",
-					conds_count2, conds_p2);
-			if (check_rows <= 0) {
-				TRACE_ERROR("[FAIL] No values about key");
-				__free_char_pointer_array(keys_array, keys_count);
-				return -1;
-			}
-			values_array = (char **)calloc(check_rows, sizeof(char *));
-			if (values_array == NULL) {
-				TRACE_ERROR("[FAIL] calloc failed");
-				__free_char_pointer_array(keys_array, keys_count);
-				return -1;
-			}
-			values_count =
-				dp_db_get_conds_list(DP_DB_TABLE_NOTIFICATION,
-					DP_DB_COL_EXTRA_VALUE, DP_DB_COL_TYPE_TEXT,
-					(void **)values_array, check_rows, -1, NULL, NULL,
-					"AND", conds_count2, conds_p2);
-			if (values_count <= 0) {
-				TRACE_ERROR("[FAIL] No values about key");
-				__free_char_pointer_array(keys_array, keys_count);
-				__free_char_pointer_array(values_array, 0);
-				return -1;
-			}
-			if (values_count == 1) {
-				char *key = keys_array[i];
-				char *value = values_array[values_count-1];
-				if (appsvc_add_data(b, key, value) !=
-					APPSVC_RET_OK) {
-					TRACE_ERROR("[FAIL] set add data");
-					__free_char_pointer_array(keys_array, keys_count);
-					__free_char_pointer_array(values_array, values_count);
-					return -1;
-				}
-			} else {
-				char *key = keys_array[i];
-				if (appsvc_add_data_array(b, key, (const char **)values_array,
-						values_count) !=	APPSVC_RET_OK) {
-					TRACE_ERROR("[FAIL] set add data");
-					__free_char_pointer_array(keys_array, keys_count);
-					__free_char_pointer_array(values_array, values_count);
-					return -1;
-				}
-			}
-			__free_char_pointer_array(values_array, values_count);
-		}
-		__free_char_pointer_array(keys_array, keys_count);
-	}
-	return 0;
 }
 
 int dp_set_downloadinginfo_notification(int id, char *packagename)
@@ -192,6 +164,9 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 	notification_error_e err = NOTIFICATION_ERROR_NONE;
 	int privId = 0;
 	bundle *b = NULL;
+	void *blob_data = NULL;
+	bundle_raw* b_raw = NULL;
+	int length;
 
 	noti_handle = notification_create(NOTIFICATION_TYPE_ONGOING);
 	if (!noti_handle) {
@@ -199,18 +174,31 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 		return -1;
 	}
 
-	char *content_name =
-		dp_db_get_text_column
-			(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_CONTENT_NAME);
+	char *title = dp_db_get_text_column(id,
+		DP_DB_TABLE_NOTIFICATION, DP_DB_COL_TITLE);
+	if(title != NULL) {
+		err = notification_set_text(noti_handle, NOTIFICATION_TEXT_TYPE_TITLE,
+			title, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		free(title);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
+			notification_free(noti_handle);
+			return -1;
+		}
+	} else {
+		char *content_name =
+			dp_db_get_text_column
+				(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_CONTENT_NAME);
 
-	if (content_name == NULL)
-		content_name = strdup("No Name");
+		if (content_name == NULL)
+			content_name = strdup("No Name");
 
-	err = notification_set_text(noti_handle,
-			NOTIFICATION_TEXT_TYPE_TITLE, content_name, NULL,
-			NOTIFICATION_VARIABLE_TYPE_NONE);
-	if (content_name)
-		free(content_name);
+		err = notification_set_text(noti_handle,
+				NOTIFICATION_TEXT_TYPE_TITLE, content_name, NULL,
+				NOTIFICATION_VARIABLE_TYPE_NONE);
+		if (content_name)
+			free(content_name);
+	}
 
 	if (err != NOTIFICATION_ERROR_NONE) {
 		TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
@@ -219,49 +207,79 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 	}
 
 	err = notification_set_image(noti_handle,
-			NOTIFICATION_IMAGE_TYPE_ICON, DP_NOTIFICATION_ICON_PATH);
+			NOTIFICATION_IMAGE_TYPE_ICON, DP_NOTIFICATION_ONGOING_ICON_PATH);
 	if (err != NOTIFICATION_ERROR_NONE) {
 		TRACE_ERROR("[FAIL] set icon [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
 
-	b = bundle_create();
-	if (!b) {
-		TRACE_ERROR("[FAIL] create bundle");
-		notification_free(noti_handle);
-		return -1;
-	}
+	blob_data = dp_db_get_blob_column
+				(id, DP_DB_TABLE_NOTIFICATION, DP_DB_COL_RAW_BUNDLE_ONGOING, &length);
+	if (blob_data != NULL) {
+		b_raw = (bundle_raw*)blob_data;
+		if (b_raw != NULL) {
+			b = bundle_decode_raw(b_raw, length);
+			if (b != NULL) {
+				err = notification_set_execute_option(noti_handle,
+					NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
 
-	if (packagename &&
-		appsvc_set_pkgname(b, packagename) != APPSVC_RET_OK) {
-		TRACE_ERROR("[FAIL] set pkg name");
-		bundle_free(b);
-		notification_free(noti_handle);
-		return -1;
-	}
+				if (err != NOTIFICATION_ERROR_NONE) {
+					TRACE_ERROR("[FAIL] set execute option [%s]", __noti_error_str(err));
+					bundle_free_encoded_rawdata(&b_raw);
+					bundle_free(b);
+					notification_free(noti_handle);
+					return -1;
+				}
+				bundle_free_encoded_rawdata(&b_raw);
+				bundle_free(b);
+			}
+		}
+	} else {
+		b = bundle_create();
+		if (!b) {
+			TRACE_ERROR("[FAIL] create bundle");
+			notification_free(noti_handle);
+			return -1;
+		}
 
-	if (__set_extra_data(b, id) < 0) {
-		bundle_free(b);
-		notification_free(noti_handle);
-		return -1;
-	}
-
-	err = notification_set_execute_option(noti_handle,
+		if (packagename &&
+			appsvc_set_pkgname(b, packagename) != APPSVC_RET_OK) {
+			TRACE_ERROR("[FAIL] set pkg name");
+			bundle_free(b);
+			notification_free(noti_handle);
+			return -1;
+		}
+		err = notification_set_execute_option(noti_handle,
 			NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
 
-	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set execute option [%s]", __noti_error_str(err));
+		if (err != NOTIFICATION_ERROR_NONE) {
+			TRACE_ERROR("[FAIL] set execute option [%s]", __noti_error_str(err));
+			bundle_free(b);
+			notification_free(noti_handle);
+			return -1;
+		}
 		bundle_free(b);
-		notification_free(noti_handle);
-		return -1;
 	}
-	bundle_free(b);
-
 	err = notification_set_property(noti_handle,
 			NOTIFICATION_PROP_DISABLE_TICKERNOTI);
 	if (err != NOTIFICATION_ERROR_NONE) {
 		TRACE_ERROR("[FAIL] set property [%s]", __noti_error_str(err));
+		notification_free(noti_handle);
+		return -1;
+	}
+
+	err = notification_set_image(noti_handle,
+		NOTIFICATION_IMAGE_TYPE_ICON_FOR_INDICATOR, DP_NOTIFICATION_DOWNLOADING_ICON_PATH);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		TRACE_ERROR("[FAIL] set icon indicator [%s]", __noti_error_str(err));
+		notification_free(noti_handle);
+		return -1;
+	}
+
+	err = notification_set_display_applist(noti_handle, NOTIFICATION_DISPLAY_APP_ALL);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		TRACE_ERROR("[FAIL] set disable icon [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -273,7 +291,7 @@ int dp_set_downloadinginfo_notification(int id, char *packagename)
 		return -1;
 	}
 
-	TRACE_INFO("m_noti_id [%d]", privId);
+	TRACE_DEBUG("m_noti_id [%d]", privId);
 	notification_free(noti_handle);
 	return privId;
 }
@@ -284,6 +302,9 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 	notification_error_e err = NOTIFICATION_ERROR_NONE;
 	int privId = 0;
 	bundle *b = NULL;
+	void *blob_data = NULL;
+	bundle_raw* b_raw = NULL;
+	int length = 0;
 
 	if (priv_id >= 0) {
 		err = notification_delete_by_priv_id(NULL, NOTIFICATION_TYPE_ONGOING,
@@ -301,99 +322,218 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 		return -1;
 	}
 
-	char *content_name =
-		dp_db_get_text_column
-			(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_CONTENT_NAME);
-
-	if (content_name == NULL)
-		content_name = strdup("No Name");
-
-	err = notification_set_text(noti_handle,
-			NOTIFICATION_TEXT_TYPE_TITLE, content_name,
-			NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
-	if (content_name)
-		free(content_name);
-
 	if (err != NOTIFICATION_ERROR_NONE) {
 		TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
 
-	err = notification_set_text(noti_handle,
-			NOTIFICATION_TEXT_TYPE_CONTENT,
-			__get_string_status(state), NULL,
-			NOTIFICATION_VARIABLE_TYPE_NONE);
+	err = notification_set_text(noti_handle, NOTIFICATION_TEXT_TYPE_TITLE,
+			__get_string_status(state), NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set text [%s]", __noti_error_str(err));
+		TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
-	time_t tt = time(NULL);
 
-	err = notification_set_time(noti_handle, tt);
+	char *description =
+		dp_db_get_text_column
+			(id, DP_DB_TABLE_NOTIFICATION, DP_DB_COL_DESCRIPTION);
+	if(description != NULL) {
+		err = notification_set_text(noti_handle,
+				NOTIFICATION_TEXT_TYPE_INFO_2, description,
+				NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		free(description);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			TRACE_ERROR("[FAIL] set description [%s]", __noti_error_str(err));
+			notification_free(noti_handle);
+			return -1;
+		}
+	} else {
+		char *url = NULL;
+		url = dp_db_get_text_column
+					(id, DP_DB_TABLE_REQUEST_INFO, DP_DB_COL_URL);
+		if (url) {
+			char *sender_str = __get_string_sender(url);
+			err = notification_set_text(noti_handle, NOTIFICATION_TEXT_TYPE_INFO_2,
+					sender_str, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+			if (err != NOTIFICATION_ERROR_NONE) {
+				TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
+				free(sender_str);
+				free(url);
+				notification_free(noti_handle);
+				return -1;
+			}
+			free(sender_str);
+			free(url);
+		}
+	}
+
+	char *title = dp_db_get_text_column(id,
+		DP_DB_TABLE_NOTIFICATION, DP_DB_COL_TITLE);
+	if(title != NULL) {
+		err = notification_set_text(noti_handle, NOTIFICATION_TEXT_TYPE_CONTENT,
+			title, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		free(title);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
+			notification_free(noti_handle);
+			return -1;
+		}
+	} else {
+		char *content_name =
+				dp_db_get_text_column
+					(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_CONTENT_NAME);
+		if (content_name == NULL)
+			content_name = strdup("No Name");
+
+		err = notification_set_text(noti_handle,
+				NOTIFICATION_TEXT_TYPE_CONTENT, content_name,
+				NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		free(content_name);
+	}
+
+	time_t tt = time(NULL);
+	err = notification_set_time_to_text(noti_handle,
+			NOTIFICATION_TEXT_TYPE_INFO_SUB_1, tt);
 	if (err != NOTIFICATION_ERROR_NONE) {
 		TRACE_ERROR("[FAIL] set time [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
-
-	b = bundle_create();
-	if (!b) {
-		TRACE_ERROR("[FAIL] create bundle");
-		notification_free(noti_handle);
-		return -1;
-	}
-
 	if (state == DP_STATE_COMPLETED) {
-		if (appsvc_set_operation(b, APPSVC_OPERATION_VIEW) != APPSVC_RET_OK) {
-			TRACE_ERROR("[FAIL] appsvc set operation");
-			bundle_free(b);
-			notification_free(noti_handle);
-			return -1;
-		}
-		
-		char *savedpath =
-			dp_db_get_text_column
-				(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_SAVED_PATH);
-		if (savedpath && appsvc_set_uri(b, savedpath) !=
-				APPSVC_RET_OK) {
-			TRACE_ERROR("[FAIL] appsvc set uri");
-			free(savedpath);
-			bundle_free(b);
-			notification_free(noti_handle);
-			return -1;
-		}
-		if (savedpath)
-			free(savedpath);
-		err = notification_set_execute_option(noti_handle,
-				NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
-		if (err != NOTIFICATION_ERROR_NONE) {
-			TRACE_ERROR("[FAIL] set execute option[%s]", __noti_error_str(err));
-			bundle_free(b);
-			notification_free(noti_handle);
-			return -1;
-		}
+		blob_data = dp_db_get_blob_column
+					(id, DP_DB_TABLE_NOTIFICATION, DP_DB_COL_RAW_BUNDLE_COMPLETE, &length);
+		if (blob_data != NULL) {
+			b_raw = (bundle_raw*)blob_data;
+			if (b_raw != NULL) {
+				b = bundle_decode_raw(b_raw, length);
+				if (b != NULL) {
+					err = notification_set_execute_option(noti_handle,
+						NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
 
+					if (err != NOTIFICATION_ERROR_NONE) {
+						TRACE_ERROR("[FAIL] set execute option [%s]", __noti_error_str(err));
+						bundle_free_encoded_rawdata(&b_raw);
+						bundle_free(b);
+						notification_free(noti_handle);
+						return -1;
+					}
+					bundle_free_encoded_rawdata(&b_raw);
+				}
+			}
+		} else {
+			char *file_path = NULL;
+			b = bundle_create();
+			if (!b) {
+				TRACE_ERROR("[FAIL] create bundle");
+				notification_free(noti_handle);
+				return -1;
+			}
+			if (appsvc_set_operation(b, APPSVC_OPERATION_VIEW) != APPSVC_RET_OK) {
+				TRACE_ERROR("[FAIL] appsvc set operation");
+				bundle_free(b);
+				notification_free(noti_handle);
+				return -1;
+			}
+			file_path = dp_db_get_text_column
+					(id, DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_SAVED_PATH);
+			if (file_path == NULL) {
+				TRACE_ERROR("[FAIL] get file path");
+				bundle_free(b);
+				notification_free(noti_handle);
+				return -1;
+
+			}
+			if (appsvc_set_uri(b, file_path) != APPSVC_RET_OK) {
+				TRACE_ERROR("[FAIL] appsvc set uri");
+				bundle_free(b);
+				notification_free(noti_handle);
+				free(file_path);
+				return -1;
+			}
+			free(file_path);
+			err = notification_set_execute_option(noti_handle,
+				NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
+			if (err != NOTIFICATION_ERROR_NONE) {
+				TRACE_ERROR("[FAIL] set execute option[%s]", __noti_error_str(err));
+				bundle_free(b);
+				notification_free(noti_handle);
+				return -1;
+			}
+		}
+		long long file_size = dp_db_get_int64_column(id,
+				DP_DB_TABLE_DOWNLOAD_INFO, DP_DB_COL_CONTENT_SIZE);
+		char *size_str = __get_string_size(file_size);
+
+		err = notification_set_text(noti_handle,	NOTIFICATION_TEXT_TYPE_INFO_1,
+				size_str, NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+
+		if (err != NOTIFICATION_ERROR_NONE) {
+			TRACE_ERROR("[FAIL] set title [%s]", __noti_error_str(err));
+			free(size_str);
+			bundle_free(b);
+			notification_free(noti_handle);
+			return -1;
+		}
+		free(size_str);
+
+		err = notification_set_image(noti_handle, NOTIFICATION_IMAGE_TYPE_ICON,
+				DP_NOTIFICATION_ICON_PATH);
+		if (err != NOTIFICATION_ERROR_NONE) {
+			TRACE_ERROR("[FAIL] set icon [%s]", __noti_error_str(err));
+			notification_free(noti_handle);
+			return -1;
+		}
 	} else if (state == DP_STATE_CANCELED || state == DP_STATE_FAILED) {
-		if (__set_extra_data(b, id) < 0) {
-			bundle_free(b);
-			notification_free(noti_handle);
-			return -1;
-		}
+		blob_data = dp_db_get_blob_column
+					(id, DP_DB_TABLE_NOTIFICATION, DP_DB_COL_RAW_BUNDLE_FAIL, &length);
+		if (blob_data != NULL) {
+			b_raw = (bundle_raw *)blob_data;
+			if (b_raw != NULL) {
+				b = bundle_decode_raw(b_raw, length);
+				if (b != NULL) {
+					err = notification_set_execute_option(noti_handle,
+						NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
 
-		if (packagename &&
-			appsvc_set_pkgname(b, packagename) !=
-			APPSVC_RET_OK) {
-			TRACE_ERROR("[FAIL] set pkg name");
-			bundle_free(b);
-			notification_free(noti_handle);
-			return -1;
+					if (err != NOTIFICATION_ERROR_NONE) {
+						TRACE_ERROR("[FAIL] set execute option [%s]", __noti_error_str(err));
+						bundle_free_encoded_rawdata(&b_raw);
+						bundle_free(b);
+						notification_free(noti_handle);
+						return -1;
+					}
+					bundle_free_encoded_rawdata(&b_raw);
+				}
+			}
+		} else {
+			b = bundle_create();
+			if (!b) {
+				TRACE_ERROR("[FAIL] create bundle");
+				notification_free(noti_handle);
+				return -1;
+			}
+			if (packagename &&
+				appsvc_set_pkgname(b, packagename) !=
+				APPSVC_RET_OK) {
+				TRACE_ERROR("[FAIL] set pkg name");
+				bundle_free(b);
+				notification_free(noti_handle);
+				return -1;
+			}
+			err = notification_set_execute_option(noti_handle,
+					NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
+			if (err != NOTIFICATION_ERROR_NONE) {
+				TRACE_ERROR("[FAIL] set execute option[%s]", __noti_error_str(err));
+				bundle_free(b);
+				notification_free(noti_handle);
+				return -1;
+			}
 		}
-		err = notification_set_execute_option(noti_handle,
-				NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, "View", NULL, b);
+		err = notification_set_image(noti_handle, NOTIFICATION_IMAGE_TYPE_ICON,
+				DP_NOTIFICATION_FAILED_ICON_PATH);
 		if (err != NOTIFICATION_ERROR_NONE) {
-			TRACE_ERROR("[FAIL] set execute option[%s]", __noti_error_str(err));
+			TRACE_ERROR("[FAIL] set icon [%s]", __noti_error_str(err));
 			bundle_free(b);
 			notification_free(noti_handle);
 			return -1;
@@ -414,18 +554,18 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 
 	bundle_free(b);
 
-	err = notification_set_image(noti_handle, NOTIFICATION_IMAGE_TYPE_ICON,
-			DP_NOTIFICATION_ICON_PATH);
-	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] set icon [%s]", __noti_error_str(err));
-		notification_free(noti_handle);
-		return -1;
-	}
-
 	err = notification_set_property(noti_handle,
 			NOTIFICATION_PROP_DISABLE_TICKERNOTI);
 	if (err != NOTIFICATION_ERROR_NONE) {
 		TRACE_ERROR("[FAIL] set property [%s]", __noti_error_str(err));
+		notification_free(noti_handle);
+		return -1;
+	}
+
+	err = notification_set_display_applist(noti_handle,
+			NOTIFICATION_DISPLAY_APP_ALL ^ NOTIFICATION_DISPLAY_APP_INDICATOR);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		TRACE_ERROR("[FAIL] set disable icon [%s]", __noti_error_str(err));
 		notification_free(noti_handle);
 		return -1;
 	}
@@ -437,7 +577,7 @@ int dp_set_downloadedinfo_notification(int priv_id, int id, char *packagename, d
 		return -1;
 	}
 
-	TRACE_INFO("m_noti_id [%d]", privId);
+	TRACE_DEBUG("m_noti_id [%d]", privId);
 	notification_free(noti_handle);
 	return privId;
 }

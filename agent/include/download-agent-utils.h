@@ -22,14 +22,6 @@
 #include "download-agent-interface.h"
 #include "download-agent-dl-mgr.h"
 
-/* Todo : move these to mime-util.c */
-#define MIME_DRM_MESSAGE	"application/vnd.oma.drm.message"
-#define MIME_ODF 				"application/vnd.oasis.opendocument.formula"
-#define MIME_OMA_DD 			"application/vnd.oma.dd+xml"
-#define MIME_MIDP_JAR		"application/vnd.sun.j2me.java-archive"
-#define MIME_MULTIPART_MESSAGE	"multipart/related"
-#define MIME_TEXT_PLAIN 		"text/plain"
-
 #define SAVE_FILE_BUFFERING_SIZE_50KB (50*1024)
 #define SAVE_FILE_BUFFERING_SIZE_5MB (5*1024*1024)
 
@@ -41,12 +33,6 @@
 		interval.tv_nsec = (((x)-(interval.tv_sec*1000))*1000000); \
 		nanosleep(&interval,&remainder); \
 	} while(0)
-
-typedef enum {
-	DA_STORAGE_PHONE,			/*To Store in Phone memory*/
-	DA_STORAGE_MMC,			    /*To Store in MMC */
-	DA_STORAGE_SYSTEM			/*To Store in both Phone and MMC*/
-} da_storage_type_t;
 
 typedef struct _da_storage_size_t {
 	unsigned long b_available;
@@ -63,7 +49,7 @@ void get_random_number(int *out_num);
 da_result_t  get_available_dd_id(int *available_id);
 da_result_t  get_extension_from_mime_type(char *mime_type, char **extension);
 da_mime_type_id_t get_mime_type_id(char *content_type);
-da_result_t  get_available_memory(da_storage_type_t storage_type, da_storage_size_t *avail_memory);
+da_result_t  get_available_memory(da_storage_size_t *avail_memory);
 da_bool_t is_valid_url(const char *url, da_result_t *err_code);
 
 int read_data_from_file(char *file, char**out_buffer);

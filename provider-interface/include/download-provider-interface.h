@@ -22,6 +22,7 @@
 #endif
 
 #include <tizen.h>
+#include <bundle.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -58,6 +59,7 @@ typedef enum
 	DOWNLOAD_ADAPTOR_ERROR_CONNECTION_TIMED_OUT = TIZEN_ERROR_CONNECTION_TIME_OUT, /**< Http session time-out */
 	DOWNLOAD_ADAPTOR_ERROR_NO_SPACE = TIZEN_ERROR_FILE_NO_SPACE_ON_DEVICE, /**< No space left on device */
 	DOWNLOAD_ADAPTOR_ERROR_FIELD_NOT_FOUND = TIZEN_ERROR_KEY_NOT_AVAILABLE, /**< Specified field not found */
+	DOWNLOAD_ADAPTOR_ERROR_PERMISSION_DENIED = TIZEN_ERROR_PERMISSION_DENIED, /**< Permission denied */
 	DOWNLOAD_ADAPTOR_ERROR_INVALID_STATE = TIZEN_ERROR_WEB_CLASS | 0x21, /**< Invalid state */
 	DOWNLOAD_ADAPTOR_ERROR_CONNECTION_FAILED = TIZEN_ERROR_WEB_CLASS | 0x22, /**< Connection failed */
 	DOWNLOAD_ADAPTOR_ERROR_INVALID_URL = TIZEN_ERROR_WEB_CLASS | 0x24, /**< Invalid URL */
@@ -76,8 +78,6 @@ typedef enum
 	DOWNLOAD_ADAPTOR_ERROR_NO_DATA = TIZEN_ERROR_NO_DATA, /**< No data because the set API is not called */
 	DOWNLOAD_ADAPTOR_ERROR_IO_ERROR = TIZEN_ERROR_IO_ERROR , /**< Internal I/O error */
 } download_adaptor_error_e;
-// sync with url-download
-
 
 // sync types with url-download..
 typedef void (*dp_interface_state_changed_cb) (int id, int state, void *user_data);
@@ -130,6 +130,14 @@ EXPORT_API int dp_interface_add_noti_extra(const int id, const char *key, const 
 EXPORT_API int dp_interface_get_noti_extra_values(const int id, const char *key, char ***values, unsigned *length);
 EXPORT_API int dp_interface_remove_noti_extra_key(const int id, const char *key);
 
+EXPORT_API int dp_interface_set_notification_bundle(const int id, int type, bundle *b);
+EXPORT_API int dp_interface_get_notification_bundle(const int id, int type, bundle **b);
+EXPORT_API int dp_interface_set_notification_title(const int id, const char *title);
+EXPORT_API int dp_interface_get_notification_title(const int id, char **title);
+EXPORT_API int dp_interface_set_notification_description(const int id, const char *description);
+EXPORT_API int dp_interface_get_notification_description(const int id, char **description);
+EXPORT_API int dp_interface_set_notification_type(const int id, int type);
+EXPORT_API int dp_interface_get_notification_type(const int id, int *type);
 #ifdef __cplusplus
 }
 #endif

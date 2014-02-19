@@ -8,7 +8,7 @@ IF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 ENDIF("${CMAKE_BUILD_TYPE}" STREQUAL "")
 MESSAGE("Build type: ${CMAKE_BUILD_TYPE}")
 
-SET(PC_REQUIRED "glib-2.0 gobject-2.0 dlog capi-base-common capi-appfw-app-manager dbus-1")
+SET(PC_REQUIRED "glib-2.0 gobject-2.0 dlog capi-base-common capi-appfw-app-manager bundle")
 
 INCLUDE(FindPkgConfig)
 

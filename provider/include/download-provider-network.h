@@ -17,6 +17,8 @@
 #ifndef DOWNLOAD_PROVIDER2_NETWORK_H
 #define DOWNLOAD_PROVIDER2_NETWORK_H
 
+#include <net_connection.h>
+
 #include "download-provider.h"
 
 dp_network_type dp_get_network_connection_status(connection_h connection, connection_type_e type);

@@ -1,0 +1,34 @@
+<manifest>
+	<define>
+		<domain name="download-provider" />
+		<provide>
+			<label name="download-provider::db" />
+		</provide>
+		<request>
+			<smack request="download-provider::db" type="rw" />
+			<smack request="system::use_internet" type="w" />
+			<smack request="sys-assert::core" type="rwxat" />
+			<smack request="device::sys_logging" type="w" />
+			<smack request="system::media" type="arwxt" />
+			<smack request="system::ext_media" type="arwxt" />
+			<smack request="connman" type="rw" />
+			<smack request="net-config" type="rw" />
+		</request>
+		<permit>
+			<smack permit="org.tizen.indicator" type="rx" />
+			<smack permit="org.tizen.quickpanel" type="rx" />
+			<smack permit="system::use_internet" type="w" />
+		</permit>
+	</define>
+	<request>
+		<domain name="download-provider" />
+	</request>
+	<assign>
+		<filesystem path="/usr/lib/libdownload-provider-interface.so*" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/libdownloadagent2.so*" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/user/download-provider.service" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/user/tizen-middleware.target.wants/download-provider.service" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/user/download-provider.socket" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/user/sockets.target.wants/download-provider.socket" label="_" exec_label="none" />
+	</assign>
+</manifest>

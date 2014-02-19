@@ -1,4 +1,0 @@
-[D-BUS Service]
-Name=org.download-provider
-Exec=/usr/bin/download-provider service
-User=root

@@ -31,7 +31,7 @@
 
 #define DA_TRUE		1
 #define DA_FALSE  		0
-#define DA_NULL  		0
+#define DA_NULL  		(void *)0
 #define DA_INVALID_ID	-1
 
 #define DA_RESULT_USER_CANCELED -10 
