@@ -31,7 +31,7 @@ da_result_t init_dl_id_history(dl_id_history_t *dl_id_history)
 	dl_id_history->cur_dl_id = DA_INVALID_ID;
 	_da_thread_mutex_unlock(&(dl_id_history->mutex));
 
-	DA_LOG_CRITICAL(Default,"starting num = %d", dl_id_history->starting_num);
+	DA_LOG_VERBOSE(Default,"starting num = %d", dl_id_history->starting_num);
 	return ret;
 }
 
@@ -66,6 +66,6 @@ int get_available_dl_id(dl_id_history_t *dl_id_history)
 
 	_da_thread_mutex_unlock(&(dl_id_history->mutex));
 
-	DA_LOG_CRITICAL(Default,"dl_id = %d", dl_id);
+	DA_LOG_VERBOSE(Default,"dl_id = %d", dl_id);
 	return dl_id;
 }

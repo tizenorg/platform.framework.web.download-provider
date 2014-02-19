@@ -64,6 +64,7 @@ typedef struct _client_input_t {
 	char *file_name;
 	char *etag;
 	char *temp_file_path;
+	char *pkg_name;
 	client_input_basic_t client_input_basic;
 } client_input_t;
 
@@ -109,7 +110,7 @@ typedef struct _req_dl_info {
 	/*************** will be depreciated ***********************/
 	/* ToDo : previous http_info should be saved in case of pause */
 	char *content_type_from_header; /* calloced in set hdr fiels on download info */
-	int content_len_from_header;
+	unsigned long long content_len_from_header;
 	char *etag_from_header;
 
 	unsigned long int downloaded_data_size;
@@ -134,7 +135,7 @@ typedef struct _req_dl_info {
 #define CHANGE_HTTP_STATE(STATE,STAGE) {\
 	_da_thread_mutex_lock(&(GET_REQUEST_HTTP_MUTEX_HTTP_STATE(STAGE)));\
 	GET_HTTP_STATE_ON_STAGE(STAGE) = STATE;\
-	DA_LOG_CRITICAL(Default, "Changed http_state to - [%d] ", GET_HTTP_STATE_ON_STAGE(STAGE));\
+	DA_LOG_DEBUG(Default, "Changed http_state to - [%d] ", GET_HTTP_STATE_ON_STAGE(STAGE));\
 	_da_thread_mutex_unlock(&(GET_REQUEST_HTTP_MUTEX_HTTP_STATE(STAGE)));\
 }
 
@@ -164,6 +165,7 @@ typedef struct _file_info {
 
 typedef struct _stage_info {
 	int dl_id;
+	int thread_id;
 	source_info_t dl_request;
 	req_dl_info dl_tansaction_context;
 	file_info dl_content_storage;
@@ -171,6 +173,7 @@ typedef struct _stage_info {
 } stage_info;
 
 #define	GET_STAGE_DL_ID(STAGE) 					((STAGE)->dl_id)
+#define	GET_STAGE_THREAD_ID(STAGE) 				((STAGE)->thread_id)
 #define	GET_STAGE_SOURCE_INFO(STAGE) 			(&((STAGE)->dl_request))
 #define	GET_STAGE_TRANSACTION_INFO(STAGE)		(&((STAGE)->dl_tansaction_context))
 #define	GET_STAGE_CONTENT_STORE_INFO(STAGE)		(&((STAGE)->dl_content_storage))
@@ -211,7 +214,7 @@ typedef struct {
 #define CHANGE_DOWNLOAD_STATE(STATE,STAGE) {\
 	_da_thread_mutex_lock (&mutex_download_state[GET_STAGE_DL_ID(STAGE)]);\
 	GET_DL_STATE_ON_STAGE(STAGE) = STATE;\
-	DA_LOG_CRITICAL(Default, "Changed download_state to - [%d] ", GET_DL_STATE_ON_STAGE(STAGE));\
+	DA_LOG_DEBUG(Default, "Changed download_state to - [%d] ", GET_DL_STATE_ON_STAGE(STAGE));\
 	_da_thread_mutex_unlock (&mutex_download_state[GET_STAGE_DL_ID(STAGE)]);\
 	}
 

@@ -25,7 +25,7 @@
 #define DP_LOCK_PID "/tmp/download-provider.lock"
 
 #define DP_CARE_CLIENT_MIN_INTERVAL 5
-#define DP_CARE_CLIENT_MAX_INTERVAL 60
+#define DP_CARE_CLIENT_MAX_INTERVAL 120
 
 // check this value should be lower than DP_MAX_REQUEST
 #define DP_MAX_DOWNLOAD_AT_ONCE 50

@@ -21,11 +21,6 @@
 extern "C" {
 #endif
 
-#ifdef DP_SUPPORT_DBUS_ACTIVATION
-#define DP_DBUS_ACTIVATION
-#define DP_DBUS_SERVICE_DBUS		"org.download-provider"
-#endif
-
 typedef enum {
 	DP_STATE_NONE = 0,
 	DP_STATE_READY = DP_STATE_NONE + 5, // created id, set some info.
@@ -40,7 +35,7 @@ typedef enum {
 } dp_state_type;
 
 typedef enum {
-	DP_ERROR_NONE = 0,
+	DP_ERROR_NONE = 10,
 	DP_ERROR_INVALID_PARAMETER = DP_ERROR_NONE + 1,
 	DP_ERROR_OUT_OF_MEMORY = DP_ERROR_NONE + 2,
 	DP_ERROR_IO_ERROR = DP_ERROR_NONE + 3,
@@ -59,6 +54,7 @@ typedef enum {
 	DP_ERROR_NO_DATA = DP_ERROR_NONE + 17,
 	DP_ERROR_UNHANDLED_HTTP_CODE = DP_ERROR_NONE + 18,
 	DP_ERROR_CANNOT_RESUME = DP_ERROR_NONE + 19,
+	DP_ERROR_PERMISSION_DENIED = DP_ERROR_NONE + 20,
 	DP_ERROR_RESPONSE_TIMEOUT = DP_ERROR_NONE + 50,
 	DP_ERROR_REQUEST_TIMEOUT = DP_ERROR_NONE + 55,
 	DP_ERROR_SYSTEM_DOWN = DP_ERROR_NONE + 60,
@@ -78,6 +74,18 @@ typedef enum {
 	DP_NETWORK_TYPE_ETHERNET = 3,
 	DP_NETWORK_TYPE_WIFI_DIRECT = 4
 } dp_network_type;
+
+typedef enum {
+	DP_NOTIFICATION_BUNDLE_TYPE_ONGOING = 0, // Ongoing, Failed
+	DP_NOTIFICATION_BUNDLE_TYPE_COMPLETE, // Completed
+	DP_NOTIFICATION_BUNDLE_TYPE_FAILED // Failed
+} dp_notification_bundle_type;
+
+typedef enum {
+	DP_NOTIFICATION_TYPE_NONE = 0, // Not register Noti.
+	DP_NOTIFICATION_TYPE_COMPLETE_ONLY, // Success, Failed
+	DP_NOTIFICATION_TYPE_ALL // Ongoing, Success, Failed
+} dp_notification_type;
 
 #ifdef __cplusplus
 }

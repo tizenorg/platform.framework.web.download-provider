@@ -20,10 +20,11 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <pthread.h>
+#include <locale.h>
+#include <libintl.h>
+#include <systemd/sd-daemon.h>
 
-#ifdef DP_SUPPORT_DBUS_ACTIVATION
-#include <dbus/dbus.h>
-#endif
+#include "vconf.h"
 
 #include "download-provider-config.h"
 #include "download-provider-log.h"
@@ -45,48 +46,15 @@ static pthread_t g_dp_thread_queue_manager_pid = 0;
 // need for libsoup, decided the life-time by mainloop.
 GMainLoop *g_main_loop_handle = 0;
 
-#ifdef DP_SUPPORT_DBUS_ACTIVATION
-static int __register_dbus_service(void)
-{
-	DBusError dbus_error;
-	DBusConnection *dp_dbus_connection = NULL;
-
-	dbus_error_init(&dbus_error);
-
-	dp_dbus_connection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
-	if (dp_dbus_connection == NULL) {
-		TRACE_ERROR("[DBUS] dbus_bus_get: %s", dbus_error.message);
-		dbus_error_free(&dbus_error);
-		return -1;
-	}
-
-	if (dbus_bus_request_name
-			(dp_dbus_connection, DP_DBUS_SERVICE_DBUS, 0, &dbus_error) < 0 ||
-			dbus_error_is_set(&dbus_error)) {
-		TRACE_ERROR("[DBUS] request_name %s", dbus_error.message);
-		dbus_error_free(&dbus_error);
-		dbus_connection_unref(dp_dbus_connection);
-		dp_dbus_connection = NULL;
-		return -1;
-	}
-	dbus_connection_unref(dp_dbus_connection);
-	dp_dbus_connection = NULL;
-	return 0;
-}
-
-#endif
-
 void dp_terminate(int signo)
 {
-	TRACE_INFO("Received SIGTERM");
+	TRACE_DEBUG("Received SIGTERM:%d", signo);
 	if (g_main_loop_is_running(g_main_loop_handle))
 		g_main_loop_quit(g_main_loop_handle);
 }
 
 static gboolean __dp_idle_start_service(void *data)
 {
-	TRACE_INFO("Launch threads .....");
-
 	// declare all resources
 	pthread_t thread_pid;
 	pthread_attr_t thread_attr;
@@ -124,6 +92,22 @@ static gboolean __dp_idle_start_service(void *data)
 	return FALSE;
 }
 
+void __set_locale()
+{
+	char *str = NULL;
+	str = vconf_get_str(VCONFKEY_LANGSET);
+	if (str != NULL) {
+		setlocale(LC_ALL, str);
+		bindtextdomain(PKG_NAME, LOCALE_DIR);
+		textdomain(PKG_NAME);
+	}
+	free(str);
+}
+void __lang_changed_cb(keynode_t *key, void* data)
+{
+	__set_locale();
+}
+
 int main(int argc, char **argv)
 {
 	dp_privates *privates = NULL;
@@ -149,6 +133,10 @@ int main(int argc, char **argv)
 		TRACE_ERROR("failed to register signal callback");
 		exit(EXIT_FAILURE);
 	}
+	if (signal(SIGINT, dp_terminate) == SIG_ERR) {
+		TRACE_ERROR("failed to register signal callback");
+		exit(EXIT_FAILURE);
+	}
 	// write IPC_FD_PATH. and lock
 	if ((lock_fd = dp_lock_pid(DP_LOCK_PID)) < 0) {
 		TRACE_ERROR
@@ -157,12 +145,13 @@ int main(int argc, char **argv)
 				DP_LOCK_PID);
 		exit(EXIT_FAILURE);
 	}
-	// if exit socket file, delete it
-	if (access(DP_IPC, F_OK) == 0) {
-		unlink(DP_IPC);
-	}
 
 	g_type_init();
+
+	// locale
+	__set_locale();
+	if (vconf_notify_key_changed(VCONFKEY_LANGSET, __lang_changed_cb, NULL) != 0)
+		TRACE_ERROR("Fail to set language changed vconf callback");
 
 	privates = (dp_privates *) calloc(1, sizeof(dp_privates));
 	if (!privates) {
@@ -187,16 +176,6 @@ int main(int argc, char **argv)
 		goto DOWNLOAD_EXIT;
 	}
 
-#ifdef DP_SUPPORT_DBUS_ACTIVATION
-	TRACE_INFO("SUPPORT DBUS-ACTIVATION");
-	if (__register_dbus_service() < 0) {
-		TRACE_ERROR("[LAUNCH ERROR] __register_dbus_service");
-		goto DOWNLOAD_EXIT;
-	}
-#else
-	TRACE_INFO("Not SUPPORT DBUS-ACTIVATION");
-#endif
-
 	dp_db_open();
 
 	// convert to request type, insert all to privates->requests
@@ -208,7 +187,7 @@ int main(int argc, char **argv)
 			if (!privates->requests[i].request)
 				continue;
 			dp_request *request = privates->requests[i].request;
-			TRACE_INFO
+			TRACE_DEBUG
 				("ID [%d] state[%d]", request->id, request->state);
 
 			// load to memory, Can be started automatically.
@@ -256,13 +235,15 @@ int main(int argc, char **argv)
 		}
 	} // query crashed_list
 
+#if 0
 	if (argc != 2 || memcmp(argv[1], "service", 7) != 0) {
 		// in first launch in booting time, not request. terminate by self
 		if (dp_get_request_count(privates->requests) <= 0) {
-			TRACE_INFO("First Boot, No Request");
+			TRACE_DEBUG("First Boot, No Request");
 			goto DOWNLOAD_EXIT;
 		}
 	}
+#endif
 
 	dp_clear_downloadinginfo_notification();
 
@@ -274,7 +255,7 @@ int main(int argc, char **argv)
 	privates->connection = 0;
 	privates->network_status = DP_NETWORK_TYPE_OFF;
 	if (dp_network_connection_init(privates) < 0) {
-		TRACE_INFO("use instant network check");
+		TRACE_DEBUG("use instant network check");
 		privates->connection = 0;
 	}
 
@@ -283,11 +264,15 @@ int main(int argc, char **argv)
 
 	g_idle_add(__dp_idle_start_service, privates);
 
+	sd_notify(0, "READY=1");
+
 	g_main_loop_run(g_main_loop_handle);
 
 DOWNLOAD_EXIT :
 
-	TRACE_INFO("Download-Provider will be terminated.");
+	TRACE_DEBUG("Download-Provider will be terminated.");
+	if (vconf_ignore_key_changed(VCONFKEY_LANGSET, __lang_changed_cb) != 0)
+		TRACE_ERROR("Fail to unset language changed vconf callback");
 
 	dp_deinit_agent();
 
@@ -296,10 +281,9 @@ DOWNLOAD_EXIT :
 		if (privates->connection)
 			dp_network_connection_destroy(privates->connection);
 
-		if (privates->listen_fd >= 0) {
-			dp_socket_free(privates->listen_fd);
+		if (privates->listen_fd >= 0)
 			privates->listen_fd = -1;
-		}
+
 		if (g_dp_thread_queue_manager_pid > 0 &&
 				pthread_kill(g_dp_thread_queue_manager_pid, 0) != ESRCH) {
 			//pthread_cancel(g_dp_thread_queue_manager_pid);
@@ -318,10 +302,6 @@ DOWNLOAD_EXIT :
 	}
 	dp_db_close();
 
-	// if exit socket file, delete it
-	if (access(DP_IPC, F_OK) == 0) {
-		unlink(DP_IPC);
-	}
 	// delete pid file
 	if (access(DP_LOCK_PID, F_OK) == 0) {
 		close(lock_fd);

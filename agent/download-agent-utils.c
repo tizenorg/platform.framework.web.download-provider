@@ -65,19 +65,19 @@ da_result_t get_extension_from_mime_type(char *mime_type, char **extension)
 	da_result_t ret = DA_RESULT_OK;
 	char *ext = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 	if (DA_NULL == mime_type || DA_NULL == extension) {
 		DA_LOG_ERR(Default,"received mime_type is null");
 		ret = DA_ERR_INVALID_ARGUMENT;
 		goto ERR;
 	}
-	DA_LOG(Default,"input mime type = %s", mime_type);
+//	DA_SECURE_LOGD("input mime type = %s", mime_type);
 	if (DA_RESULT_OK != (ret = da_mime_get_ext_name(mime_type, &ext))) {
 		DA_LOG_ERR(Default,"can't find proper extension!");
 		goto ERR;
 	}
 	*extension = ext;
-	DA_LOG(Default,"found extension = %s", *extension);
+//	DA_SECURE_LOGD("found extension = %s", *extension);
 
 ERR:
 	return ret;
@@ -99,7 +99,7 @@ int read_data_from_file(char *file, char **out_buffer)
 	/* open file with "rb", because fread() handles the file as binary mode */
 	fd = fopen(file, "rb");
 	if (!fd) {
-		DA_LOG_ERR(FileManager,"File open err! received file path = [%s]", file);
+		DA_LOG_ERR(FileManager,"File open err! received file path");
 		return 0;
 	}
 
@@ -137,16 +137,14 @@ int read_data_from_file(char *file, char **out_buffer)
 	return buffer_len;
 }
 
-da_result_t get_available_memory(
-        da_storage_type_t storage_type,
-        da_storage_size_t *avail_memory)
+da_result_t get_available_memory(da_storage_size_t *avail_memory)
 {
 	da_result_t ret = DA_RESULT_OK;
 	int fs_ret = 0;
 	struct statfs filesys_info = {0, };
 	char *default_install_dir = NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGD(Default);
 
 	if (!avail_memory)
 		return DA_ERR_INVALID_ARGUMENT;
@@ -168,10 +166,9 @@ da_result_t get_available_memory(
 	avail_memory->b_available = filesys_info.f_bavail;
 	avail_memory->b_size = filesys_info.f_bsize;
 
-	DA_LOG(Default, "Memory type : %d", storage_type);
-	DA_LOG_VERBOSE(Default, "Available Memory(f_bavail) : %lu", filesys_info.f_bavail);
+	DA_LOG_VERBOSE(Default, "Available Memory(f_bavail) : %llu", filesys_info.f_bavail);
 	DA_LOG_VERBOSE(Default, "Available Memory(f_bsize) : %d", filesys_info.f_bsize);
-	DA_LOG(Default, "Available Memory(kbytes) : %lu", (filesys_info.f_bavail/1024)*filesys_info.f_bsize);
+	DA_LOG_VERBOSE(Default, "Available Memory(kbytes) : %lu", (filesys_info.f_bavail/1024)*filesys_info.f_bsize);
 
 	free(default_install_dir);
 	return DA_RESULT_OK;
@@ -181,12 +178,8 @@ da_mime_type_id_t get_mime_type_id(char *content_type)
 {
 	int i = 0;
 
-	DA_LOG_FUNC_START(Default);
-
-	DA_LOG(Default,"received content_type = %s", content_type);
-
 	if (content_type == NULL) {
-		DA_LOG_ERR(Default, "No Mime Type\n");
+		DA_LOG_CRITICAL(Default, "No Mime Type Id");
 		return DA_MIME_TYPE_NONE;
 	}
 
@@ -197,7 +190,7 @@ da_mime_type_id_t get_mime_type_id(char *content_type)
 		}
 		i++;
 	}
-	DA_LOG(Default, "dd mime type check: index[%d] type[%d]", i, descriptor_mime_table[i].mime_type);
+	//DA_LOG_VERBOSE(Default, "dd mime type check: index[%d] type[%d]", i, descriptor_mime_table[i].mime_type);
 	return descriptor_mime_table[i].mime_type;
 }
 
@@ -281,10 +274,10 @@ da_result_t move_file(const char *from_path, const char *to_path)
 
 void remove_file(const char *file_path)
 {
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	if (file_path && is_file_exist(file_path)) {
-		DA_LOG(FileManager,"remove file [%s]", file_path);
+		DA_SECURE_LOGD("remove file [%s]", file_path);
 		if (unlink(file_path) < 0) {
 			DA_LOG_ERR(FileManager,"file removing failed.");
 		}

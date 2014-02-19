@@ -36,7 +36,7 @@ da_result_t init_download_mgr() {
 	da_result_t ret = DA_RESULT_OK;
 	int i = 0;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	_da_thread_mutex_lock(&mutex_download_mgr);
 
@@ -58,7 +58,7 @@ da_result_t init_download_mgr() {
 da_result_t deinit_download_mgr(void) {
 	da_result_t ret = DA_RESULT_OK;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	_da_thread_mutex_lock(&mutex_download_mgr);
 	if (download_mgr.is_init == DA_TRUE) {
@@ -90,12 +90,10 @@ void init_download_info(int slot_id)
 {
 	dl_info_t *dl_info = DA_NULL;
 
-//	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	_da_thread_mutex_lock(&mutex_download_state[slot_id]);
-//	DA_LOG_VERBOSE(Default, "Init slot_id [%d] Info", slot_id);
 	dl_info = &(download_mgr.dl_info[slot_id]);
-
 	dl_info->is_using = DA_FALSE;
 	dl_info->state = DOWNLOAD_STATE_IDLE;
 	dl_info->download_stage_data = DA_NULL;
@@ -120,9 +118,7 @@ void destroy_download_info(int slot_id)
 {
 	dl_info_t *dl_info = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
-
-	DA_LOG(Default, "Destroying slot_id [%d] Info", slot_id);
+	DA_LOG_VERBOSE(Default, "Destroying slot_id [%d] Info", slot_id);
 
 	if (slot_id == DA_INVALID_ID) {
 		DA_LOG_ERR(Default, "invalid slot_id");
@@ -131,14 +127,11 @@ void destroy_download_info(int slot_id)
 
 	dl_info = &(download_mgr.dl_info[slot_id]);
 	if (DA_FALSE == dl_info->is_using) {
-/*		DA_LOG_ERR(Default, "invalid slot_id"); */
 		return;
 	}
 
 	_da_thread_mutex_lock (&mutex_download_state[slot_id]);
 	dl_info->state = DOWNLOAD_STATE_IDLE;
-	DA_LOG(Default, "Changed download_state to - [%d] ", dl_info->state);
-
 	dl_info->active_dl_thread_id = 0;
 
 	if (dl_info->download_stage_data != DA_NULL) {
@@ -162,9 +155,9 @@ void destroy_download_info(int slot_id)
 		dl_info->user_etag = DA_NULL;
 	}
 
-	if (dl_info->user_temp_file_path ) {
-		free(dl_info->user_temp_file_path );
-		dl_info->user_temp_file_path  = DA_NULL;
+	if (dl_info->user_temp_file_path) {
+		free(dl_info->user_temp_file_path);
+		dl_info->user_temp_file_path = DA_NULL;
 	}
 
 	dl_info->user_data = DA_NULL;
@@ -174,7 +167,7 @@ void destroy_download_info(int slot_id)
 
 	dl_info->is_using = DA_FALSE;
 
-	DA_LOG(Default, "Destroying slot_id [%d] Info END", slot_id);
+	DA_LOG_DEBUG(Default, "Destroying slot_id [%d] Info END", slot_id);
 	_da_thread_mutex_unlock (&mutex_download_state[slot_id]);
 	return;
 }
@@ -184,7 +177,7 @@ void *Add_new_download_stage(int slot_id)
 	stage_info *download_stage_data = NULL;
 	stage_info *new_download_stage_data = NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	new_download_stage_data = (stage_info*)calloc(1, sizeof(stage_info));
 	if (!new_download_stage_data)
@@ -201,7 +194,7 @@ void *Add_new_download_stage(int slot_id)
 	} else {
 		GET_DL_CURRENT_STAGE(slot_id) = new_download_stage_data;
 	}
-	DA_LOG(Default, "NEW STAGE ADDED FOR DOWNLOAD ID[%d] new_stage[%p]", slot_id,new_download_stage_data);
+	DA_LOG_VERBOSE(Default, "NEW STAGE ADDED FOR DOWNLOAD ID[%d] new_stage[%p]", slot_id,new_download_stage_data);
 
 ERR:
 	return new_download_stage_data;
@@ -211,7 +204,7 @@ void remove_download_stage(int slot_id, stage_info *in_stage)
 {
 	stage_info *stage = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	stage = GET_DL_CURRENT_STAGE(slot_id);
 	if (DA_NULL == stage) {
@@ -256,9 +249,7 @@ void empty_stage_info(stage_info *in_stage)
 	req_dl_info *request_download_info = NULL;
 	file_info *file_information = NULL;
 
-	DA_LOG_FUNC_START(Default);
-
-	DA_LOG(Default, "Stage to Remove:[%p]", in_stage);
+	DA_LOG_VERBOSE(Default, "Stage to Remove:[%p]", in_stage);
 	source_information = GET_STAGE_SOURCE_INFO(in_stage);
 
 	cleanup_source_info_basic_download(
@@ -277,7 +268,7 @@ void cleanup_source_info_basic_download(source_info_basic_t *source_info_basic)
 	if (NULL == source_info_basic)
 		goto ERR;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (NULL != source_info_basic->url) {
 		free(source_info_basic->url);
@@ -291,16 +282,18 @@ ERR:
 
 void cleanup_req_dl_info_http(req_dl_info *http_download)
 {
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (http_download->http_info.http_msg_request) {
 		http_msg_request_destroy(
 		                &(http_download->http_info.http_msg_request));
+		http_download->http_info.http_msg_request = DA_NULL;
 	}
 
 	if (http_download->http_info.http_msg_response) {
 		http_msg_response_destroy(
 		                &(http_download->http_info.http_msg_response));
+		http_download->http_info.http_msg_response = DA_NULL;
 	}
 
 	if (DA_NULL != http_download->location_url) {
@@ -328,7 +321,7 @@ void cleanup_req_dl_info_http(req_dl_info *http_download)
 
 void destroy_file_info(file_info *file_information)
 {
-//	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (!file_information)
 		return;
@@ -357,7 +350,7 @@ void destroy_file_info(file_info *file_information)
 
 void clean_up_client_input_info(client_input_t *client_input)
 {
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	if (client_input) {
 		client_input->user_data = NULL;
@@ -380,6 +373,11 @@ void clean_up_client_input_info(client_input_t *client_input)
 		if (client_input->temp_file_path) {
 			free(client_input->temp_file_path);
 			client_input->temp_file_path = DA_NULL;
+		}
+
+		if (client_input->pkg_name) {
+			free(client_input->pkg_name);
+			client_input->pkg_name = DA_NULL;
 		}
 
 		client_input_basic_t *client_input_basic =
@@ -457,7 +455,7 @@ da_result_t get_available_slot_id(int *available_id)
 				= get_available_dl_id(&(download_mgr.dl_id_history));
 
 			*available_id = i;
-			DA_LOG_CRITICAL(Default, "available download id = %d", *available_id);
+			DA_LOG_VERBOSE(Default, "available download id = %d", *available_id);
 			ret = DA_RESULT_OK;
 
 			break;

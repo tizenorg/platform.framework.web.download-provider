@@ -37,7 +37,7 @@ void Q_destroy_queue(queue_t *queue)
 {
 	q_event_t *event = DA_NULL;
 
-	DA_LOG_FUNC_START(HTTPManager);
+	DA_LOG_FUNC_LOGV(HTTPManager);
 
 	do {
 		Q_pop_event(queue, &event);
@@ -80,8 +80,6 @@ void Q_destroy_q_event(q_event_t **in_q_event)
 	if(q_event == DA_NULL)
 		return;
 
-//	DA_LOG(HTTPManager, "destroying size = %d", q_event->size);
-
 	switch(q_event->event_type)	{
 		case Q_EVENT_TYPE_DATA_HTTP:
 			init_q_event_data_http(q_event);
@@ -110,7 +108,7 @@ da_result_t  Q_make_control_event(q_event_type_control control_type, q_event_t *
 	da_result_t  ret = DA_RESULT_OK;
 	q_event_t *q_event = DA_NULL;
 
-	DA_LOG_FUNC_START(HTTPManager);
+	DA_LOG_FUNC_LOGD(HTTPManager);
 
 	q_event = (q_event_t *)calloc(1, sizeof(q_event_t));
 	if(q_event == DA_NULL) {
@@ -134,7 +132,7 @@ da_result_t  Q_make_http_data_event(q_event_type_data data_type, q_event_t **out
 	da_result_t  ret = DA_RESULT_OK;
 	q_event_t *q_event = DA_NULL;
 
-//	DA_LOG_FUNC_START(HTTPManager);
+	DA_LOG_FUNC_LOGV(HTTPManager);
 
 	q_event = (q_event_t *)calloc(1, sizeof(q_event_t));
 	if(q_event == DA_NULL) {
@@ -148,7 +146,7 @@ da_result_t  Q_make_http_data_event(q_event_type_data data_type, q_event_t **out
 
 		*out_event = q_event;
 
-//		DA_LOG(HTTPManager, "made event = %x", *out_event);
+//		DA_LOG_VERBOSE(HTTPManager, "made event = %x", *out_event);
 	}
 
 	return ret;
@@ -159,7 +157,7 @@ da_result_t  Q_set_status_code_on_http_data_event(q_event_t *q_event, int status
 {
 	da_result_t  ret = DA_RESULT_OK;
 
-//	DA_LOG_FUNC_START(HTTPManager);
+	DA_LOG_FUNC_LOGV(HTTPManager);
 
 	if(q_event->event_type != Q_EVENT_TYPE_DATA_HTTP) {
 		DA_LOG_ERR(HTTPManager, "status_code can be set only for Q_EVENT_TYPE_DATA_HTTP.");
@@ -169,7 +167,7 @@ da_result_t  Q_set_status_code_on_http_data_event(q_event_t *q_event, int status
 
 	q_event->type.q_event_data_http.status_code = status_code;
 
-//	DA_LOG(HTTPManager, "status_code = %d, q_event = %x", q_event->type.q_event_data_http.status_code, q_event);
+//	DA_LOG_VERBOSE(HTTPManager, "status_code = %d, q_event = %x", q_event->type.q_event_data_http.status_code, q_event);
 
 ERR:
 	return ret;
@@ -180,7 +178,7 @@ da_result_t  Q_set_http_body_on_http_data_event(q_event_t *q_event, int body_len
 {
 	da_result_t  ret = DA_RESULT_OK;
 
-//	DA_LOG_FUNC_START(HTTPManager);
+	DA_LOG_FUNC_LOGV(HTTPManager);
 
 	if(q_event->event_type != Q_EVENT_TYPE_DATA_HTTP) {
 		DA_LOG_ERR(HTTPManager, "http body can be set only for Q_EVENT_TYPE_DATA_HTTP.");
@@ -192,7 +190,7 @@ da_result_t  Q_set_http_body_on_http_data_event(q_event_t *q_event, int body_len
 	q_event->type.q_event_data_http.body_data = body_data;
 	q_event->size = body_len;
 
-//	DA_LOG(HTTPManager, "body_len = %d, body_data = %x, q_event = %x", q_event->type.q_event_data_http.body_len, q_event->type.q_event_data_http.body_data, q_event);
+//	DA_LOG_VERBOSE(HTTPManager, "body_len = %d, body_data = %x, q_event = %x", q_event->type.q_event_data_http.body_len, q_event->type.q_event_data_http.body_data, q_event);
 
 ERR:
 	return ret;
@@ -203,7 +201,7 @@ da_result_t  Q_set_error_type_on_http_data_event(q_event_t *q_event, int error_t
 {
 	da_result_t  ret = DA_RESULT_OK;
 
-//	DA_LOG_FUNC_START(HTTPManager);
+	DA_LOG_FUNC_LOGV(HTTPManager);
 
 	if(q_event->event_type != Q_EVENT_TYPE_DATA_HTTP) {
 		DA_LOG_ERR(HTTPManager, "error_type can be set only for Q_EVENT_TYPE_DATA_HTTP.");
@@ -213,7 +211,7 @@ da_result_t  Q_set_error_type_on_http_data_event(q_event_t *q_event, int error_t
 
 	q_event->type.q_event_data_http.error_type = error_type;
 
-	DA_LOG(HTTPManager, "error_type = %d, q_event = %p", q_event->type.q_event_data_http.error_type, q_event);
+	DA_LOG_VERBOSE(HTTPManager, "error_type = %d, q_event = %p", q_event->type.q_event_data_http.error_type, q_event);
 
 ERR:
 	return ret;
@@ -241,8 +239,7 @@ da_bool_t Q_push_event_without_lock(const queue_t *in_queue, const q_event_t *in
 	q_event_t *head = DA_NULL;
 	q_event_t *cur = DA_NULL;
 
-//	DA_LOG_FUNC_START(HTTPManager);
-//	DA_LOG(HTTPManager, "queue = %x", in_queue);
+//	DA_LOG_VERBOSE(HTTPManager, "queue = %x", in_queue);
 
 	event_type = event->event_type;
 
@@ -275,7 +272,7 @@ da_bool_t Q_push_event_without_lock(const queue_t *in_queue, const q_event_t *in
 			}
 
 			queue->queue_size += event->size;
-//			DA_LOG(HTTPManager, "queue size is %d", queue->queue_size);
+//			DA_LOG_VERBOSE(HTTPManager, "queue size is %d", queue->queue_size);
 
 			b_ret = DA_TRUE;
 		} else {
@@ -294,8 +291,7 @@ void Q_pop_event(const queue_t *in_queue, q_event_t **out_event)
 {
 	queue_t *queue = (queue_t*)in_queue;
 
-//	DA_LOG_FUNC_START(HTTPManager);
-//	DA_LOG(HTTPManager, "queue = %x", in_queue);
+//	DA_LOG_VERBOSE(HTTPManager, "queue = %x", in_queue);
 
 	/** Pop Priority
 	  * 1. If there are control event, control event should pop first
@@ -313,7 +309,7 @@ void Q_pop_event(const queue_t *in_queue, q_event_t **out_event)
 			*out_event = queue->data_head;
 			queue->data_head = queue->data_head->next;
 			queue->queue_size -= (*out_event)->size;
-//			DA_LOG(HTTPManager, "queue size is %d", queue->queue_size);
+			DA_LOG_VERBOSE(HTTPManager, "queue size is %d", queue->queue_size);
 		} else {/* Priority 3 */
 			*out_event = DA_NULL;
 		}
@@ -331,7 +327,6 @@ void Q_pop_event(const queue_t *in_queue, q_event_t **out_event)
 
 void Q_goto_sleep(const queue_t *in_queue)
 {
-//	DA_LOG_FUNC_START(HTTPManager);
 	DA_LOG_VERBOSE(HTTPManager, "sleep for %p", in_queue);
 
 //** SHOULD NOT use mutex **//
@@ -343,7 +338,6 @@ void Q_goto_sleep(const queue_t *in_queue)
 
 void Q_wake_up(const queue_t *in_queue)
 {
-//	DA_LOG_FUNC_START(HTTPManager);
 	DA_LOG_VERBOSE(HTTPManager, "wake up for %p", in_queue);
 
 //** SHOULD NOT use mutex **//
@@ -357,15 +351,16 @@ void init_q_event_data_http(q_event_t *q_event)
 {
 	q_event_data_http_t *q_event_data_http;
 
-//	DA_LOG_FUNC_START(HTTPManager);
+	DA_LOG_FUNC_LOGV(HTTPManager);
 
 	if(q_event->event_type == Q_EVENT_TYPE_DATA_HTTP) {
 		q_event_data_http = &(q_event->type.q_event_data_http);
 
 		if(q_event_data_http) {
-			q_event_data_http->status_code = DA_NULL;
+			q_event_data_http->status_code = 0;
 			if(q_event_data_http->http_response_msg) {
 				http_msg_response_destroy(&(q_event_data_http->http_response_msg));
+				q_event_data_http->http_response_msg = DA_NULL;
 			}
 
 			if(q_event_data_http->body_len > 0 ) {
@@ -374,7 +369,7 @@ void init_q_event_data_http(q_event_t *q_event)
 					q_event_data_http->body_data = DA_NULL;
 				}
 			}
-			q_event_data_http->error_type = DA_NULL;
+			q_event_data_http->error_type = 0;
 		}
 	}
 }
@@ -383,12 +378,12 @@ void init_q_event_control(q_event_t *q_event)
 {
 	q_event_control_t *q_event_control;
 
-//	DA_LOG_FUNC_START(HTTPManager);
+	DA_LOG_FUNC_LOGV(HTTPManager);
 
 	if(q_event->event_type == Q_EVENT_TYPE_CONTROL) {
 		q_event_control = &(q_event->type.q_event_control);
 		if(q_event_control) {
-			q_event_control->control_type = DA_NULL;
+			q_event_control->control_type = Q_EVENT_TYPE_CONTROL_NONE;
 		}
 	}
 

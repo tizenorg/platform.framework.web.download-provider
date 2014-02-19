@@ -22,7 +22,6 @@
 #include "download-agent-utils.h"
 
 da_result_t get_user_agent_string(char **uagent_str);
-da_result_t get_storage_type(da_storage_type_t *type);
 char *get_proxy_address(void);
 
 #endif

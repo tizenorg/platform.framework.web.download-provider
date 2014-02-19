@@ -98,6 +98,7 @@ typedef struct {
 	const char *file_name;
 	const char *temp_file_path; /* For resume download, the "etag" value should be existed together */
 	const char *etag; /* For resume download */
+	const char *pkg_name; /* For system resource */
 	void *user_data;
 } extension_data_t;
 

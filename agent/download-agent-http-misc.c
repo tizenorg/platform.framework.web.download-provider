@@ -29,7 +29,7 @@ char *get_user_agent()
 {
 	char *uagent_str = DA_NULL;
 
-	DA_LOG_FUNC_START(Default);
+	DA_LOG_FUNC_LOGV(Default);
 
 	uagent_str = get_client_user_agent_string();
 	if (!uagent_str) {

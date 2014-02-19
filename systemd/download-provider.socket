@@ -1,0 +1,6 @@
+[Socket]
+ListenStream=/tmp/download-provider
+SocketMode=0777
+
+[Install]
+WantedBy=sockets.target

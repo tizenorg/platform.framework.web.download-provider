@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <math.h>
-
+#include <errno.h>
 #include "download-agent-client-mgr.h"
 #include "download-agent-debug.h"
 #include "download-agent-utils.h"
@@ -26,11 +27,6 @@
 #include "download-agent-mime-util.h"
 #include "download-agent-http-mgr.h"
 #include "download-agent-plugin-conf.h"
-
-#ifdef _ENABLE_OMA_DRM
-#include "download-agent-plugin-drm.h"
-#endif
-
 
 #define NO_NAME_TEMP_STR "No name"
 
@@ -54,7 +50,6 @@ static da_result_t __file_write_buf_copy_to_buf(file_info *file_storage,
 static da_result_t __file_write_buf_directly_write(stage_info *stage,
 		file_info *file_storage, char *body, int body_len);
 
-
 da_result_t clean_files_from_dir(char *dir_path)
 {
 	da_result_t ret = DA_RESULT_OK;
@@ -62,7 +57,7 @@ da_result_t clean_files_from_dir(char *dir_path)
 	DIR *dir;
 	char file_path[DA_MAX_FULL_PATH_LEN] = { 0, };
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	if (dir_path == DA_NULL)
 		return DA_ERR_INVALID_ARGUMENT;
@@ -70,11 +65,11 @@ da_result_t clean_files_from_dir(char *dir_path)
 	if (is_dir_exist(dir_path)) {
 		dir = opendir(dir_path);
 		if (DA_NULL == dir) {
-			DA_LOG_ERR(FileManager, "opendir() for %s is failed.", dir_path);
+			DA_LOG_ERR(FileManager, "opendir() is failed.");
 			ret = DA_ERR_INVALID_INSTALL_PATH;
 		} else {
 			while (DA_NULL != (d = readdir(dir))) {
-				DA_LOG(FileManager, "%s",d->d_name);
+				DA_SECURE_LOGD("%s",d->d_name);
 				if (0 == strncmp(d->d_name, ".", strlen("."))
 						|| 0 == strncmp(d->d_name,
 								"..",
@@ -114,7 +109,7 @@ da_result_t get_mime_type(stage_info *stage, char **out_mime_type)
 	/* Priority 1 */
 	if (GET_REQUEST_HTTP_HDR_CONT_TYPE(GET_STAGE_TRANSACTION_INFO(stage))) {
 		mime_type = GET_REQUEST_HTTP_HDR_CONT_TYPE(GET_STAGE_TRANSACTION_INFO(stage));
-		 DA_LOG(FileManager, "content type from HTTP response header [%s]", mime_type);
+//		DA_SECURE_LOGI("content type from HTTP response header [%s]", mime_type);
 	}
 
 	if (!mime_type) {
@@ -126,14 +121,14 @@ da_result_t get_mime_type(stage_info *stage, char **out_mime_type)
 	*out_mime_type = (char *)calloc(1, strlen(mime_type) + 1);
 	if (*out_mime_type) {
 		strncpy(*out_mime_type, mime_type, strlen(mime_type));
-		DA_LOG_VERBOSE(FileManager, "out_mime_type str[%s] ptr[%p] len[%d]",
-				*out_mime_type,*out_mime_type,strlen(*out_mime_type));
+//		DA_SECURE_LOGD("out_mime_type str[%s] ptr[%p] len[%d]",
+//				*out_mime_type,*out_mime_type,strlen(*out_mime_type));
 	} else {
 		DA_LOG_ERR(FileManager, "fail to allocate memory");
 		return DA_ERR_FAIL_TO_MEMALLOC;
 	}
 
-	DA_LOG(FileManager, "mime type = %s", *out_mime_type);
+//	DA_SECURE_LOGD("mime type = %s", *out_mime_type);
 	return DA_RESULT_OK;
 }
 
@@ -151,7 +146,7 @@ da_bool_t is_file_exist(const char *file_path)
 
 	if (stat_ret == 0) {
 		if (dir_state.st_mode & S_IFREG) {
-			DA_LOG(FileManager, "Exist! %s is a regular file & its size = %lu", file_path, dir_state.st_size);
+			DA_SECURE_LOGD("Exist! %s is a regular file & its size = %lu", file_path, dir_state.st_size);
 			return DA_TRUE;
 		}
 
@@ -175,7 +170,7 @@ da_bool_t is_dir_exist(const char *file_path)
 
 	if (stat_ret == 0) {
 		if (dir_state.st_mode & S_IFDIR) {
-			DA_LOG(FileManager, "Exist! %s is a directory.", file_path);
+			DA_LOG_VERBOSE(FileManager, "Existed directory.");
 			return DA_TRUE;
 		}
 
@@ -217,28 +212,29 @@ da_result_t __saved_file_open(stage_info *stage)
 	char *actual_file_path = DA_NULL;
 	void *fd = DA_NULL;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	file_storage = GET_STAGE_CONTENT_STORE_INFO(stage);
 	if (!file_storage)
 		return DA_ERR_INVALID_ARGUMENT;
 
 	actual_file_path = GET_CONTENT_STORE_ACTUAL_FILE_NAME(file_storage);
-	DA_LOG(FileManager, "actual_file_path = %s", actual_file_path);
 	if (!actual_file_path)
 		return DA_ERR_INVALID_ARGUMENT;
-
 
 	fd = fopen(actual_file_path, "a+"); // for resume
 	if (fd == DA_NULL) {
 		DA_LOG_ERR(FileManager, "File open failed");
-		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
+		if (errno == ENOSPC)
+			ret = DA_ERR_DISK_FULL;
+		else
+			ret = DA_ERR_FAIL_TO_ACCESS_FILE;
 		goto ERR;
 	}
 	GET_CONTENT_STORE_FILE_HANDLE(file_storage) = fd;
 
-	DA_LOG(FileManager, "file path for saving = %s",
-			GET_CONTENT_STORE_ACTUAL_FILE_NAME(file_storage));
+//	DA_SECURE_LOGD("file path for saving = %s",
+//			GET_CONTENT_STORE_ACTUAL_FILE_NAME(file_storage));
 
 ERR:
 	if (DA_RESULT_OK != ret) {
@@ -253,7 +249,7 @@ da_result_t __set_file_size(stage_info *stage)
 	req_dl_info *stage_req_info = DA_NULL;
 	file_info *file_storage = DA_NULL;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	if (!stage) {
 		ret = DA_ERR_INVALID_ARGUMENT;
@@ -266,13 +262,13 @@ da_result_t __set_file_size(stage_info *stage)
 	if (!file_storage)
 		goto ERR;
 
-	if (GET_REQUEST_HTTP_HDR_CONT_LEN(stage_req_info) != DA_NULL) {
+	if (GET_REQUEST_HTTP_HDR_CONT_LEN(stage_req_info) != 0) {
 		GET_CONTENT_STORE_FILE_SIZE(file_storage)
 				= GET_REQUEST_HTTP_HDR_CONT_LEN(stage_req_info);
 	} else {
 		GET_CONTENT_STORE_FILE_SIZE(file_storage) = 0;
 	}
-	DA_LOG(FileManager, "file size = %d", GET_CONTENT_STORE_FILE_SIZE(file_storage));
+	DA_LOG_VERBOSE(FileManager, "file size = %d", GET_CONTENT_STORE_FILE_SIZE(file_storage));
 ERR:
 	return ret;
 
@@ -315,7 +311,7 @@ char *__derive_extension(stage_info *stage)
 				DA_NULL, &file_name);
 		if (b_ret && file_name) {
 			char *extension = DA_NULL;
-			DA_LOG(FileManager, "Name from Content-Disposition :[%s]", file_name);
+			DA_SECURE_LOGD("Name from Content-Disposition :[%s]", file_name);
 			__divide_file_name_into_pure_name_N_extesion(file_name, DA_NULL, &extension);
 				if (file_name) {
 				free(file_name);
@@ -333,7 +329,7 @@ char *__derive_extension(stage_info *stage)
 	else
 		url = GET_SOURCE_BASIC_URL(source_info);
 	if (url) {
-		DA_LOG(FileManager, "url:[%s]", url);
+		DA_SECURE_LOGD("url:[%s]", url);
 		da_bool_t b_ret = da_get_extension_name_from_url(url, &extension);
 		if (b_ret && extension)
 			return extension;
@@ -355,7 +351,7 @@ da_result_t __get_candidate_file_name(stage_info *stage, char **out_pure_file_na
 	char *pure_file_name = DA_NULL;
 	char *extension = DA_NULL;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	if (!stage || !out_pure_file_name)
 		return DA_ERR_INVALID_ARGUMENT;
@@ -381,8 +377,8 @@ da_result_t __get_candidate_file_name(stage_info *stage, char **out_pure_file_na
 			da_bool_t b_ret = http_msg_response_get_content_disposition(http_msg_response,
 					DA_NULL, &file_name);
 			if (b_ret && file_name) {
-				DA_LOG(FileManager, "Name from Content-Disposition :[%s]", file_name);
-				__divide_file_name_into_pure_name_N_extesion(file_name, &pure_file_name, DA_NULL);
+				DA_SECURE_LOGD("Name from Content-Disposition :[%s]", file_name);
+				__divide_file_name_into_pure_name_N_extesion(file_name, &pure_file_name, &extension);
 				if (file_name) {
 					free(file_name);
 					file_name = DA_NULL;
@@ -402,7 +398,7 @@ da_result_t __get_candidate_file_name(stage_info *stage, char **out_pure_file_na
 		else
 			url = GET_SOURCE_BASIC_URL(source_info);
 		if (url) {
-			DA_LOG(FileManager, "url: [%s]", url);
+			DA_SECURE_LOGD("url: [%s]", url);
 			da_get_file_name_from_url(url, &pure_file_name);
 		}
 	}
@@ -418,7 +414,7 @@ da_result_t __get_candidate_file_name(stage_info *stage, char **out_pure_file_na
 
 	*out_pure_file_name = pure_file_name;
 	pure_file_name = DA_NULL;
-	DA_LOG(FileManager, "candidate file name [%s]", *out_pure_file_name);
+	DA_SECURE_LOGD("candidate file name [%s]", *out_pure_file_name);
 
 	if (out_extension) {
 		if (extension) {
@@ -426,7 +422,7 @@ da_result_t __get_candidate_file_name(stage_info *stage, char **out_pure_file_na
 			extension = DA_NULL;
 		} else {
 			*out_extension = __derive_extension(stage);
-			DA_LOG(FileManager, "candidate extension [%s]", *out_extension);
+			DA_SECURE_LOGD("candidate extension [%s]", *out_extension);
 		}
 	}
 
@@ -452,7 +448,7 @@ da_result_t __decide_file_path(stage_info *stage)
 	char *user_install_path = DA_NULL;
 	file_info *file_info_data = DA_NULL;
 	int len = 0;
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	file_info_data = GET_STAGE_CONTENT_STORE_INFO(stage);
 	if (!file_info_data)
@@ -506,7 +502,7 @@ da_result_t __decide_file_path(stage_info *stage)
 	}
 
 ERR:
-	DA_LOG(FileManager, "decided file path = %s", GET_CONTENT_STORE_ACTUAL_FILE_NAME(file_info_data));
+	DA_SECURE_LOGI("decided file path = %s", GET_CONTENT_STORE_ACTUAL_FILE_NAME(file_info_data));
 	if (temp_dir) {
 		free(temp_dir);
 		temp_dir = DA_NULL;
@@ -532,15 +528,14 @@ char *get_full_path_avoided_duplication(char *in_dir, char *in_candidate_file_na
 	int final_path_len = 0;
 	int extension_len = 0;
 
-	int suffix_count = 0;	/* means suffix on file name. up to "_99" */
-	const int max_suffix_count = 99;
+	int suffix_count = 0;	/* means suffix on file name. up to "_1000000000" */
+	const int max_suffix_count = 1000000000;
 	int suffix_len = (int)log10(max_suffix_count+1) + 1;	/* 1 means "_" */
 
 	if (!in_dir || !in_candidate_file_name)
 		return DA_NULL;
 
-//	DA_LOG_FUNC_START(FileManager);
-	DA_LOG(FileManager, "in_candidate_file_name=[%s], in_extension=[%s]", in_candidate_file_name, in_extension);
+//	DA_SECURE_LOGD("in_candidate_file_name=[%s], in_extension=[%s]", in_candidate_file_name, in_extension);
 
 	if (extension)
 		extension_len = strlen(extension);
@@ -592,7 +587,7 @@ char *get_full_path_avoided_duplication(char *in_dir, char *in_candidate_file_na
 		break;
 	} while (1);
 
-	DA_LOG(FileManager, "decided path = [%s]", final_path);
+//	DA_SECURE_LOGD("decided path = [%s]", final_path);
 	return final_path;
 }
 
@@ -605,7 +600,7 @@ da_result_t __divide_file_name_into_pure_name_N_extesion(const char *in_file_nam
 	int len = 0;
 	da_result_t ret = DA_RESULT_OK;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	if (!in_file_name)
 		return DA_ERR_INVALID_ARGUMENT;
@@ -617,7 +612,7 @@ da_result_t __divide_file_name_into_pure_name_N_extesion(const char *in_file_nam
 	if (tmp_ptr && out_extension) {
 		strncpy((char*) tmp_ext, tmp_ptr, sizeof(tmp_ext) - 1);
 		*out_extension = strdup((const char*) tmp_ext);
-		DA_LOG(FileManager, "extension [%s]", *out_extension);
+		DA_SECURE_LOGD("extension [%s]", *out_extension);
 	}
 
 	if (!out_pure_file_name)
@@ -644,7 +639,7 @@ da_result_t __divide_file_name_into_pure_name_N_extesion(const char *in_file_nam
 				(const char*) temp_file);
 	}
 
-	DA_LOG(FileManager, "pure file name [%s]", *out_pure_file_name);
+	DA_SECURE_LOGD("pure file name [%s]", *out_pure_file_name);
 	return ret;
 }
 
@@ -653,7 +648,7 @@ da_result_t __file_write_buf_make_buf(file_info *file_storage)
 	da_result_t ret = DA_RESULT_OK;
 	char *buffer = DA_NULL;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	buffer = (char*) calloc(DOWNLOAD_NOTIFY_LIMIT, 1);
 	if (DA_NULL == buffer) {
@@ -671,7 +666,7 @@ da_result_t __file_write_buf_destroy_buf(file_info *file_storage)
 {
 	da_result_t ret = DA_RESULT_OK;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	if (GET_CONTENT_STORE_FILE_BUFFER(file_storage))
 		free(GET_CONTENT_STORE_FILE_BUFFER(file_storage));
@@ -690,7 +685,7 @@ da_result_t __file_write_buf_flush_buf(stage_info *stage, file_info *file_storag
 	int write_success_len = 0;
 	void *fd = DA_NULL;
 
-	//	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	buffer = GET_CONTENT_STORE_FILE_BUFFER(file_storage);
 	buffer_size = GET_CONTENT_STORE_FILE_BUFF_LEN(file_storage);
@@ -707,7 +702,6 @@ da_result_t __file_write_buf_flush_buf(stage_info *stage, file_info *file_storag
 		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
 		goto ERR;
 	}
-
 	write_success_len = fwrite(buffer, sizeof(char), buffer_size,
 			(FILE *) fd);
 	/* FIXME : This can be necessary later due to progressive download.
@@ -715,13 +709,15 @@ da_result_t __file_write_buf_flush_buf(stage_info *stage, file_info *file_storag
 	//fflush((FILE *) fd);
 	if (write_success_len != buffer_size) {
 		DA_LOG_ERR(FileManager, "write  fails ");
-		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
+		if (errno == ENOSPC)
+			ret = DA_ERR_DISK_FULL;
+		else
+			ret = DA_ERR_FAIL_TO_ACCESS_FILE;
 		goto ERR;
 	}
 	GET_CONTENT_STORE_CURRENT_FILE_SIZE(GET_STAGE_CONTENT_STORE_INFO(stage))
 			+= write_success_len;
-	DA_LOG(FileManager, "write %d bytes", write_success_len);
-
+	DA_LOG_VERBOSE(FileManager, "write %d bytes", write_success_len);
 	IS_CONTENT_STORE_FILE_BYTES_WRITTEN_TO_FILE(file_storage) = DA_TRUE;
 	GET_CONTENT_STORE_FILE_BUFF_LEN(file_storage) = 0;
 
@@ -736,7 +732,7 @@ da_result_t __file_write_buf_copy_to_buf(file_info *file_storage, char *body,
 	char *buffer = DA_NULL;
 	int buffer_size = 0;
 
-	//	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	buffer = GET_CONTENT_STORE_FILE_BUFFER(file_storage);
 	buffer_size = GET_CONTENT_STORE_FILE_BUFF_LEN(file_storage);
@@ -754,7 +750,7 @@ da_result_t __file_write_buf_directly_write(stage_info *stage,
 	int write_success_len = 0;
 	void *fd = DA_NULL;
 
-	//	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	fd = GET_CONTENT_STORE_FILE_HANDLE(file_storage);
 	if (DA_NULL == fd) {
@@ -763,7 +759,6 @@ da_result_t __file_write_buf_directly_write(stage_info *stage,
 		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
 		goto ERR;
 	}
-
 	write_success_len = fwrite(body, sizeof(char), body_len,
 			(FILE *) fd);
 	/* FIXME : This can be necessary later due to progressive download.
@@ -771,7 +766,10 @@ da_result_t __file_write_buf_directly_write(stage_info *stage,
 	//fflush((FILE *) fd);
 	if (write_success_len != body_len) {
 		DA_LOG_ERR(FileManager, "write  fails ");
-		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
+		if (errno == ENOSPC)
+			ret = DA_ERR_DISK_FULL;
+		else
+			ret = DA_ERR_FAIL_TO_ACCESS_FILE;
 		goto ERR;
 	}
 	GET_CONTENT_STORE_CURRENT_FILE_SIZE(GET_STAGE_CONTENT_STORE_INFO(stage))
@@ -790,7 +788,7 @@ da_result_t file_write_ongoing(stage_info *stage, char *body, int body_len)
 	int buffer_size = 0;
 	char *buffer = DA_NULL;
 
-	//	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	file_storage = GET_STAGE_CONTENT_STORE_INFO(stage);
 	if (!file_storage) {
@@ -861,7 +859,7 @@ da_result_t file_write_complete(stage_info *stage)
 	unsigned int buffer_size = 0;
 	void *fd = DA_NULL;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	file_storage = GET_STAGE_CONTENT_STORE_INFO(stage);
 	if (!file_storage) {
@@ -899,7 +897,7 @@ da_result_t start_file_writing(stage_info *stage)
 	da_result_t ret = DA_RESULT_OK;
 	file_info *file_info_data = DA_NULL;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGV(FileManager);
 
 	file_info_data = GET_STAGE_CONTENT_STORE_INFO(stage);
 	ret = get_mime_type(stage,
@@ -929,7 +927,7 @@ da_result_t start_file_writing_append(stage_info *stage)
 {
 	da_result_t ret = DA_RESULT_OK;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	ret = __saved_file_open(stage);
 
@@ -948,7 +946,7 @@ da_result_t start_file_writing_append_with_new_download(stage_info *stage)
 	req_dl_info *request_info = DA_NULL;
 	unsigned long long temp_file_size = 0;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	file_storage = GET_STAGE_CONTENT_STORE_INFO(stage);
 	if (!file_storage)
@@ -1026,7 +1024,7 @@ da_result_t discard_download(stage_info *stage)
 	file_info *file_storage = DA_NULL;
 	FILE *f_handle = DA_NULL;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	file_storage = GET_STAGE_CONTENT_STORE_INFO(stage);
 
@@ -1044,7 +1042,7 @@ void clean_paused_file(stage_info *stage)
 	char *paused_file_path = DA_NULL;
 	FILE *fd = DA_NULL;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	file_info_data = GET_STAGE_CONTENT_STORE_INFO(stage);
 
@@ -1067,7 +1065,7 @@ da_result_t replace_content_file_in_stage(stage_info *stage,
 	char *dd_file_path = DA_NULL;
 	int len;
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	if (!dest_dd_file_path
 			&& (DA_FALSE == is_file_exist(dest_dd_file_path))) {
@@ -1105,7 +1103,7 @@ da_result_t copy_file(const char *src, const char *dest)
 	int fwritenum = 0;
 	char buff[4096] = { 0, };
 
-	DA_LOG_FUNC_START(FileManager);
+	DA_LOG_FUNC_LOGD(FileManager);
 
 	/* open files to copy */
 	fs = fopen(src, "rb");
@@ -1150,10 +1148,10 @@ da_result_t create_dir(const char *install_dir)
 		/* read/write/search permissions for owner and group,
 		 * and with read/search permissions for others. */
 	if (mkdir(install_dir, S_IRWXU | S_IRWXG | S_IRWXO)) {
-		DA_LOG_ERR(FileManager, "Fail to creaate directory [%s]", install_dir);
+		DA_LOG_ERR(FileManager, "Fail to creaate directory");
 		ret = DA_ERR_FAIL_TO_ACCESS_STORAGE;
 	} else {
-		DA_LOG(FileManager, "[%s] is created!", install_dir);
+		DA_SECURE_LOGD("[%s] is created!", install_dir);
 		if (chown(install_dir, 5000, 5000) < 0) {
 			DA_LOG_ERR(FileManager, "Fail to chown");
 			ret = DA_ERR_FAIL_TO_ACCESS_STORAGE;
@@ -1162,37 +1160,9 @@ da_result_t create_dir(const char *install_dir)
 	return ret;
 }
 
-
-da_result_t get_default_dir(char **out_path)
-{
-	char *tmp_default_path = DA_NULL;
-	int len = 0;
-
-	if (!out_path) {
-		DA_LOG_ERR(ClientNoti, "DA_ERR_INVALID_ARGUMENT");
-		return DA_ERR_INVALID_ARGUMENT;
-	}
-
-	len = strlen(DA_DEFAULT_FILE_DIR_PATH);
-	tmp_default_path = calloc(len + 1, sizeof(char));
-	if (!tmp_default_path) {
-		return DA_ERR_FAIL_TO_MEMALLOC;
-	}
-
-	memcpy(tmp_default_path, DA_DEFAULT_FILE_DIR_PATH, len);
-	tmp_default_path[len] = '\0';
-
-	*out_path = tmp_default_path;
-
-	DA_LOG_VERBOSE(FileManager, "default temp path = [%s]", *out_path);
-
-	return DA_RESULT_OK;
-}
-
 da_result_t get_default_install_dir(char **out_path)
 {
 	char *default_path = DA_NULL;
-	da_storage_type_t type;
 	da_result_t ret = DA_RESULT_OK;
 	int len = 0;
 
@@ -1200,22 +1170,15 @@ da_result_t get_default_install_dir(char **out_path)
 		DA_LOG_ERR(ClientNoti, "DA_ERR_INVALID_ARGUMENT");
 		return DA_ERR_INVALID_ARGUMENT;
 	}
-	ret = get_storage_type(&type);
-	if (DA_RESULT_OK != ret)
-		return ret;
-	if (type == DA_STORAGE_MMC)
-		len = strlen(DA_DEFAULT_INSTALL_PATH_FOR_MMC);
-	else
-		len = strlen(DA_DEFAULT_INSTALL_PATH_FOR_PHONE);
+
+	len = strlen(DA_DEFAULT_INSTALL_PATH_FOR_PHONE);
 
 	default_path = calloc(len + 1, sizeof(char));
 	if (!default_path) {
 		return DA_ERR_FAIL_TO_MEMALLOC;
 	}
-	if (type == DA_STORAGE_MMC)
-		memcpy(default_path, DA_DEFAULT_INSTALL_PATH_FOR_MMC, len);
-	else // DA_STROAGE_PHONE
-		memcpy(default_path, DA_DEFAULT_INSTALL_PATH_FOR_PHONE, len);
+
+	memcpy(default_path, DA_DEFAULT_INSTALL_PATH_FOR_PHONE, len);
 	default_path[len] = '\0';
 
 	*out_path = default_path;
@@ -1223,6 +1186,6 @@ da_result_t get_default_install_dir(char **out_path)
 	if (!is_dir_exist(default_path)) {
 		ret = create_dir(default_path);
 	}
-	DA_LOG_VERBOSE(FileManager, "default temp path = [%s]", *out_path);
+	DA_SECURE_LOGD("default temp path = [%s]", *out_path);
 	return DA_RESULT_OK;
 }

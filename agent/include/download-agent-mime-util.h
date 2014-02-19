@@ -21,6 +21,12 @@
 
 #define NO_EXTENSION_NAME_STR "dat"
 
+#define DD_MIME_STR "application/vnd.oma.dd+xml"
+#define DD_EXT_STR "*.dd"
+#define DRM_MIME_MSG_STR "application/vnd.oma.drm.message"
+#define DRM_EXT_STR "*.dm"
+#define DRM_MIME_CONTENT_STR "application/vnd.oma.drm.content"
+
 typedef struct {
 	char *standard;
 	char *normal;
