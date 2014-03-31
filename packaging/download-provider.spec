@@ -3,12 +3,10 @@ Summary:    Download the contents in background
 Version:    1.1.6
 Release:    0
 Group:      Development/Libraries
-License:    Apache License, Version 2.0
+License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 Requires(post): sys-assert
 Requires(post): libdevice-node
-Requires(post): org.tizen.indicator
-Requires(post): org.tizen.quickpanel
 Requires(post): sqlite
 Requires(post): connman
 Requires(post): /sbin/ldconfig
