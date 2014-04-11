@@ -129,7 +129,6 @@ ln -s ../download-provider.socket %{buildroot}%{_libdir}/systemd/system/sockets.
 %{_libdir}/libdownload-provider-interface.so.0
 %{_bindir}/%{name}
 %{_licensedir}/%{name}
-%{_smackruledir}/%{name}.rule
 %{_sqlschemafile}
 
 %files devel
