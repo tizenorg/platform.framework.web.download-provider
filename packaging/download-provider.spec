@@ -66,6 +66,7 @@ Description: download the contents in background (development files)
 		-DPKG_RELEASE=%{release} \\\
 		-DIMAGE_DIR:PATH=%{_imagedir} \\\
 		-DLOCALE_DIR:PATH=%{_localedir} \\\
+		-DSYSTEMD_DIR:PATH=%{_unitdir} \\\
 		-DDATABASE_SCHEMA_DIR=%{_sqlschemadir} \\\
 		-DDATABASE_SCHEMA_FILE=%{_sqlschemafile} \\\
 		-DSUPPORT_WIFI_DIRECT:BOOL=OFF \\\
@@ -114,8 +115,8 @@ vconftool set -t int db/setting/default_memory/wap 0
 %{_bindir}/%{name}
 %{_imagedir}/*.png
 %{_imagedir}/*.gif
-%{_libdir}/libdownloadagent2.so.*
-%{_libdir}/libdownload-provider-interface.so.*
+%{_libdir}/libdownloadagent2.so*
+%{_libdir}/libdownload-provider-interface.so*
 %{_unitdir}/download-provider.service
 %{_unitdir}/graphical.target.wants/download-provider.service
 %{_unitdir}/download-provider.socket

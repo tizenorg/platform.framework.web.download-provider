@@ -627,7 +627,7 @@ static void __paused_cb(user_paused_info_t *info, void *user_data)
 int dp_init_agent()
 {
 
-	g_da_handle = dlopen("/usr/lib/libdownloadagent2.so", RTLD_LAZY | RTLD_GLOBAL);
+	g_da_handle = dlopen("libdownloadagent2.so", RTLD_LAZY | RTLD_GLOBAL);
 	if (!g_da_handle) {
 		TRACE_ERROR("[dlopen] %s", dlerror());
 		g_da_handle = NULL;
