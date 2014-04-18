@@ -44,8 +44,8 @@ SET(PACKAGE_DESCRIPTION "Defines for ${PROJECT_NAME}")
 CONFIGURE_FILE(download-provider.pc.in download-provider.pc @ONLY)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/download-provider.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/download-provider.service DESTINATION ${LIB_INSTALL_DIR}/systemd/system)
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/download-provider.socket DESTINATION ${LIB_INSTALL_DIR}/systemd/system)
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/download-provider.service DESTINATION ${SYSTEMD_DIR})
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/download-provider.socket DESTINATION ${SYSTEMD_DIR})
 
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/download-provider-schema.sql DESTINATION ${DATABASE_SCHEMA_DIR})
 
