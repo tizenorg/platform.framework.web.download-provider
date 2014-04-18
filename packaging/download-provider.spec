@@ -2,17 +2,11 @@ Name:       download-provider
 Summary:    Download the contents in background
 Version:    1.1.6
 Release:    0
-Group:      Development/Libraries
+Group:      System/Libraries
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
-Requires(post): sys-assert
-Requires(post): libdevice-node
-Requires(post): sqlite
-Requires(post): connman
-Requires(post): vconf
-Requires(post): /sbin/ldconfig
-Requires(postun): /sbin/ldconfig
 BuildRequires:  cmake
+BuildRequires:  fdupes
 BuildRequires:  libprivilege-control-conf
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gobject-2.0)
@@ -31,8 +25,12 @@ BuildRequires:  pkgconfig(wifi-direct)
 BuildRequires:  pkgconfig(libsmack)
 BuildRequires:  gettext-devel
 BuildRequires:  pkgconfig(libsystemd-daemon)
-BuildRequires: pkgconfig(libtzplatform-config)
-Requires:      libtzplatform-config
+BuildRequires:  pkgconfig(libtzplatform-config)
+Requires(post): /sbin/ldconfig
+Requires(post): vconf
+Requires:       sqlite
+Requires:       connman
+%systemd_requires
 
 %description
 Description: download the contents in background
@@ -53,8 +51,6 @@ Description: download the contents in background (development files)
 %define _localedir %{_data_install_path}/locales
 %define _sqlschemadir %{_data_install_path}/sql
 %define _sqlschemafile %{_sqlschemadir}/download-provider-schema.sql
-%define _licensedir /usr/share/license
-%define _smackruledir %{TZ_SYS_SMACK}/accesses.d
 
 %define cmake \
 	CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -fvisibility=hidden"; export CFLAGS \
@@ -72,8 +68,6 @@ Description: download the contents in background (development files)
 		-DLOCALE_DIR:PATH=%{_localedir} \\\
 		-DDATABASE_SCHEMA_DIR=%{_sqlschemadir} \\\
 		-DDATABASE_SCHEMA_FILE=%{_sqlschemafile} \\\
-		-DLICENSE_DIR:PATH=%{_licensedir} \\\
-		-DSMACK_RULE_DIR:PATH=%{_smackruledir} \\\
 		-DSUPPORT_WIFI_DIRECT:BOOL=OFF \\\
 		-DSUPPORT_LOG_MESSAGE:BOOL=ON \\\
 		-DSUPPORT_CHECK_IPC:BOOL=ON \\\
@@ -93,55 +87,49 @@ export FFLAGS="$FFLAGS -DTIZEN_ENGINEER_MODE"
 make %{?jobs:-j%jobs}
 
 %install
-rm -rf %{buildroot}
 %make_install
-mkdir -p %{buildroot}%{_licensedir}
 mkdir -p %{buildroot}/%{_data_install_path}
-mkdir -p %{buildroot}%{_libdir}/systemd/system/graphical.target.wants
-mkdir -p %{buildroot}%{_libdir}/systemd/system/sockets.target.wants
-ln -s ../download-provider.service %{buildroot}%{_libdir}/systemd/system/graphical.target.wants/
-ln -s ../download-provider.socket %{buildroot}%{_libdir}/systemd/system/sockets.target.wants/
-
-%post devel
-/sbin/ldconfig
-
-%postun devel
-/sbin/ldconfig
-
-%postun
-/sbin/ldconfig
+mkdir -p %{buildroot}%{_unitdir}/graphical.target.wants
+mkdir -p %{buildroot}%{_unitdir}/sockets.target.wants
+ln -s ../download-provider.service %{buildroot}%{_unitdir}/graphical.target.wants/
+ln -s ../download-provider.socket %{buildroot}%{_unitdir}/sockets.target.wants/
+%fdupes %{buildroot}%{_localedir}
 
 %post
 /sbin/ldconfig
+%systemd_post %{name}.service
 vconftool set -t int db/setting/default_memory/wap 0
+
+%preun
+%systemd_preun %{name}.service
+
+%postun
+/sbin/ldconfig
+%systemd_postun %{name}.service
 
 %files
 %defattr(-,root,root,-)
-%manifest download-provider.manifest
+%manifest %{name}.manifest
+%license LICENSE.APLv2
+%{_bindir}/%{name}
 %{_imagedir}/*.png
 %{_imagedir}/*.gif
-%{_localedir}/*
-%{_libdir}/libdownloadagent2.so.0.0.1
-%{_libdir}/libdownloadagent2.so
-%{_libdir}/systemd/system/download-provider.service
-%{_libdir}/systemd/system/graphical.target.wants/download-provider.service
-%{_libdir}/systemd/system/download-provider.socket
-%{_libdir}/systemd/system/sockets.target.wants/download-provider.socket
-%{_libdir}/libdownload-provider-interface.so.%{version}
-%{_libdir}/libdownload-provider-interface.so.0
-%{_bindir}/%{name}
-%{_licensedir}/%{name}
+%{_libdir}/libdownloadagent2.so.*
+%{_libdir}/libdownload-provider-interface.so.*
+%{_unitdir}/download-provider.service
+%{_unitdir}/graphical.target.wants/download-provider.service
+%{_unitdir}/download-provider.socket
+%{_unitdir}/sockets.target.wants/download-provider.socket
 %{_sqlschemafile}
+%{_localedir}/*
 
 %files devel
 %defattr(-,root,root,-)
-%{_libdir}/libdownloadagent2.so.0.0.1
+%manifest %{name}.manifest
 %{_libdir}/libdownloadagent2.so
 %{_libdir}/libdownload-provider-interface.so
 %{_includedir}/download-provider/download-provider-defs.h
 %{_includedir}/download-provider/download-provider-interface.h
-%{_bindir}/%{name}
 %{_libdir}/pkgconfig/download-provider.pc
 %{_libdir}/pkgconfig/download-provider-interface.pc
 
-%changelog
