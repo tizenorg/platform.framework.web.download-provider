@@ -9,6 +9,7 @@ Requires(post): sys-assert
 Requires(post): libdevice-node
 Requires(post): sqlite
 Requires(post): connman
+Requires(post): vconf
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 BuildRequires:  cmake
@@ -112,6 +113,7 @@ ln -s ../download-provider.socket %{buildroot}%{_libdir}/systemd/system/sockets.
 
 %post
 /sbin/ldconfig
+vconftool set -t int db/setting/default_memory/wap 0
 
 %files
 %defattr(-,root,root,-)
