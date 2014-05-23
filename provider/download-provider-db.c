@@ -1768,7 +1768,7 @@ static char *__merge_strings(char *dest, const char *src, char sep)
 	dest_length = strlen(dest);
 	src_length = strlen(src);
 
-	temp_dest = sqlite3_realloc(dest, dest_length + src_length + 1);
+	temp_dest = sqlite3_realloc(dest, dest_length + src_length + 2);
 	if (temp_dest == NULL) {
 		free(dest);
 		return NULL;
