@@ -28,7 +28,7 @@
 #include "download-provider-log.h"
 #include "download-provider-pthread.h"
 
-#define DATABASE_FILE tzplatform_mkpath(TZ_USER_DB,".download-provider.db")
+#define DATABASE_FILE tzplatform_mkpath(TZ_SYS_DB,".download-provider.db")
 
 //BASIC
 #define DP_DB_BASIC_GET_QUERY_FORMAT "SELECT %s FROM %s WHERE id = ?"
