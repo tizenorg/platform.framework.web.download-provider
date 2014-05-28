@@ -28,6 +28,7 @@ BuildRequires:  pkgconfig(libsystemd-daemon)
 BuildRequires:  pkgconfig(libtzplatform-config)
 Requires(post): /sbin/ldconfig
 Requires(post): vconf
+Requires:       net-config
 Requires:       sqlite
 Requires:       connman
 
