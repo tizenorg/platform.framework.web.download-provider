@@ -30,6 +30,9 @@
 #include <dlog.h>
 #include <download-provider-interface.h>
 #include <download-provider.h>
+#include <tzplatform_config.h>
+
+#define DEFAULT_INSTALL_PATH tzplatform_getenv(TZ_USER_DOWNLOADS)
 
 #ifdef SUPPORT_CHECK_IPC
 #include <sys/ioctl.h>
@@ -691,8 +694,8 @@ static int __disconnect_from_provider()
 // clear read buffer. call in head of API before calling IPC_SEND
 static void __clear_read_buffer(int fd)
 {
-	long i;
-	long unread_count;
+	int i;
+	int unread_count;
 	char tmp_char;
 
 	// FIONREAD : Returns the number of bytes immediately readable
@@ -1338,6 +1341,37 @@ static dp_error_type __dp_interface_get_raw_bundle
 }
 
 
+static int _mkdir(const char *dir, mode_t mode) {
+        char tmp[256];
+        char *p = NULL;
+        size_t len;
+
+        snprintf(tmp, sizeof(tmp),"%s",dir);
+        len = strlen(tmp);
+        if(tmp[len - 1] == '/')
+                tmp[len - 1] = 0;
+        for(p = tmp + 1; *p; p++)
+                if(*p == '/') {
+                        *p = 0;
+                        mkdir(tmp, mode);
+                        *p = '/';
+                }
+        return mkdir(tmp, mode);
+}
+
+static dp_error_type __create_dir(const char *install_dir)
+{
+    dp_error_type ret = DP_ERROR_NONE;
+        /* read/write/search permissions for owner and group,
+         * and with read/search permissions for others as fas as
+         * umask allows. */
+    if (_mkdir(install_dir, S_IRWXU | S_IRWXG | S_IRWXO)) {
+        ret = DP_ERROR_PERMISSION_DENIED;
+    }
+    return ret;
+}
+
+
 /////////////////////// APIs /////////////////////////////////
 
 int dp_interface_create(int *id)
@@ -1386,6 +1420,18 @@ int dp_interface_create(int *id)
 	if (errorcode == DP_ERROR_IO_ERROR)
 		__disconnect_from_provider();
 	pthread_mutex_unlock(&g_function_mutex);
+	if (errorcode == DP_ERROR_NONE){
+	    // safely set the default path, maybe overwritten by the user later
+	    const char* dest_path = DEFAULT_INSTALL_PATH;
+        if (dest_path){
+            struct stat dir_state;
+            int stat_ret = stat(dest_path, &dir_state);
+            if (stat_ret != 0) {
+                __create_dir(dest_path);
+            }
+            dp_interface_set_destination(t_id, dest_path);
+        }
+	}
 	return __dp_interface_convert_errorcode(errorcode);
 }
 
@@ -1425,10 +1471,11 @@ int dp_interface_destroy(const int id)
 	return __dp_interface_convert_errorcode(errorcode);
 }
 
+
 int dp_interface_start(const int id)
 {
-	int errorcode = DP_ERROR_NONE;
 
+    int errorcode = DP_ERROR_NONE;
 	DP_PRE_CHECK_ID;
 
 	pthread_mutex_lock(&g_function_mutex);
@@ -1524,7 +1571,11 @@ int dp_interface_get_network_type(const int id, int *net_type)
 
 int dp_interface_set_destination(const int id, const char *path)
 {
-	return __dp_interface_set_string(id, DP_CMD_SET_DESTINATION, path);
+    if (path && strlen(path)>0) {
+        return __dp_interface_set_string(id, DP_CMD_SET_DESTINATION, path);
+    } else {
+        return __dp_interface_convert_errorcode(DP_ERROR_NONE);
+    }
 }
 
 

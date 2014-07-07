@@ -19,6 +19,7 @@
 
 #include <sys/time.h>
 #include <sys/statfs.h>
+#include <sys/smack.h>
 #include "download-provider.h"
 #include "download-provider-log.h"
 
@@ -29,8 +30,6 @@
 
 #include "download-provider-notification.h"
 
-#define SMACKFS_MAGIC 0x43415d53
-#define SMACKFS_MNT "/smack"
 ///////// below functions are called by main thread of thread-request.c
 
 //////////////////////////////////////////////////////////////////////////
@@ -158,18 +157,8 @@ char *dp_print_errorcode(dp_error_type errorcode)
 
 int dp_is_smackfs_mounted()
 {
-	struct statfs sfs;
-	int ret;
-	do {
-		ret = statfs(SMACKFS_MNT, &sfs);
-	} while (ret < 0 && errno == EINTR);
-	if (ret) {
-		TRACE_ERROR("[SMACK ERROR]");
-		return -1;
-	}
-	if (sfs.f_type == SMACKFS_MAGIC) {
-		return 1;
-	}
+	if(smack_smackfs_path() != NULL)
+	  return 1;
 	TRACE_ERROR("[SMACK DISABLE]");
 	return 0;
 }

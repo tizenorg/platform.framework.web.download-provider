@@ -773,7 +773,7 @@ static int __dp_set_group_new(int clientfd, dp_group_slots *groups,
 
 	if (dp_is_smackfs_mounted() == 1) {
 		ret = smack_new_label_from_socket(clientfd, &smack_label);
-		if (ret != 0) {
+		if (ret < 0) {
 			TRACE_ERROR("[CRITICAL] cannot get smack label");
 			free(pkgname);
 			free(smack_label);
