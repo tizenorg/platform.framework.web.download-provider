@@ -63,7 +63,6 @@ da_result_t handle_http_body(stage_info *stage, char *body, int body_len);
 da_result_t set_hdr_fields_on_download_info(stage_info *stage);
 
 da_result_t _check_content_type_is_matched(stage_info *stage);
-da_result_t _check_enough_memory_for_this_download(stage_info *stage);
 da_result_t _check_downloaded_file_size_is_same_with_header_content_size(
 		stage_info *stage);
 
@@ -1210,9 +1209,6 @@ da_result_t handle_http_status_code(stage_info *stage,
 		ret = _check_content_type_is_matched(stage);
 		if (ret != DA_RESULT_OK)
 			goto ERR;
-		ret = _check_enough_memory_for_this_download(stage);
-		if (ret != DA_RESULT_OK)
-			goto ERR;
 		CHANGE_HTTP_STATE(HTTP_STATE_DOWNLOAD_STARTED,stage);
 		CHANGE_DOWNLOAD_STATE(DOWNLOAD_STATE_NEW_DOWNLOAD,stage); // ?
 		break;
@@ -1471,40 +1467,6 @@ da_result_t _check_content_type_is_matched(stage_info *stage)
 	return ret;
 }
 
-da_result_t _check_enough_memory_for_this_download(stage_info *stage)
-{
-	da_result_t ret = DA_RESULT_OK;
-
-	req_dl_info *request_info = DA_NULL;
-
-	unsigned long long cont_len = 0;
-	da_storage_size_t memory;
-
-	DA_LOG_FUNC_LOGV(HTTPManager);
-
-	memset(&memory, 0x00, sizeof(da_storage_size_t));
-	request_info = GET_STAGE_TRANSACTION_INFO(stage);
-
-	cont_len = (unsigned long long) GET_REQUEST_HTTP_HDR_CONT_LEN(request_info);
-	if (cont_len) {
-		ret = get_available_memory(&memory);
-		if (DA_RESULT_OK == ret) {
-			DA_LOG(HTTPManager, "Memory avail: %lu, Memory block :%lu Content: %llu",
-					memory.b_available,memory.b_size, cont_len);
-			if (memory.b_available < ((cont_len
-					+ (unsigned long long)SAVE_FILE_BUFFERING_SIZE_50KB)
-					/ (unsigned long long)memory.b_size)) /* 50KB buffering */
-			{
-				ret = DA_ERR_DISK_FULL;
-				goto ERR;
-			}
-		}
-	}
-
-ERR:
-	return ret;
-}
-
 da_result_t _check_this_partial_download_is_available(stage_info *stage,
 		http_msg_response_t *new_http_msg_response)
 {
@@ -1513,7 +1475,6 @@ da_result_t _check_this_partial_download_is_available(stage_info *stage,
 	char *origin_ETag = NULL;
 	char *new_ETag = NULL;
 	unsigned long long remained_content_len = 0;
-	da_storage_size_t memory;
 	char *value = NULL;
 	unsigned long long size = 0;
 
@@ -1548,21 +1509,6 @@ da_result_t _check_this_partial_download_is_available(stage_info *stage,
 		goto ERR;
 	}
 
-	if (remained_content_len) {
-		ret = get_available_memory(&memory);
-		if (DA_RESULT_OK == ret) {
-			DA_LOG(HTTPManager, "Memory avail: %lu, Memory block :%lu Content: %llu",
-					memory.b_available,memory.b_size, remained_content_len);
-			if (memory.b_available < ((remained_content_len
-					+ SAVE_FILE_BUFFERING_SIZE_50KB)
-					/ memory.b_size)) /* 50KB buffering */
-			{
-				ret = DA_ERR_DISK_FULL;
-				goto ERR;
-			}
-		}
-	}
-
 ERR:
 	if (new_ETag) {
 		free(new_ETag);
@@ -1580,7 +1526,6 @@ da_result_t _check_resume_download_is_available(stage_info *stage,
 	char *origin_ETag = NULL;
 	char *new_ETag = NULL;
 	unsigned long long remained_content_len = 0;
-	da_storage_size_t memory;
 	char *value = NULL;
 	unsigned long long size = 0;
 	char *temp_file_path = DA_NULL;
@@ -1618,20 +1563,6 @@ da_result_t _check_resume_download_is_available(stage_info *stage,
 		goto ERR;
 	}
 
-	if (remained_content_len) {
-		ret = get_available_memory(&memory);
-		if (DA_RESULT_OK == ret) {
-			DA_LOG(HTTPManager, "Memory avail: %lu, Memory block :%lu Content: %llu",
-					memory.b_available,memory.b_size, remained_content_len);
-			if (memory.b_available < ((remained_content_len
-					+ SAVE_FILE_BUFFERING_SIZE_50KB)
-					/ memory.b_size)) /* 50KB buffering */
-			{
-				ret = DA_ERR_DISK_FULL;
-				goto ERR;
-			}
-		}
-	}
 	b_ret = http_msg_response_get_content_type(new_http_msg_response, &value);
 	if (b_ret) {
 		GET_REQUEST_HTTP_HDR_CONT_TYPE(request_info) = value;
