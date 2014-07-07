@@ -30,6 +30,7 @@ Requires(post): /sbin/ldconfig
 Requires(post): vconf
 Requires:       sqlite
 Requires:       connman
+Requires:       net-config
 
 %description
 Description: download the contents in background

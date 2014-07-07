@@ -24,8 +24,6 @@
 #include "download-agent-type.h"
 #include "download-agent-dl-mgr.h"
 
-#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE tzplatform_getenv(TZ_USER_DOWNLOADS)
-
 da_bool_t is_file_exist(const char *file_path);
 da_bool_t is_dir_exist(const char *dir_path);
 
@@ -42,11 +40,8 @@ da_result_t  get_mime_type(stage_info *stage, char **out_mime_type);
 da_result_t  discard_download(stage_info *stage) ;
 void clean_paused_file(stage_info *stage);
 da_result_t  replace_content_file_in_stage(stage_info *stage, const char *dest_dd_file_path);
-da_result_t  decide_tmp_file_path(stage_info *stage);
 char *get_full_path_avoided_duplication(char *in_dir, char *in_candidate_file_name, char *in_extension);
 
 da_result_t copy_file(const char *src, const char *dest);
-da_result_t create_dir(const char *install_dir);
-da_result_t get_default_install_dir(char **out_path);
 
 #endif

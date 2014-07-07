@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <math.h>
 #include <errno.h>
-#include <tzplatform_config.h>
 
 #include "download-agent-client-mgr.h"
 #include "download-agent-debug.h"
@@ -457,26 +456,19 @@ da_result_t __decide_file_path(stage_info *stage)
 		return DA_ERR_INVALID_ARGUMENT;
 
 
-	/* If the installed path which user want is set, the temporary directory is same to the installation directory.
-	 * Otherwise, the default temporary directory is used.
+	/* The destination path is set by user or by CAPI already
 	 */
 	user_install_path = GET_DL_USER_INSTALL_PATH(GET_STAGE_DL_ID(stage));
-	if (user_install_path) {
-		len = strlen(user_install_path);
-		temp_dir = (char *)calloc(len + 1, sizeof(char));
-		if (!temp_dir) {
-			ret = DA_ERR_FAIL_TO_MEMALLOC;
-			goto ERR;
-		}
-		memcpy(temp_dir, user_install_path, len);
-		temp_dir[len] = '\0';
+    len = strlen(user_install_path);
+    temp_dir = (char *)calloc(len + 1, sizeof(char));
+    if (!temp_dir) {
+        ret = DA_ERR_FAIL_TO_MEMALLOC;
+        goto ERR;
+    }
+    memcpy(temp_dir, user_install_path, len);
+    temp_dir[len] = '\0';
 
-	} else {
-		ret = get_default_install_dir(&temp_dir);
-		if (DA_RESULT_OK != ret || DA_NULL == temp_dir) {
-			goto ERR;
-		}
-	}
+
 
 	ret = __get_candidate_file_name(stage, &file_name_without_extension, &extension);
 	if (ret != DA_RESULT_OK)
@@ -1144,50 +1136,3 @@ da_result_t copy_file(const char *src, const char *dest)
 	return DA_RESULT_OK;
 }
 
-da_result_t create_dir(const char *install_dir)
-{
-	da_result_t ret = DA_RESULT_OK;
-		/* read/write/search permissions for owner and group,
-		 * and with read/search permissions for others. */
-	if (mkdir(install_dir, S_IRWXU | S_IRWXG | S_IRWXO)) {
-		DA_LOG_ERR(FileManager, "Fail to creaate directory");
-		ret = DA_ERR_FAIL_TO_ACCESS_STORAGE;
-	} else {
-		DA_SECURE_LOGD("[%s] is created!", install_dir);
-		if (chown(install_dir, tzplatform_getuid(TZ_USER_NAME),tzplatform_getuid(TZ_SYS_USER_GROUP)) < 0) {
-			DA_LOG_ERR(FileManager, "Fail to chown");
-			ret = DA_ERR_FAIL_TO_ACCESS_STORAGE;
-		}
-	}
-	return ret;
-}
-
-da_result_t get_default_install_dir(char **out_path)
-{
-	char *default_path = DA_NULL;
-	da_result_t ret = DA_RESULT_OK;
-	int len = 0;
-
-	if (!out_path) {
-		DA_LOG_ERR(ClientNoti, "DA_ERR_INVALID_ARGUMENT");
-		return DA_ERR_INVALID_ARGUMENT;
-	}
-
-	len = strlen(DA_DEFAULT_INSTALL_PATH_FOR_PHONE);
-
-	default_path = calloc(len + 1, sizeof(char));
-	if (!default_path) {
-		return DA_ERR_FAIL_TO_MEMALLOC;
-	}
-
-	memcpy(default_path, DA_DEFAULT_INSTALL_PATH_FOR_PHONE, len);
-	default_path[len] = '\0';
-
-	*out_path = default_path;
-
-	if (!is_dir_exist(default_path)) {
-		ret = create_dir(default_path);
-	}
-	DA_SECURE_LOGD("default temp path = [%s]", *out_path);
-	return DA_RESULT_OK;
-}

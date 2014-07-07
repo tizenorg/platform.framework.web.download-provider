@@ -137,43 +137,6 @@ int read_data_from_file(char *file, char **out_buffer)
 	return buffer_len;
 }
 
-da_result_t get_available_memory(da_storage_size_t *avail_memory)
-{
-	da_result_t ret = DA_RESULT_OK;
-	int fs_ret = 0;
-	struct statfs filesys_info = {0, };
-	char *default_install_dir = NULL;
-
-	DA_LOG_FUNC_LOGD(Default);
-
-	if (!avail_memory)
-		return DA_ERR_INVALID_ARGUMENT;
-
-	ret = get_default_install_dir(&default_install_dir);
-
-	if (ret == DA_RESULT_OK && default_install_dir) {
-		fs_ret = statfs(default_install_dir, &filesys_info);
-	} else {
-		return DA_ERR_FAIL_TO_ACCESS_STORAGE;
-	}
-
-	if (fs_ret != 0) {
-		DA_LOG_ERR(Default,"Phone file path :statfs error - [%d]", errno);
-		free(default_install_dir);
-		return DA_ERR_INVALID_INSTALL_PATH;
-	}
-
-	avail_memory->b_available = filesys_info.f_bavail;
-	avail_memory->b_size = filesys_info.f_bsize;
-
-	DA_LOG_VERBOSE(Default, "Available Memory(f_bavail) : %llu", filesys_info.f_bavail);
-	DA_LOG_VERBOSE(Default, "Available Memory(f_bsize) : %d", filesys_info.f_bsize);
-	DA_LOG_VERBOSE(Default, "Available Memory(kbytes) : %lu", (filesys_info.f_bavail/1024)*filesys_info.f_bsize);
-
-	free(default_install_dir);
-	return DA_RESULT_OK;
-}
-
 da_mime_type_id_t get_mime_type_id(char *content_type)
 {
 	int i = 0;
