@@ -1,0 +1,9 @@
+Code-Review+2: Casey Schaufler <casey.schaufler@intel.com>
+Code-Review+1: Corentin Lecouvey <corentin.lecouvey@open.eurogiciel.org>
+Code-Review+1: Romuald Texier-Marcadé <romuald.texier-marcade@open.eurogiciel.org>
+Verified+1: Romuald Texier-Marcadé <romuald.texier-marcade@open.eurogiciel.org>
+Submitted-by: Casey Schaufler <casey.schaufler@intel.com>
+Submitted-at: Wed, 13 Aug 2014 09:16:52 -0700
+Reviewed-on: https://review.tizen.org/gerrit/24123
+Project: platform/framework/web/download-provider
+Branch: refs/heads/tizen
