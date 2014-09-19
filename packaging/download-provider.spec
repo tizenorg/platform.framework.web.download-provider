@@ -1,14 +1,20 @@
+%define _imagedir       %{_datadir}/download-provider
+%define _databasedir    /opt/usr/dbspace
+%define _databasefile   %{_databasedir}/.download-provider.db
+%define _dbusservicedir %{_datadir}/dbus-1/system-services
+%define _dbuspolicydir  %{_sysconfdir}/dbus-1/system.d
+%define _licensedir     %{_datadir}/license
 
 Name:       download-provider
 Summary:    Download the contents in background
 Version:    1.0.5
-Release:    10
+Release:    0
 Group:      Development/Libraries
-License:    Apache License, Version 2.0
+License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 Source1:    download-provider.service
 Source101:  org.download-provider.conf
-Source1001: 	download-provider.manifest
+Source1001: download-provider.manifest
 Requires(post): /usr/bin/sqlite3
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(glib-2.0)
@@ -27,8 +33,9 @@ BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(appsvc)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(wifi-direct)
-Requires(post): /sbin/ldconfig
+Requires(post):   /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
+
 %description
 Description: download the contents in background
 
@@ -38,49 +45,33 @@ Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description devel
-Description: download the contents in background (developement files)
+Description: download the contents in background (development files)
 
 %prep
 %setup -q
 cp %{SOURCE101} .
 cp %{SOURCE1001} .
 
-%define _imagedir /usr/share/download-provider
-%define _databasedir /opt/usr/dbspace
-%define _databasefile %{_databasedir}/.download-provider.db
-%define _dbusservicedir /usr/share/dbus-1/system-services
-%define _dbuspolicydir /etc/dbus-1/system.d
-%define _licensedir /usr/share/license
-
-%define cmake \
-	CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -fvisibility=hidden"; export CFLAGS \
-	FFLAGS="${FFLAGS:-%optflags} -fPIC -fvisibility=hidden"; export FFLAGS \
-	LDFLAGS+=" -Wl,--as-needed -Wl,--hash-style=both"; export LDFLAGS \
-	%__cmake \\\
-		-DCMAKE_INSTALL_PREFIX:PATH=%{_prefix} \\\
-		-DBIN_INSTALL_DIR:PATH=%{_bindir} \\\
-		-DLIB_INSTALL_DIR:PATH=%{_libdir} \\\
-		-DINCLUDE_INSTALL_DIR:PATH=%{_includedir} \\\
-		-DPKG_NAME=%{name} \\\
-		-DPKG_VERSION=%{version} \\\
-		-DPKG_RELEASE=%{release} \\\
-		-DIMAGE_DIR:PATH=%{_imagedir} \\\
-		-DDATABASE_FILE:PATH=%{_databasefile} \\\
-		-DDBUS_SERVICE_DIR:PATH=%{_dbusservicedir} \\\
-		-DLICENSE_DIR:PATH=%{_licensedir} \\\
-		-DSUPPORT_DBUS_SYSTEM:BOOL=ON \\\
-		-DSUPPORT_WIFI_DIRECT:BOOL=OFF \\\
-		-DSUPPORT_LOG_MESSAGE:BOOL=ON \\\
-		-DSUPPORT_CHECK_IPC:BOOL=ON \\\
-		%if "%{?_lib}" == "lib64" \
-		%{?_cmake_lib_suffix64} \\\
-		%endif \
-		%{?_cmake_skip_rpath} \\\
-		-DBUILD_SHARED_LIBS:BOOL=ON
-
 %build
-%cmake .
-make %{?jobs:-j%jobs}
+CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -fvisibility=hidden"; export CFLAGS
+FFLAGS="${FFLAGS:-%optflags} -fPIC -fvisibility=hidden"; export FFLAGS
+LDFLAGS="${LDFLAGS} -Wl,--as-needed -Wl,--hash-style=both"; export LDFLAGS
+
+%cmake . \
+       -DBIN_INSTALL_DIR:PATH=%{_bindir} \
+       -DPKG_NAME=%{name} \
+       -DPKG_VERSION=%{version} \
+       -DPKG_RELEASE=%{release} \
+       -DIMAGE_DIR:PATH=%{_imagedir} \
+       -DDATABASE_FILE:PATH=%{_databasefile} \
+       -DDBUS_SERVICE_DIR:PATH=%{_dbusservicedir} \
+       -DLICENSE_DIR:PATH=%{_licensedir} \
+       -DSUPPORT_DBUS_SYSTEM:BOOL=ON \
+       -DSUPPORT_WIFI_DIRECT:BOOL=OFF \
+       -DSUPPORT_LOG_MESSAGE:BOOL=ON \
+       -DSUPPORT_CHECK_IPC:BOOL=ON
+
+%__make %{?_smp_mflags}
 
 %install
 rm -rf %{buildroot}
@@ -96,7 +87,7 @@ mkdir -p  %{buildroot}%{_sysconfdir}/rc.d/rc5.d
 ln -s %{_sysconfdir}/rc.d/init.d/download-provider-service  %{buildroot}%{_sysconfdir}/rc.d/rc5.d/S70download-provider-service
 
 mkdir -p %{buildroot}/%{_unitdir}/graphical.target.wants
-install %{SOURCE1} %{buildroot}/%{_unitdir}/
+install -m 644 %{SOURCE1} %{buildroot}/%{_unitdir}/
 ln -s ../download-provider.service %{buildroot}/%{_unitdir}/graphical.target.wants/
 
 mkdir -p %{buildroot}/opt/data/%{name}
@@ -163,13 +154,11 @@ CREATE UNIQUE INDEX requests_index ON logging (id, state, errorcode, packagename
 '
 fi
 
-
 %post
 /sbin/ldconfig
 
 %postun
 /sbin/ldconfig
-
 
 %files
 %defattr(-,root,root,-)
@@ -183,9 +172,9 @@ fi
 %{_libdir}/libdownload-provider-interface.so.%{version}
 %{_libdir}/libdownload-provider-interface.so.0
 %{_bindir}/%{name}
-%{_sysconfdir}/rc.d/init.d/download-provider-service
-%{_sysconfdir}/rc.d/rc3.d/S70download-provider-service
-%{_sysconfdir}/rc.d/rc5.d/S70download-provider-service
+%config %{_sysconfdir}/rc.d/init.d/download-provider-service
+%config %{_sysconfdir}/rc.d/rc3.d/S70download-provider-service
+%config %{_sysconfdir}/rc.d/rc5.d/S70download-provider-service
 %{_licensedir}/%{name}
 %{_dbusservicedir}/org.download-provider.service
 %{_dbuspolicydir}/org.download-provider.conf
@@ -202,4 +191,3 @@ fi
 %{_bindir}/%{name}
 %{_libdir}/pkgconfig/download-provider.pc
 %{_libdir}/pkgconfig/download-provider-interface.pc
-
