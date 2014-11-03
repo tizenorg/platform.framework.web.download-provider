@@ -7,5 +7,5 @@ Type=simple
 ExecStart=/usr/bin/download-provider
 
 [Install]
-WantedBy=graphical.target
+WantedBy=default.target
 
