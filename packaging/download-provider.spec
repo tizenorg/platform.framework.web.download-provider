@@ -90,9 +90,9 @@ make %{?jobs:-j%jobs}
 %install
 %make_install
 mkdir -p %{buildroot}/%{_data_install_path}
-mkdir -p %{buildroot}%{_unitdir}/graphical.target.wants
+mkdir -p %{buildroot}%{_unitdir}/default.target.wants
 mkdir -p %{buildroot}%{_unitdir}/sockets.target.wants
-ln -s ../download-provider.service %{buildroot}%{_unitdir}/graphical.target.wants/
+ln -s ../download-provider.service %{buildroot}%{_unitdir}/default.target.wants/
 ln -s ../download-provider.socket %{buildroot}%{_unitdir}/sockets.target.wants/
 %fdupes %{buildroot}%{_localedir}
 
@@ -118,7 +118,7 @@ vconftool set -t int db/setting/default_memory/wap 0
 %{_libdir}/libdownloadagent2.so*
 %{_libdir}/libdownload-provider-interface.so*
 %{_unitdir}/download-provider.service
-%{_unitdir}/graphical.target.wants/download-provider.service
+%{_unitdir}/default.target.wants/download-provider.service
 %{_unitdir}/download-provider.socket
 %{_unitdir}/sockets.target.wants/download-provider.socket
 %{_sqlschemafile}
