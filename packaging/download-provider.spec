@@ -27,7 +27,7 @@ BuildRequires:  gettext-devel
 BuildRequires:  pkgconfig(libsystemd-daemon)
 BuildRequires:  pkgconfig(libtzplatform-config)
 Requires(post): /sbin/ldconfig
-Requires(post): vconf
+Requires(post): /usr/bin/vconftool
 Requires:       sqlite
 Requires:       connman
 Requires:       net-config
