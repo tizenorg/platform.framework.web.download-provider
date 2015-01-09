@@ -19,6 +19,7 @@ BuildRequires:  pkgconfig(bundle)
 BuildRequires:  pkgconfig(capi-base-common)
 BuildRequires:  pkgconfig(capi-appfw-app-manager)
 BuildRequires:  pkgconfig(capi-network-connection)
+BuildRequires:  pkgconfig(connman-lib)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(appsvc)
 BuildRequires:  pkgconfig(wifi-direct)
@@ -30,7 +31,6 @@ Requires(post): /sbin/ldconfig
 Requires(post): vconf
 Requires:       sqlite
 Requires:       connman
-Requires:       net-config
 
 %description
 Description: download the contents in background
