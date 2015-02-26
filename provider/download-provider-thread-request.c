@@ -681,11 +681,11 @@ static int __dp_set_group_new(int clientfd, dp_group_slots *groups,
 	}
 
 	// getting the package name via pid
-	if (app_manager_get_package(credential.pid, &pkgname) ==
+	if (app_manager_get_app_id(credential.pid, &pkgname) ==
 			APP_MANAGER_ERROR_NONE) {
 		TRACE_SECURE_DEBUG("package : %s", pkgname);
 	} else
-		TRACE_ERROR("[CRITICAL] app_manager_get_package");
+		TRACE_ERROR("[CRITICAL] app_manager_get_app_id");
 
 	//// TEST CODE ... to allow sample client ( no package name ).
 	if (pkgname == NULL) {
@@ -694,7 +694,7 @@ static int __dp_set_group_new(int clientfd, dp_group_slots *groups,
 	}
 
 	if (pkgname == NULL) {
-		TRACE_ERROR("[CRITICAL] app_manager_get_package");
+		TRACE_ERROR("[CRITICAL] app_manager_get_app_id");
 		return -1;
 	}
 	if ((pkg_len = strlen(pkgname)) <= 0) {
