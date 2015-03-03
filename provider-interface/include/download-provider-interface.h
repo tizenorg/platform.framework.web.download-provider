@@ -60,6 +60,7 @@ typedef enum
 	DOWNLOAD_ADAPTOR_ERROR_NO_SPACE = TIZEN_ERROR_FILE_NO_SPACE_ON_DEVICE, /**< No space left on device */
 	DOWNLOAD_ADAPTOR_ERROR_FIELD_NOT_FOUND = TIZEN_ERROR_KEY_NOT_AVAILABLE, /**< Specified field not found */
 	DOWNLOAD_ADAPTOR_ERROR_PERMISSION_DENIED = TIZEN_ERROR_PERMISSION_DENIED, /**< Permission denied */
+	DOWNLOAD_ADAPTOR_ERROR_NOT_SUPPORTED = TIZEN_ERROR_NOT_SUPPORTED,               /**< Not supported */	
 	DOWNLOAD_ADAPTOR_ERROR_INVALID_STATE = TIZEN_ERROR_WEB_CLASS | 0x21, /**< Invalid state */
 	DOWNLOAD_ADAPTOR_ERROR_CONNECTION_FAILED = TIZEN_ERROR_WEB_CLASS | 0x22, /**< Connection failed */
 	DOWNLOAD_ADAPTOR_ERROR_INVALID_URL = TIZEN_ERROR_WEB_CLASS | 0x24, /**< Invalid URL */
@@ -75,6 +76,7 @@ typedef enum
 	DOWNLOAD_ADAPTOR_ERROR_RESPONSE_TIMEOUT = TIZEN_ERROR_WEB_CLASS | 0x33, /**< It does not call start API in some time although the download is created*/
 	DOWNLOAD_ADAPTOR_ERROR_SYSTEM_DOWN = TIZEN_ERROR_WEB_CLASS | 0x34, /**< There are no response from client after rebooting download daemon*/
 	DOWNLOAD_ADAPTOR_ERROR_ID_NOT_FOUND = TIZEN_ERROR_WEB_CLASS | 0x35, /**< The download id is not existed in download service module*/
+	DOWNLOAD_ADAPTOR_ERROR_INVALID_NETWORK_TYPE = TIZEN_ERROR_WEB_CLASS | 0x36, /**< error when setting network bonding and network all is not set */	
 	DOWNLOAD_ADAPTOR_ERROR_NO_DATA = TIZEN_ERROR_NO_DATA, /**< No data because the set API is not called */
 	DOWNLOAD_ADAPTOR_ERROR_IO_ERROR = TIZEN_ERROR_IO_ERROR , /**< Internal I/O error */
 } download_adaptor_error_e;
