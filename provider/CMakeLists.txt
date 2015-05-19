@@ -21,7 +21,9 @@ pkg_check_modules(dp2_pkgs REQUIRED glib-2.0
 		libsmack
 		libsystemd-daemon
 		libtzplatform-config
-		dlog)
+		dlog
+		cynara-session
+		cynara-client)
 
 FOREACH(flag ${dp2_pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
@@ -52,6 +54,7 @@ IF(DEFINED LOCALE_DIR)
 	ADD_DEFINITIONS(-DLOCALE_DIR=\"${LOCALE_DIR}\")
 ENDIF(DEFINED LOCALE_DIR)
 
+ADD_DEFINITIONS(-D_GNU_SOURCE)
 
 ADD_EXECUTABLE(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-pid.c
@@ -64,7 +67,8 @@ ADD_EXECUTABLE(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-thread-request.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-thread-queue.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-notification.c
-	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-main.c )
+	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-main.c
+	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-cynara.c )
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${dp2_pkgs_LDFLAGS} ${DP2_LINK_LIBRARIES} -ldl)
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${BIN_INSTALL_DIR})
 

@@ -26,6 +26,8 @@ BuildRequires:  pkgconfig(libsmack)
 BuildRequires:  gettext-devel
 BuildRequires:  pkgconfig(libsystemd-daemon)
 BuildRequires:  pkgconfig(libtzplatform-config)
+BuildRequires:  pkgconfig(cynara-session)
+BuildRequires:  pkgconfig(cynara-client)
 Requires(post): /sbin/ldconfig
 Requires(post): /usr/bin/vconftool
 Requires:       sqlite

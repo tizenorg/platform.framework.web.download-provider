@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Samsung Electronics Co., Ltd All Rights Reserved
+ * Copyright (c) 2012-2015 Samsung Electronics Co., Ltd All Rights Reserved
  *
  * Licensed under the Apache License, Version 2.0 (the License);
  * you may not use this file except in compliance with the License.
@@ -801,6 +801,10 @@ static int __dp_set_group_new(int clientfd, dp_group_slots *groups,
 	TRACE_SECURE_INFO("New Group: slot:%d pid:%d sock:%d [%s]", i,
 		credential.pid, clientfd, pkgname);
 	free(pkgname);
+
+	groups[i].group->cynara_user = dp_cynara_user_new(credential.uid);
+	groups[i].group->cynara_session = dp_cynara_session_new(credential.pid);
+
 	return 0;
 }
 
@@ -1679,42 +1683,15 @@ void *dp_thread_requests_manager(void *arg)
 				continue;
 			}
 
-#ifdef SO_PEERCRED
 			// getting the info of client
 			socklen_t cr_len = sizeof(credential);
 			if (getsockopt(clientfd, SOL_SOCKET, SO_PEERCRED,
-				&credential, &cr_len) == 0) {
-				TRACE_DEBUG
-					("credential : pid=%d, uid=%d, gid=%d",
-					credential.pid, credential.uid, credential.gid);
-			}
-#else // In case of not supported SO_PEERCRED
-			int client_pid = 0;
-			if (dp_ipc_read_custom_type(clientfd,
-					&client_pid, sizeof(int)) < 0) {
-				TRACE_ERROR("[CRITICAL] not support SO_PEERCRED");
+				&credential, &cr_len) < 0) {
+				TRACE_ERROR("Cannot get credentials from socket %d", clientfd);
 				close(clientfd);
-				continue;
 			}
-			if (client_pid <= 0) {
-				TRACE_ERROR("[CRITICAL] not support SO_PEERCRED");
-				close(clientfd);
-				continue;
-			}
-			credential.pid = client_pid;
-			if (dp_ipc_read_custom_type(clientfd,
-					&credential.uid, sizeof(int)) < 0) {
-				TRACE_ERROR("[CRITICAL] not support SO_PEERCRED");
-				close(clientfd);
-				continue;
-			}
-			if (dp_ipc_read_custom_type(clientfd,
-					&credential.gid, sizeof(int)) < 0) {
-				TRACE_ERROR("[CRITICAL] not support SO_PEERCRED");
-				close(clientfd);
-				continue;
-			}
-#endif
+			TRACE_DEBUG("credential : pid=%d, uid=%u, gid=%u",
+				credential.pid, credential.uid, credential.gid);
 
 			switch(connect_cmd) {
 			case DP_CMD_SET_COMMAND_SOCKET:
@@ -1783,6 +1760,19 @@ void *dp_thread_requests_manager(void *arg)
 						__clear_group(privates, group);
 						privates->groups[i].group = NULL;
 					}
+					continue;
+				}
+
+				// All other commands need access to
+				//	http://tizen.org/privilege/download privilege
+				const char privilege[] = "http://tizen.org/privilege/download";
+				if (dp_cynara_check(group->smack_label, group->cynara_session,
+					group->cynara_user, privilege) < 0) {
+					dp_ipc_send_errorcode(sock,
+						DP_ERROR_PERMISSION_DENIED);
+					FD_CLR(sock, &listen_fdset);
+					__clear_group(privates, group);
+					privates->groups[i].group = NULL;
 					continue;
 				}
 
