@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Samsung Electronics Co., Ltd All Rights Reserved
+ * Copyright (c) 2013-2015 Samsung Electronics Co., Ltd All Rights Reserved
  *
  * Licensed under the Apache License, Version 2.0 (the License);
  * you may not use this file except in compliance with the License.
@@ -860,30 +860,7 @@ static int __connect_to_provider()
 			pthread_mutex_unlock(&g_clear_mutex);
 			return DP_ERROR_IO_ERROR;
 		}
-#ifndef SO_PEERCRED
-		// send PID. Not support SO_PEERCRED
-		if (__ipc_send_int(g_interface_info->cmd_socket, getpid()) < 0) {
-			close(g_interface_info->cmd_socket);
-			free(g_interface_info);
-			g_interface_info = NULL;
-			pthread_mutex_unlock(&g_clear_mutex);
-			return DP_ERROR_IO_ERROR;
-		}
-		if (__ipc_send_int(g_interface_info->cmd_socket, getuid()) < 0) {
-			close(g_interface_info->cmd_socket);
-			free(g_interface_info);
-			g_interface_info = NULL;
-			pthread_mutex_unlock(&g_clear_mutex);
-			return DP_ERROR_IO_ERROR;
-		}
-		if (__ipc_send_int(g_interface_info->cmd_socket, getgid()) < 0) {
-			close(g_interface_info->cmd_socket);
-			free(g_interface_info);
-			g_interface_info = NULL;
-			pthread_mutex_unlock(&g_clear_mutex);
-			return DP_ERROR_IO_ERROR;
-		}
-#endif
+
 		g_interface_info->event_socket = __create_socket();
 		if (g_interface_info->event_socket < 0) {
 			TRACE_STRERROR("[CRITICAL] connect system error");
@@ -903,18 +880,6 @@ static int __connect_to_provider()
 			pthread_mutex_unlock(&g_clear_mutex);
 			return DP_ERROR_IO_ERROR;
 		}
-#ifndef SO_PEERCRED
-		// send PID. Not support SO_PEERCRED
-		if (__ipc_send_int
-				(g_interface_info->event_socket, getpid()) < 0) {
-			close(g_interface_info->cmd_socket);
-			close(g_interface_info->event_socket);
-			free(g_interface_info);
-			g_interface_info = NULL;
-			pthread_mutex_unlock(&g_clear_mutex);
-			return DP_ERROR_IO_ERROR;
-		}
-#endif
 
 		int ret = pthread_mutex_init(&g_interface_info->mutex, NULL);
 		if (ret != 0) {

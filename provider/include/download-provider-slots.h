@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Samsung Electronics Co., Ltd All Rights Reserved
+ * Copyright (c) 2012-2015 Samsung Electronics Co., Ltd All Rights Reserved
  *
  * Licensed under the Apache License, Version 2.0 (the License);
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 #ifndef DOWNLOAD_PROVIDER2_SLOTS_H
 #define DOWNLOAD_PROVIDER2_SLOTS_H
 
+#include <sys/socket.h>
+#include <sys/types.h>
+
 #include "download-provider.h"
 #include "download-provider-pthread.h"
 
@@ -24,11 +27,7 @@
 #define DP_MAX_GROUP 15
 #define DP_MAX_REQUEST 64
 
-typedef struct {
-	pid_t pid;
-	uid_t uid;
-	gid_t gid;
-} dp_credential;
+typedef struct ucred dp_credential;
 
 typedef struct {
 	// send command * get return value.
@@ -40,6 +39,8 @@ typedef struct {
 	char *pkgname;
 	dp_credential credential;
 	char *smack_label;
+	char *cynara_session;
+	char *cynara_user;
 } dp_client_group;
 
 typedef struct {
