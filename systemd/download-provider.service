@@ -1,0 +1,12 @@
+[Unit]
+Description=Download provider service
+After=check-mount.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/download-provider
+MemoryLimit=100M
+
+[Install]
+WantedBy=graphical.target
+

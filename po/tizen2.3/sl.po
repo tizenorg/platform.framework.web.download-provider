@@ -1,0 +1,6 @@
+msgid "IDS_DM_HEADER_DOWNLOAD_COMPLETE"
+msgstr "Prenos je končan"
+
+msgid "IDS_DM_BODY_DOWNLOAD_FAILED_M_STATUS_ABB"
+msgstr "Prenos ni uspel"
+

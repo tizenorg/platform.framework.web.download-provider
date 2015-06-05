@@ -1,0 +1,1758 @@
+info: generate repositories ...
+info: build conf has been downloaded at:
+      /var/tmp/youngj-gbs/tizen.conf
+[32minfo: [0mstart building packages from: /home/youngj/dev/spin/tizen_2_4_download-provider/download-provider (git)
+2015-05-14 18:49 +0900
+gbs 0.23
+[32minfo: [0mprepare sources...
+[32minfo: [0mstart export source from: /home/youngj/dev/spin/tizen_2_4_download-provider/download-provider ...
+info: the following untracked files would be included:
+   .cproject
+   .project
+   agent/download-agent-plugin-libcurl.c~
+   bi.sh
+   blog.txt
+   download-provider-w.manifest~
+   download-provider.manifest~
+   i.sh
+   packaging/download-provider.spec~
+   refresh.sh
+warning: Deprecated option '--git-export-only', please use '--no-build' instead!
+info: Creating (native) source archive download-provider-2.1.23.tar.gz from '6faf3bf06df44cba1e07da17e7bfae625ac6cb29'
+info: package files have been exported to:
+     /home/youngj/GBS-ROOT/local/sources/tizen/download-provider-2.1.23-0
+[32minfo: [0mretrieving repo metadata...
+[32minfo: [0mparsing package data...
+[32minfo: [0mbuilding repo metadata ...
+[32minfo: [0mresolving skipped packages ...
+[32minfo: [0mpackage dependency resolving ...
+[32minfo: [0mnext pass:
+download-provider
+[32minfo: [0m*** [1/1] building download-provider-2.1.23-0 armv7l tizen (worker: 0) ***
+VM_IMAGE: , VM_SWAP: 
+--repository /home/youngj/GBS-ROOT/local/repos/tizen/armv7l/RPMS --repository http://168.219.209.55/download/snapshots/2.4-mobile/common/latest/repos/target/packages
+logging output to /home/youngj/GBS-ROOT/local/BUILD-ROOTS/scratch.armv7l.0/.build.log...
+[    0s] Memory limit set to 6608244KB
+[    0s] Using BUILD_ROOT=/home/youngj/GBS-ROOT/local/BUILD-ROOTS/scratch.armv7l.0
+[    0s] Using BUILD_ARCH=armv7l:armv7el:armv6l:armv5tejl:armv5tel:armv5l:armv4tl:armv4l:armv3l:noarch
+[    0s] 
+[    0s] 
+[    0s] santafe started "build download-provider.spec" at Thu May 14 09:49:49 UTC 2015.
+[    0s] 
+[    0s] 
+[    0s] processing specfile /home/youngj/GBS-ROOT/local/sources/tizen/download-provider-2.1.23-0/download-provider.spec ...
+[    0s] init_buildsystem --configdir /usr/lib/build/configs --cachedir /home/youngj/GBS-ROOT/local/cache --repository /home/youngj/GBS-ROOT/local/repos/tizen/armv7l/RPMS --repository http://168.219.209.55/download/snapshots/2.4-mobile/common/latest/repos/target/packages --use-system-qemu /home/youngj/GBS-ROOT/local/sources/tizen/download-provider-2.1.23-0/download-provider.spec ...
+[    0s] initializing /home/youngj/GBS-ROOT/local/BUILD-ROOTS/scratch.armv7l.0/.srcfiles.cache ...
+[    0s] /usr/lib/build/createrpmdeps /home/youngj/GBS-ROOT/local/repos/tizen/armv7l/RPMS
+[    1s] /usr/lib/build/createrepomddeps --cachedir=/home/youngj/GBS-ROOT/local/cache http://168.219.209.55/download/snapshots/2.4-mobile/common/latest/repos/target/packages
+[    1s] expanding package dependencies...
+[    2s] copying qemu
+[    2s] 
+[    2s] registering binfmt handlers for VM
+[    2s] warning: /usr/lib/build/qemu-reg: line 7: interpreter '/usr/bin/qemu-arm64-binfmt' not found
+[    2s] write: Invalid argument
+[    2s] /proc/sys/fs/binfmt_misc/register: write failed
+[    2s] /usr/lib/build/qemu-reg: line 7: write failed. Content: :aarch64:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/usr/bin/qemu-arm64-binfmt:P
+[    2s] 
+[    2s] /.build/qemu-reg: No such file or directory
+[    2s] /.build/qemu-reg: failed. Trying alternate binfmt file
+[    2s] warning: /usr/lib/build/qemu-reg: line 7: interpreter '/usr/bin/qemu-arm64-binfmt' not found
+[    2s] write: Invalid argument
+[    2s] /proc/sys/fs/binfmt_misc/register: write failed
+[    2s] /usr/lib/build/qemu-reg: line 7: write failed. Content: :aarch64:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/usr/bin/qemu-arm64-binfmt:P
+[    2s] 
+[    2s] /usr/lib/build/qemu-reg: binfmt registration failed
+[    9s] [1/4] downloading http://168.219.209.55/download/snapshots/2.4-mobile/common/latest/repos/target/packages/armv7l/capi-network-wifi-direct-devel-1.2.31-6.7.armv7l.rpm ... 
+[   10s] [2/4] downloading http://168.219.209.55/download/snapshots/2.4-mobile/common/latest/repos/target/packages/armv7l/libresourced-devel-0.2.86-7.11.armv7l.rpm ... 
+[   10s] [3/4] downloading http://168.219.209.55/download/snapshots/2.4-mobile/common/latest/repos/target/packages/noarch/model-build-features-0.4-7.1.noarch.rpm ... 
+[   10s] [4/4] downloading http://168.219.209.55/download/snapshots/2.4-mobile/common/latest/repos/target/packages/armv7l/smack-devel-1.0+s14-3.13.armv7l.rpm ... 
+[   10s] 
+[   11s] reordering...cycle: gcc49-locale -> gcc49
+[   11s]   breaking dependency gcc49 -> gcc49-locale
+[   11s] cycle: coreutils -> pam
+[   11s]   breaking dependency pam -> coreutils
+[   11s] cycle: gio-branding-upstream -> libgio
+[   11s]   breaking dependency libgio -> gio-branding-upstream
+[   11s] cycle: dbus-libs -> dbus
+[   11s]   breaking dependency dbus-libs -> dbus
+[   11s] cycle: efl -> eina
+[   11s]   breaking dependency eina -> efl
+[   11s] cycle: efl -> eo
+[   11s]   breaking dependency eo -> efl
+[   11s] cycle: ecore -> eldbus
+[   11s]   breaking dependency ecore -> eldbus
+[   11s] cycle: ecore -> evas
+[   11s]   breaking dependency ecore -> evas
+[   11s] cycle: pulseaudio-libs -> pulseaudio
+[   11s]   breaking dependency pulseaudio -> pulseaudio-libs
+[   11s] cycle: pkgmgr-info -> pkgmgr-info-parser
+[   11s]   breaking dependency pkgmgr-info -> pkgmgr-info-parser
+[   11s] cycle: pkgmgr-client -> pkgmgr-installer -> pkgmgr
+[   11s]   breaking dependency pkgmgr-client -> pkgmgr-installer
+[   11s] cycle: pkgmgr-client -> pkgmgr
+[   11s]   breaking dependency pkgmgr -> pkgmgr-client
+[   11s] cycle: pkgmgr -> pkgmgr-installer
+[   11s]   breaking dependency pkgmgr -> pkgmgr-installer
+[   11s] cycle: libalarm -> alarm-server
+[   11s]   breaking dependency alarm-server -> libalarm
+[   11s] cycle: libsensord -> sensord
+[   11s]   breaking dependency sensord -> libsensord
+[   11s] cycle: libsoftokn3 -> nss
+[   11s]   breaking dependency nss -> libsoftokn3
+[   11s] cycle: rpm -> rpm-libs
+[   11s]   breaking dependency rpm-libs -> rpm
+[   11s] done
+[   12s] deleting download-provider
+[   12s] deleting download-provider-devel
+[   13s] [1/326] [2/326] [3/326] [4/326] installing model-build-features-0.4-7.1
+[   13s] [5/326] [6/326] [7/326] [8/326] [9/326] [10/326] [11/326] [12/326] [13/326] [14/326] [15/326] [16/326] [17/326] [18/326] [19/326] [20/326] [21/326] [22/326] [23/326] [24/326] [25/326] [26/326] [27/326] [28/326] [29/326] [30/326] [31/326] [32/326] [33/326] [34/326] [35/326] [36/326] [37/326] [38/326] [39/326] [40/326] [41/326] [42/326] [43/326] [44/326] [45/326] [46/326] [47/326] [48/326] [49/326] [50/326] [51/326] [52/326] [53/326] [54/326] [55/326] [56/326] [57/326] [58/326] [59/326] [60/326] [61/326] [62/326] [63/326] [64/326] [65/326] [66/326] [67/326] [68/326] [69/326] [70/326] [71/326] [72/326] [73/326] [74/326] [75/326] [76/326] [77/326] [78/326] [79/326] [80/326] [81/326] [82/326] installing fribidi-devel-0.19.6-2.2
+[   13s] [83/326] installing openssl-devel-1.0.1m-4.8
+[   15s] [84/326] installing smack-devel-1.0+s14-3.13
+[   16s] [85/326] [86/326] [87/326] [88/326] [89/326] [90/326] [91/326] [92/326] [93/326] [94/326] [95/326] [96/326] [97/326] [98/326] [99/326] [100/326] [101/326] [102/326] [103/326] [104/326] installing libwayland-server-1.6.0-1.19
+[   16s] [105/326] [106/326] [107/326] [108/326] [109/326] [110/326] [111/326] installing gettext-runtime-0.18.3.2-2.18
+[   17s] [112/326] [113/326] [114/326] [115/326] [116/326] [117/326] [118/326] [119/326] [120/326] [121/326] [122/326] [123/326] [124/326] installing libicu-devel-51-1.270
+[   17s] [125/326] [126/326] [127/326] [128/326] installing lua-5.1.4-2.16
+[   18s] [129/326] [130/326] [131/326] [132/326] [133/326] [134/326] [135/326] [136/326] [137/326] [138/326] installing libwayland-cursor-1.6.0-1.19
+[   18s] [139/326] [140/326] [141/326] [142/326] [143/326] [144/326] [145/326] [146/326] [147/326] installing libsndfile-devel-1.0.28-3.5
+[   19s] [148/326] [149/326] [150/326] [151/326] [152/326] [153/326] [154/326] [155/326] [156/326] [157/326] [158/326] [159/326] installing lua-devel-5.1.4-2.16
+[   19s] [160/326] [161/326] [162/326] [163/326] [164/326] [165/326] installing gettext-tools-0.18.3.2-2.18
+[   21s] [166/326] [167/326] [168/326] [169/326] [170/326] installing wayland-devel-1.6.0-1.19
+[   21s] [171/326] [172/326] [173/326] [174/326] [175/326] installing harfbuzz-devel-0.9.40-3.3
+[   22s] [176/326] [177/326] [178/326] [179/326] [180/326] [181/326] [182/326] [183/326] [184/326] [185/326] [186/326] [187/326] [188/326] [189/326] [190/326] [191/326] [192/326] [193/326] [194/326] [195/326] [196/326] [197/326] [198/326] [199/326] [200/326] [201/326] [202/326] [203/326] [204/326] [205/326] [206/326] [207/326] [208/326] [209/326] installing dbus-devel-1.8.16-2.15
+[   22s] [210/326] [211/326] [212/326] [213/326] [214/326] [215/326] [216/326] [217/326] [218/326] [219/326] [220/326] [221/326] installing systemd-devel-216-9.13
+[   23s] [222/326] installing xdgmime-devel-0.0.12-1.48
+[   23s] [223/326] [224/326] [225/326] [226/326] [227/326] [228/326] [229/326] [230/326] [231/326] [232/326] installing capi-content-mime-type-devel-0.0.3-1.49
+[   23s] [233/326] installing libidn-devel-1.15-1.258
+[   24s] [234/326] [235/326] installing eina-devel-1.13.0-39.8
+[   24s] [236/326] installing sqlite-devel-3.7.14-6.5
+[   24s] [237/326] installing vconf-internal-keys-0.0.152-15.1
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-rcs-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-ail-keys.sh
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key db/ail+ail_info
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-desktop-mode-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-factory-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-webkit-keys.sh
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key db/webkit+user_agent
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-dailybriefing-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-aircommand-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-filemanager-keys.sh
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/filemanager+Mmc
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key db/filemanager+dbupdate
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-security-mdpp-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-ise-keys.sh
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key db/ise+keysound
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-sysman-keys.sh
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+added_usb_storage
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+removed_usb_storage
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+charger_status
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+charge_now
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+battery_status_low
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+battery_capacity
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+battery_level_status
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+usb_status
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+earjack
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+low_memory
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+sliding_keyboard
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+mmc_mount
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+mmc_unmount
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+mmc_format
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+mmc_err_status
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key db/sysman+mmc_dev_changed
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+hdmi
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+stime_changed
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+power_off
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sysman+mmc_format_progress
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/deviced+boot_power_on
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-kies-via-wifi-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-cloud-pdm-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-group-play-keys.sh
+[   27s] running ---------------------------------------------------- /opt/usr/vconf-internal-email-keys.sh
+[   27s] Key already exist. Use -f option to force update
+[   27s] Error!	 create key memory/sync+email
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-popsync-keys.sh
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-ode-keys.sh
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-system-keys.sh
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/system+timechanged
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/system+timechange
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/system+timechange_external
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-fmm-keys.sh
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-appservice-keys.sh
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-crash-keys.sh
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-idle-lock-keys.sh
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/idle_lock+bgset
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-quicksetting-keys.sh
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-pkgmgr-keys.sh
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pkgmgr+status
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-keepit-keys.sh
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/keepit+screen_capture_destination
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-contacts-svc-keys.sh
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/contacts-svc+name_display_order
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/contacts-svc+name_sorting_order
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/contacts-svc+phonenumber_min_match_digit
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-pm-keys.sh
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+state
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+custom_brightness_status
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+camera_status
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+battery_timetoempty
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+battery_timetofull
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+brt_changed_lpm
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+lcdoff_source
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+key_ignore
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+current_brt
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/pm+sip_status
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-sound-keys.sh
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/Sound+SoundStatus
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/Sound+SoundCaptureStatus
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key memory/private+Sound+VoiceControlOn
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-radio-keys.sh
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-download-keys.sh
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-account-keys.sh
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/account+sync_all
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/account+auto_sync
+[   28s] Key already exist. Use -f option to force update
+[   28s] Error!	 create key db/account+msg
+[   28s] running ---------------------------------------------------- /opt/usr/vconf-internal-mobiletv-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-calendar-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-qc-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-debug-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-myfile-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-mobile-hotspot-keys.sh
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/mobile_hotspot+mode
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/mobile_hotspot+connected_device
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key db/mobile_hotspot+security
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key db/mobile_hotspot+hide
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-voicerecorder-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-voice-keys.sh
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key db/voice_input+language
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-facebook-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-setup-wizard-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-mobex-connector-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-miracast-keys.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-fota-consumer.sh
+[   30s] running ---------------------------------------------------- /opt/usr/vconf-internal-telephony-keys.sh
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+daemon_load_count
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+nw_name
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+plmn
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+lac
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+cell_id
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+roam_icon_mode
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+svc_type
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+svc_cs
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+svc_ps
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+svc_roam
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+zone_type
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+sim_slot
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+sim_slot2
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+sim_slot_count
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+pb_init
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+sim_status
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+sim_is_changed
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+cphs_operator_name_full
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+cphs_operator_name_short
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key memory/telephony+call_state
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key db/telephony+call_forward_state
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key db/telephony+call_forward_state2
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key db/telephony+ss_cli_state
+[   30s] Key already exist. Use -f option to force update
+[   30s] Error!	 create key db/telephony+ss_cli_state2
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+tapi_state
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+spn_disp_condition
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+spn
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+rssi
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+imei
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+ps_type
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/setting+3gEnabled
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+telephony_ready
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+nitz_gmt
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+nitz_event_gmt
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+nitz_zone
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+flight_mode
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+svc_act
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+sim_power_state1
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+sim_power_state2
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+dualsim+receive_incoming_call
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+modem_always_on
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+activation_completed
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+emergency_mode
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+mdn
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+call_alert_signal_type
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+call_alert_pitch_type
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/telephony+call_signal
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+dualsim+default_data_service
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+dualsim+preferred_voice_subscription
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/telephony+dualsim+default_subscription
+[   31s] running ---------------------------------------------------- /opt/usr/vconf-internal-location-keys.sh
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/location+setting+Usemylocation
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/location+setting+GpsEnabled
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/location+setting+AgpsEnabled
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/location+setting+NetworkEnabled
+[   31s] running ---------------------------------------------------- /opt/usr/vconf-internal-lockscreen-keys.sh
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/lockscreen+phone_lock_verification
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/lockscreen+wallpaper_type
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/lockscreen+security_auto_lock
+[   31s] running ---------------------------------------------------- /opt/usr/vconf-internal-eas-keys.sh
+[   31s] running ---------------------------------------------------- /opt/usr/vconf-internal-livebox-keys.sh
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/data-provider-master+started
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key db/data-provider-master+serveraddr
+[   31s] Key already exist. Use -f option to force update
+[   31s] Error!	 create key memory/private+data-provider-master+restart_count
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-nfc-keys.sh
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/nfc+feature
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/nfc+enable
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/nfc+sbeam
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/nfc+predefined_item_state
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/nfc+predefined_item
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/nfc+se_type
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/nfc+wallet_mode
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/nfc+state_by_flight
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-menuscreen-keys.sh
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/menuscreen+desktop
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-smemo-keys.sh
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-boot-animation-keys.sh
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key memory/boot_animation+finished
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-allshare-keys.sh
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-google-pim-sync-keys.sh
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-dr-keys.sh
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key memory/data_router+osp_serial_open
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-svoice-keys.sh
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/svoice+package_name
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-bt-keys.sh
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key memory/bluetooth+btsco
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key memory/bluetooth+sco_headset_name
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/bluetooth+lestatus
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key memory/bluetooth+dutmode
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key file/private+libug-setting-bluetooth-efl+visibility_time
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key file/private+bt-service+bt_off_due_to_timeout
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key file/private+bt-core+powersaving_mode_deactivated
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key file/private+bt-core+flight_mode_deactivated
+[   32s] running ---------------------------------------------------- /opt/usr/vconf-internal-video-player-keys.sh
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+personal_no_ask_again
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+backgroud_playing
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+auto_search_subtitle_file
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+show_subtitle
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+subtitle_size
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+subtitle_edge
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+subtitle_font
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+subtitle_font_color
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+subtitle_alignment
+[   32s] Key already exist. Use -f option to force update
+[   32s] Error!	 create key db/private+org.tizen.videos+subtitle_font_color_hex
+[   32s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+subtitle_bg_color
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+subtitle_bg_color_hex
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+subtitle_caption_win_color_hex
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+display_color_tone_type
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+outdoor_visibility
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+preview_url_videos
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+preview_url_records
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+preview_audio_track
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+show_indicator
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+show_border
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+repeat_mode
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+screen_mode
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+sound_alive
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+motion_asked
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+storage_type
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+sort_type
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+view_as_type
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+capture_on
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+tag_active
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+tag_weather
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+tag_location
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+tag_edit_weather
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/private+org.tizen.videos+allow_dock_connect
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/private+org.tizen.videos+extern_mode
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+multi_play
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/private+org.tizen.videos+main_display_tab
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/private+org.tizen.videos+mirroring_warning
+[   33s] running ---------------------------------------------------- /opt/usr/vconf-internal-shot-tizen-keys.sh
+[   33s] running ---------------------------------------------------- /opt/usr/vconf-internal-music-keys.sh
+[   33s] running ---------------------------------------------------- /opt/usr/vconf-internal-wifi-keys.sh
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/wifi+state
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/wifi+transfer_state
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/wifi+strength
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/wifi+wifi_qs_exit
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/wifi+enable_quick_start
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/wifi+connected_ap_name
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key memory/wifi+ug_run_state
+[   33s] Key already exist. Use -f option to force update
+[   33s] Error!	 create key db/wifi+bssid_address
+[   33s] running ---------------------------------------------------- /opt/usr/vconf-internal-chatonv-keys.sh
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-testmode-keys.sh
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/testmode+fast_dormancy
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/testmode+fast_dormancy2
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-starter-keys.sh
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/starter+sequence
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/starter+use_volume_key
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/starter+is_fallback
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/starter+fallback_pkg
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-camera-keys.sh
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/camera+state
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key file/camera+shutter_sound_policy
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/recorder+state
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/camera+pid
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/camera+flash_state
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/recorder+pid
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-ready-to-share-keys.sh
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-oma-ds-keys.sh
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-browser-keys.sh
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-memo-keys.sh
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-call-keys.sh
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/call+vol_level
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-idle-screen-keys.sh
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/idle-screen+safemode
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-gallery-setting-keys.sh
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-image-viewer-keys.sh
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-isf-keys.sh
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/isf+input_language
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/isf+input_keyboard_uuid
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/isf+input_panel_state
+[   35s] running ---------------------------------------------------- /opt/usr/vconf-internal-dnet-keys.sh
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+status
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+network_config
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+ip
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+proxy
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+wifi
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+cellular
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+state
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+state2
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key memory/dnet+packet_state
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/dnet+statistics+cellular+totalrcv
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/dnet+statistics+cellular+totalrcv2
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/dnet+statistics+cellular+totalsnt
+[   35s] Key already exist. Use -f option to force update
+[   35s] Error!	 create key db/dnet+statistics+cellular+totalsnt2
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/dnet+statistics+cellular+lastrcv
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/dnet+statistics+cellular+lastrcv2
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/dnet+statistics+cellular+lastsnt
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/dnet+statistics+cellular+lastsnt2
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/dnet+statistics+wifi+totalrcv
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/dnet+statistics+wifi+totalsnt
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/dnet+statistics+wifi+lastrcv
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/dnet+statistics+wifi+lastsnt
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-mobex-engine-keys.sh
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-dock-keys.sh
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-syncml-keys.sh
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-admin-keys.sh
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-baby-crying-detector-keys.sh
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-csc-keys.sh
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-msg-keys.sh
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key memory/msg+ready
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/msg+recv_sms
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/msg+recv_mms
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/msg+network_mode
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-ciss-keys.sh
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-alarm-keys.sh
+[   36s] running ---------------------------------------------------- /opt/usr/vconf-internal-setting-keys.sh
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+call+vibration_pattern_path
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+touch_sounds
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+button_sounds
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+sound_lock
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+media+sound_volume
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+Brightness
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+automatic_brightness_level
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+auto_display_adjustment
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+lcd_backlight_normal
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+call+ringtone_sound_volume
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+call+ringtone_path
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+call+ringtone_path_with_time
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+call+ringtone_default_path
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+call+vibration_level
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+call+vibration_type
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+noti+sound_volume
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+noti+msg_alert_rep_type
+[   36s] Key already exist. Use -f option to force update
+[   36s] Error!	 create key db/setting+sound+noti+msg_ringtone_path
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+noti+ringtone_default_path
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+noti+email_alert_rep_type
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+noti+email_ringtone_path
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+noti+vibration_level
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+touch_feedback+sound_volume
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+touch_feedback+vibration_level_bak
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+touch_feedback+vibration_level
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key memory/setting+usb_in_mode_change
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key memory/setting+usb_mode
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key memory/setting+usb_sel_mode
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+debug_mode
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+select_network
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+network_mode
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+power_on_lock
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+phone_lock_attempts_left
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+phone_lock_timestamp
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sim_lock_timestamp
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+simple_password
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+screen_lock_type
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+3rd_lock_pkg_name
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+font_size
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+font_type
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+brightness_automatic
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+automatic_time_update
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+date_format
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+cityname_id
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+weekofday_format
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+lang
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+ticker_noti+twitter
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+accessibility+font_size
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+accessibility+font_name
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key memory/setting+accessibility+torch_light
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+accessibility+rapid_key_input
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+accessibility+assistive_light_reminder
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+accessibility+turn_off_all_sounds
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+sound_on_bak
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+touch_sounds_bak
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+sound+sound_lock_bak
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+accessibility+accept_call
+[   38s] Key already exist. Use -f option to force update
+[   38s] Error!	 create key db/setting+accessibility+enable_auto_answer
+[   38s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+accessibility+auto_answer
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+accessibility+powerkey_end_calls
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+accessibility+led_notify
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+accessibility+lock_time
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+accessibility+power_key_hold
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+accessibility+easy_touch_mode
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+accessibility+tts
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+accessibility+speech_rate
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+system_mode+status
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+status
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+wifi
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+bt
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+gps
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+data_sync
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+hotspot
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+brt+status
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+brt+auto+status
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+brt+value
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+backlight+time
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+system_mode+reminder
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+at
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+cpu
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+display
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+bg_color
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+pwrsv+custom_mode+screen_vib
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+fmm+sim_change_alert
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+fmm+recipients
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+fmm+sender
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+fmm+alert_message
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+fmm+remote_control
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+fmm+location_consent
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/menu_widget+language
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/menu_widget+regionformat
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+menuscreen+package_name
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+homescreen+package_name
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+transaction_tracking
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+expiry_reminder
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+roaming_network
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+default_memory+download
+[   39s] Key already exist. Use -f option to force update
+[   39s] Error!	 create key db/setting+default_memory+download_contents
+[   39s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+default_memory+download_application
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+default_memory+install_applications
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+default_memory+wifi_direct
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+default_memory+bluetooth
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+default_memory+camera
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+default_memory+voice_recorder
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+battery_percentage
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+accessibility+screen_zoom
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+timezone_id
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+timezone
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+rotate_lock
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+auto_rotate_screen
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+accessibility+mono_audio
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+accessibility+led_playing_path
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/menu_widget+regionformat_time1224
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+sim_lock_attempts_left
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key memoroy/setting+font_changed
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+device_name
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+sound+sound_on
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+sound+vibration_on
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+sound+vibrate_when_ringing
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+sound+vibrate_when_notification
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+sound+haptic_feedback_on
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+data_roaming
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+motion_active
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_tilt
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_tilt_scroll
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+tilt_scroll_sensitivity
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_panning
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_panning_browser
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+panning_sensitivity
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+panning_browser_sensitivity
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_double_tap
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_turn_over
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_pick_up
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_pick_up_call
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_shake
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+use_mute_pause
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+motion+palm_motion
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+motion+palm_touch_mute
+[   40s] Key already exist. Use -f option to force update
+[   40s] Error!	 create key db/setting+motion+palm_swipe_capture
+[   40s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+motion+palm_swipe_tryit
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/menu_widget+bgset
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+devoption+bgprocess
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+default_rendering_engine
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+most_recently_setting
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+data_limit
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+select_network_act
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+lang_automatic
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+data_usage_cycle
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+data_usage_roaming_status
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+set_data_usage_limit
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+accessibility+taphold_delay
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+accessibility+speak_passwd
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+accessibility+sound_balance
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+selected_num
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+screenmode+selected_name
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+lcd_timeout_normal_backup
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+led_indicator+charging
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+led_indicator+low_batt
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+led_indicator+notifications
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+led_indicator+voice_rec
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key memory/setting+rotate_hold
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key memory/setting+tmp_font_name
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+psmode
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+mmc_encryption+status
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+mmc_encryption+is_encrypting_flag
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+display+touchkey_light_duration
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+display+screen_capture_destination
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+display+edit_after_screen_capture
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+network_restrict_mode
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+lcd_freq_control
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+display+dynamic_status_bar
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+network+mobile_data_on_reminder
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+network+mobile_data_off_reminder
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+usb_otg
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+psmode_shortcut
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+handsfree_sound_reminder
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+firewall
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key memory/setting+personal
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+personal_unlock_method
+[   42s] Key already exist. Use -f option to force update
+[   42s] Error!	 create key db/setting+personal_off_popup_do_not_show_flag
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+personal_attempts
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+personal_timestamp
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+developer_option_state
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+firewall_net_interface
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+change_ui+theme
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+change_ui+color_theme_wallpaper_set
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+win_gray
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+win_fps
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+open_via_multi
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+verify_samsung_account
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+fingerprint_no_disclaimer
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+upsm_no_disclaimer
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+emergency+mode
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/setting+emergency_no_disclaimer
+[   43s] running ---------------------------------------------------- /opt/usr/vconf-internal-usb-keys.sh
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key memory/usb+cur_mode
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/usb+sel_mode
+[   43s] running ---------------------------------------------------- /opt/usr/vconf-internal-wms-keys.sh
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+preview_message
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+safety_enable
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key memory/wms+safety_message_trigger
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+smart_relay_support
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+smart_search_support
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+wakeup_by_gesture_setting
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+application_shortcuts_down_package_class
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+application_shortcuts_up_package_class
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+clocks_set_idle
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+favorites_reorder
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+noti_setting_setconnected_active_path
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+package_exist_emailminiapp
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+powerkey_double_pressing
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+safety_cam_disable
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key memory/wms+shortcut_clock
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+watch_pkgname
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key memory/wms+watchapps_reorder_data
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key memory/wms+watchapps_reorder_viewtype
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+contacts_settings
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key memory/wms+gm_setupwizard_data_receiving_finished
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+gm_setupwizard_eula_finished
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key memory/wms+gm_setupwizard_restore_finished
+[   43s] Key already exist. Use -f option to force update
+[   43s] Error!	 create key db/wms+is_initialed_watch
+[   43s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+is_master_reset
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+restore_start
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+smart_relay
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+sync_contacts
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+sync_logs
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+wakeup_by_gesture_enable
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key memory/wms+wmanager_connected
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+wearable_status_xml
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+host_status_xml
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+shake_gesture_enable
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+palm_over_enable
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+palm_swipe_enable
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key db/wms+summary_panel
+[   44s] running ---------------------------------------------------- /opt/usr/vconf-internal-player-keys.sh
+[   44s] Key already exist. Use -f option to force update
+[   44s] Error!	 create key memory/Player+XvStateInfo
+[   44s] running ---------------------------------------------------- /opt/usr/vconf-internal-mdm-keys.sh
+[   44s] running ---------------------------------------------------- /opt/usr/vconf-internal-pwlock-keys.sh
+[   44s] [238/326] [239/326] [240/326] [241/326] [242/326] [243/326] [244/326] [245/326] [246/326] [247/326] [248/326] [249/326] [250/326] installing libstorage-devel-0.1.0-3.28
+[   44s] [251/326] installing pkgmgr-info-devel-0.0.230-23.5
+[   44s] [252/326] installing capi-network-wifi-direct-devel-1.2.31-6.7
+[   45s] [253/326] installing eo-devel-1.13.0-39.8
+[   45s] [254/326] [255/326] installing vconf-internal-keys-devel-0.0.152-15.1
+[   45s] [256/326] installing libcurl-devel-7.40.1_1-6.6
+[   46s] [257/326] installing libpng-devel-1.2.50-2.1
+[   46s] [258/326] [259/326] [260/326] [261/326] [262/326] [263/326] [264/326] [265/326] [266/326] [267/326] [268/326] installing vconf-keys-devel-0.2.84-6.15
+[   46s] [269/326] installing capi-network-connection-devel-1.0.57-11.1
+[   47s] [270/326] installing efl-devel-1.13.0-39.8
+[   47s] [271/326] [272/326] installing eet-devel-1.13.0-39.8
+[   48s] [273/326] installing freetype-devel-2.5.5-2.42
+[   48s] [274/326] [275/326] [276/326] [277/326] installing fontconfig-devel-2.11.92-4.6
+[   48s] [278/326] installing pulseaudio-libs-devel-4.0.181-18.1
+[   49s] [279/326] installing ector-devel-1.13.0-39.8
+[   49s] [280/326] [281/326] [282/326] [283/326] [284/326] [285/326] installing vconf-devel-0.2.84-6.15
+[   49s] [286/326] [287/326] [288/326] [289/326] [290/326] [291/326] [292/326] [293/326] [294/326] installing evas-devel-1.13.0-39.8
+[   50s] [295/326] [296/326] [297/326] [298/326] [299/326] installing ecore-devel-1.13.0-39.8
+[   50s] [300/326] [301/326] [302/326] [303/326] installing edbus-devel-1.6.0+svn.76526slp2+build10-1.159
+[   51s] [304/326] [305/326] installing libresourced-devel-0.2.86-7.11
+[   51s] [306/326] [307/326] [308/326] [309/326] installing aul-devel-0.2.3.0-21.2
+[   51s] [310/326] [311/326] [312/326] [313/326] [314/326] installing app-svc-devel-0.1.78-7.72
+[   52s] [315/326] [316/326] [317/326] [318/326] [319/326] [320/326] [321/326] [322/326] [323/326] [324/326] [325/326] [326/326] installing notification-devel-0.2.31-4.4
+[   52s] removing nis flags from /home/youngj/GBS-ROOT/local/BUILD-ROOTS/scratch.armv7l.0/etc/nsswitch.conf...
+[   52s] now finalizing build dir...
+[   52s] qemu: Unsupported syscall: 311
+[   53s] -----------------------------------------------------------------
+[   53s] ----- building download-provider.spec (user abuild)
+[   53s] -----------------------------------------------------------------
+[   53s] -----------------------------------------------------------------
+[   53s] qemu: Unsupported syscall: 311
+[   53s] + exec rpmbuild --define '_srcdefattr (-,root,root)' --nosignature --target=armv7l-tizen-linux --define '_build_create_debug 1' -ba /home/abuild/rpmbuild/SOURCES/download-provider.spec
+[   53s] Building target platforms: armv7l-tizen-linux
+[   53s] Building for target armv7l-tizen-linux
+[   53s] Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.fmaEg6
+[   53s] + umask 022
+[   53s] + cd /home/abuild/rpmbuild/BUILD
+[   53s] + cd /home/abuild/rpmbuild/BUILD
+[   53s] + rm -rf download-provider-2.1.23
+[   53s] + /bin/gzip -dc /home/abuild/rpmbuild/SOURCES/download-provider-2.1.23.tar.gz
+[   53s] + /bin/tar -xf -
+[   53s] + STATUS=0
+[   53s] + '[' 0 -ne 0 ']'
+[   53s] + cd download-provider-2.1.23
+[   53s] + /bin/chmod -Rf a+rX,u+w,g-w,o-w .
+[   53s] + exit 0
+[   53s] Executing(%build): /bin/sh -e /var/tmp/rpm-tmp.Uc0Ko6
+[   53s] + umask 022
+[   53s] + cd /home/abuild/rpmbuild/BUILD
+[   53s] + cd download-provider-2.1.23
+[   53s] + LANG=C
+[   53s] + export LANG
+[   53s] + unset DISPLAY
+[   53s] + CFLAGS='-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g'
+[   53s] + export CFLAGS
+[   53s] + CXXFLAGS='-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g'
+[   53s] + export CXXFLAGS
+[   53s] + FFLAGS='-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -I%_fmoddir'
+[   53s] + export FFLAGS
+[   53s] + LD_AS_NEEDED=1
+[   53s] + export LD_AS_NEEDED
+[   53s] + export 'CFLAGS=-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -DTIZEN_DEBUG_ENABLE'
+[   53s] + CFLAGS='-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -DTIZEN_DEBUG_ENABLE'
+[   53s] + export 'CXXFLAGS=-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -DTIZEN_DEBUG_ENABLE'
+[   53s] + CXXFLAGS='-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -DTIZEN_DEBUG_ENABLE'
+[   53s] + export 'FFLAGS=-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -I%_fmoddir -DTIZEN_DEBUG_ENABLE'
+[   53s] + FFLAGS='-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -I%_fmoddir -DTIZEN_DEBUG_ENABLE'
+[   53s] + CFLAGS='-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -DTIZEN_DEBUG_ENABLE -fPIC -D_REENTRANT -fvisibility=hidden'
+[   53s] + export CFLAGS
+[   53s] + FFLAGS='-O2 -g2 -feliminate-unused-debug-types -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wformat -Wformat-security -fmessage-length=0 -fdiagnostics-color=never -Wl,--as-needed -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfpu=neon -mfloat-abi=softfp -Wp,-D__SOFTFP__ -mthumb -Wa,-mimplicit-it=thumb -g -I%_fmoddir -DTIZEN_DEBUG_ENABLE -fPIC -fvisibility=hidden'
+[   53s] + export FFLAGS
+[   53s] + LDFLAGS+=' -Wl,--as-needed -Wl,--hash-style=both'
+[   53s] + export LDFLAGS
+[   53s] + /usr/bin/cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DBIN_INSTALL_DIR:PATH=/usr/bin -DLIB_INSTALL_DIR:PATH=/usr/lib -DINCLUDE_INSTALL_DIR:PATH=/usr/include -DPKG_NAME=download-provider -DPKG_VERSION=2.1.23 -DPKG_RELEASE=0 -DIPC_SOCKET:PATH=/opt/data/download-provider/download-provider.sock -DPROVIDER_DIR:PATH=/opt/usr/data/download-provider -DNOTIFY_DIR:PATH=/opt/usr/data/download-provider/notify -DDATABASE_DIR:PATH=/opt/usr/data/download-provider/database -DDATABASE_CLIENT_DIR:PATH=/opt/usr/data/download-provider/database/clients -DIMAGE_DIR:PATH=/usr/share/download-provider/images -DLOCALE_DIR:PATH=/usr/share/download-provider/locales -DLICENSE_DIR:PATH=/usr/share/license -DSUPPORT_WIFI_DIRECT:BOOL=ON -DSUPPORT_SYS_RESOURCE:BOOL=OFF -DSUPPORT_DOWNLOAD_BOOSTER:BOOL=OFF -DSUPPORT_NOTIFICATION:BOOL=ON -DSUPPORT_LOG_MESSAGE:BOOL=ON -DSUPPORT_OMA_DRM:BOOL=OFF -DSUPPORT_SECURITY_PRIVILEGE:BOOL=OFF -DSUPPORT_COMPANION_MODE:BOOL=OFF -DSUPPORT_KNOX:BOOL=ON -DTIZEN_2_3_UX:BOOL=ON -DCMAKE_LOG_DUMP_SCRIPT_DIR=/opt/etc/dump.d/module.d -DHTTP_LIB=libcurl -DCMAKE_SKIP_RPATH:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON .
+[   53s] PROJECT : download-provider
+[   53s] VERSION : 2.1.23-0
+[   53s] SUPPORT_WIFI_DIRECT: ON
+[   53s] SUPPORT_LOG_MESSAGE: ON
+[   53s] SUPPORT_SECURITY_PRIVILEGE: OFF
+[   53s] SUPPORT_COMPANION_MODE: OFF
+[   53s] TIZEN_2_3_UX:On
+[   53s] SUPPORT_KNOX: ON
+[   54s] -- The C compiler identification is GNU 4.9.2
+[   54s] -- Check for working C compiler: /bin/cc
+[   54s] -- Check for working C compiler: /bin/cc -- works
+[   54s] -- Detecting C compiler ABI info
+[   55s] -- Detecting C compiler ABI info - done
+[   55s] -- Found PkgConfig: /bin/pkg-config (found version "0.28") 
+[   55s] SUPPORT_SYS_RESOURCE: OFF
+[   55s] -- checking for modules 'xdgmime;vconf;capi-network-connection;dlog;storage'
+[   55s] --   found xdgmime, version 1.1.0
+[   55s] --   found vconf, version 0.2.45
+[   55s] --   found capi-network-connection, version 
+[   55s] --   found dlog, version 1.0
+[   55s] --   found storage, version 0.1
+[   55s] HTTP_LIB: libcurl
+[   55s] -- checking for module 'libcurl'
+[   55s] --   found libcurl, version 7.40.1-DEV
+[   55s] Build type: Debug
+[   55s] -- checking for module 'glib-2.0 gobject-2.0 dlog capi-base-common capi-appfw-app-manager capi-appfw-application bundle'
+[   55s] --   found glib-2.0 gobject-2.0 dlog capi-base-common capi-appfw-app-manager capi-appfw-application bundle, version 2.43.1;2.43.1;1.0;0.2.0;0.1.22
+[   55s] Build type: Debug
+[   55s] -- checking for modules 'glib-2.0;gobject-2.0;sqlite3;capi-appfw-app-manager;capi-network-connection;capi-content-mime-type;appsvc;bundle;libsmack;dlog;libsystemd-daemon;vconf'
+[   55s] --   found glib-2.0, version 2.43.1
+[   56s] --   found gobject-2.0, version 2.43.1
+[   56s] --   found sqlite3, version 3.7.14
+[   56s] --   found capi-appfw-app-manager, version 
+[   56s] --   found capi-network-connection, version 
+[   56s] --   found capi-content-mime-type, version 
+[   56s] --   found appsvc, version 0.1.0
+[   56s] --   found bundle, version 0.1.22
+[   56s] --   found libsmack, version 1.0
+[   56s] --   found dlog, version 1.0
+[   56s] --   found libsystemd-daemon, version 216
+[   56s] --   found vconf, version 0.2.45
+[   56s] WIFI direct:On
+[   56s] -- checking for module 'capi-network-wifi-direct'
+[   56s] --   found capi-network-wifi-direct, version 0.0
+[   56s] Notification:On
+[   56s] -- checking for module 'notification'
+[   56s] --   found notification, version 0.1.0
+[   56s] Companion:Off
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ar.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/az.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/bg.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ca.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/cs.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/da.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/de.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/el_GR.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/en.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/en_PH.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/en_US.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/es_ES.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/es_US.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/et.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/eu.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/fi.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/fr.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/fr_CA.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ga.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/gl.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/hi.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/hr.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/hu.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/hy.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/is.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/it_IT.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ja_JP.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ka.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/kk.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ko_KR.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/lt.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/lv.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/mk.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/nb.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/nl.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/pl.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/pt_BR.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/pt_PT.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ro.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ru_RU.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/sk.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/sl.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/sr.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/sv.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/tr_TR.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/uk.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/uz.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/zh_CN.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/zh_HK.po
+[   56s] PO: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/zh_TW.po
+[   56s] .mo files: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ar.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/az.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/bg.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ca.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/cs.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/da.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/de.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/el_GR.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/en.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/en_PH.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/en_US.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/es_ES.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/es_US.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/et.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/eu.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/fi.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/fr.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/fr_CA.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ga.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/gl.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/hi.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/hr.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/hu.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/hy.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/is.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/it_IT.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ja_JP.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ka.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/kk.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ko_KR.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/lt.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/lv.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/mk.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/nb.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/nl.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/pl.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/pt_BR.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/pt_PT.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ro.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/ru_RU.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/sk.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/sl.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/sr.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/sv.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/tr_TR.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/uk.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/uz.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/zh_CN.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/zh_HK.mo;/home/abuild/rpmbuild/BUILD/download-provider-2.1.23/po/tizen2.3/zh_TW.mo
+[   56s] INSTALL download-provider.res
+[   56s] -- Configuring done
+[   56s] -- Generating done
+[   56s] -- Build files have been written to: /home/abuild/rpmbuild/BUILD/download-provider-2.1.23
+[   56s] + make -j16
+[   56s] Scanning dependencies of target po
+[   56s] Scanning dependencies of target download-provider-interface
+[   56s] [  1%] [  2%] [  3%] [  5%] Scanning dependencies of target downloadagent2
+[   56s] [  7%] [  7%] Generating ar.mo
+[   56s] Building C object provider-interface/CMakeFiles/download-provider-interface.dir/__/provider/download-provider-ipc.c.o
+[   56s] Building C object provider-interface/CMakeFiles/download-provider-interface.dir/__/provider/download-provider-utils.c.o
+[   56s] Building C object provider-interface/CMakeFiles/download-provider-interface.dir/__/provider/download-provider-pthread.c.o
+[   56s] [  8%] [ 10%] [ 11%] Generating bg.mo
+[   56s] Scanning dependencies of target download-provider
+[   56s] [ 12%] Generating az.mo
+[   56s] [ 13%] [ 15%] [ 16%] Generating ca.mo
+[   56s] Generating cs.mo
+[   56s] [ 17%] Building C object provider-interface/CMakeFiles/download-provider-interface.dir/download-provider-interface.c.o
+[   56s] [ 18%] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-interface.c.o
+[   56s] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-client-mgr.c.o
+[   56s] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-dl-mgr.c.o
+[   56s] [ 20%] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-dl-info.c.o
+[   56s] Generating da.mo
+[   56s] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-http-mgr.c.o
+[   56s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-pthread.c.o
+[   56s] [ 21%] [ 22%] [ 23%] [ 25%] [ 26%] [ 27%] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-encoding.c.o
+[   56s] In file included from /usr/include/unistd.h:25:0,
+[   56s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-pthread.c:17:
+[   56s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   56s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   56s]     ^
+[   56s] In file included from /usr/include/unistd.h:25:0,
+[   56s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-pthread.c:17:
+[   56s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   56s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   56s]     ^
+[   56s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-utils.c.o
+[   56s] In file included from /usr/include/stdio.h:27:0,
+[   56s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-utils.c:17:
+[   56s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   56s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   56s]     ^
+[   56s] Generating de.mo
+[   56s] In file included from /usr/include/stdio.h:27:0,
+[   56s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-ipc.c:17:
+[   56s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   56s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   56s]     ^
+[   56s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-ipc.c.o
+[   56s] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-http-msg-handler.c.o
+[   56s] In file included from /usr/include/stdio.h:27:0,
+[   56s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider-interface/download-provider-interface.c:17:
+[   56s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   56s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   56s]     ^
+[   57s] In file included from /usr/include/stdio.h:27:0,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-utils.c:17:
+[   57s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   57s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   57s]     ^
+[   57s] In file included from /usr/include/stdio.h:27:0,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-ipc.c:17:
+[   57s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   57s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   57s]     ^
+[   57s] Generating el_GR.mo
+[   57s] [ 28%] [ 30%] [ 32%] [ 33%] [ 33%] [ 35%] [ 36%] [ 37%] Linking C shared library libdownload-provider-interface.so
+[   57s] [ 38%] [ 40%] [ 41%] Generating en.mo
+[   57s] Generating en_PH.mo
+[   57s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-notify.c.o
+[   57s] Generating en_US.mo
+[   57s] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-file.c.o
+[   57s] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-plugin-conf.c.o
+[   57s] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-mime-util.c.o
+[   57s] Building C object agent/CMakeFiles/downloadagent2.dir/download-agent-plugin-libcurl.c.o
+[   57s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-smack.c.o
+[   57s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-network.c.o
+[   57s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-db.c.o
+[   57s] [ 42%] [ 43%] [ 45%] [ 46%] Generating es_ES.mo
+[   57s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-plugin-download-agent.c.o
+[   57s] Generating es_US.mo
+[   57s] Generating et.mo
+[   57s] In file included from /usr/include/stdlib.h:24:0,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-smack.c:17:
+[   57s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   57s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   57s]     ^
+[   57s] [ 47%] [ 48%] In file included from /usr/include/stdio.h:27:0,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-db.c:19:
+[   57s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   57s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   57s]     ^
+[   57s] [ 50%] Building C object provider/CMakeFiles/download-provider.dir/download-provider-queue.c.o
+[   57s] Generating eu.mo
+[   57s] In file included from /usr/include/stdio.h:27:0,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-notify.c:17:
+[   57s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   57s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   57s]     ^
+[   57s] Generating fi.mo
+[   57s] In file included from /usr/include/stdio.h:27:0,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-plugin-download-agent.c:17:
+[   57s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   57s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   57s]     ^
+[   57s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/agent/download-agent-http-msg-handler.c: In function '__get_http_header_for_field':
+[   57s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/agent/download-agent-http-msg-handler.c:376:23: warning: 'http_msg_iter' may be used uninitialized in this function [-Wmaybe-uninitialized]
+[   57s]    *http_msg_iter = cur->next;
+[   57s]                        ^
+[   57s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/agent/download-agent-http-msg-handler.c:620:18: note: 'http_msg_iter' was declared here
+[   57s]   http_msg_iter_t http_msg_iter;
+[   57s]                   ^
+[   57s] In file included from /usr/include/unistd.h:25:0,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/include/download-provider.h:103,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-network.c:17:
+[   57s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   57s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   57s]     ^
+[   57s] [ 51%] [ 52%] Generating fr.mo
+[   57s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-queue-manager.c.o
+[   57s] [ 53%] [ 55%] In file included from /usr/include/stdlib.h:24:0,
+[   57s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-queue.c:17:
+[   57s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   57s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   57s]     ^
+[   57s] Generating ga.mo
+[   58s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/agent/download-agent-http-msg-handler.c: In function '__get_http_req_header_for_field':
+[   58s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/agent/download-agent-http-msg-handler.c:376:23: warning: 'http_msg_iter' may be used uninitialized in this function [-Wmaybe-uninitialized]
+[   58s]    *http_msg_iter = cur->next;
+[   58s]                        ^
+[   58s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/agent/download-agent-http-msg-handler.c:641:18: note: 'http_msg_iter' was declared here
+[   58s]   http_msg_iter_t http_msg_iter;
+[   58s]                   ^
+[   58s] Generating fr_CA.mo
+[   58s] [ 56%] Building C object provider/CMakeFiles/download-provider.dir/download-provider-client.c.o
+[   58s] [ 57%] Generating gl.mo
+[   58s] [ 58%] Generating hi.mo
+[   58s] [ 60%] Generating hr.mo
+[   58s] [ 61%] Generating hu.mo
+[   58s] [ 62%] Generating hy.mo
+[   58s] [ 63%] Generating is.mo
+[   58s] [ 63%] [ 65%] Built target download-provider-interface
+[   58s] [ 66%] Generating it_IT.mo
+[   58s] Generating ja_JP.mo
+[   58s] [ 67%] [ 68%] Building C object provider/CMakeFiles/download-provider.dir/download-provider-client-manager.c.o
+[   58s] Generating ka.mo
+[   58s] [ 70%] Generating kk.mo
+[   58s] [ 71%] Generating ko_KR.mo
+[   58s] [ 72%] Generating lt.mo
+[   58s] [ 73%] Generating lv.mo
+[   58s] [ 75%] Generating mk.mo
+[   58s] [ 76%] Generating nb.mo
+[   58s] [ 77%] Generating nl.mo
+[   58s] [ 78%] Generating pl.mo
+[   58s] [ 80%] Generating pt_BR.mo
+[   58s] [ 81%] [ 82%] [ 83%] [ 85%] [ 86%] [ 87%] [ 88%] Building C object provider/CMakeFiles/download-provider.dir/download-provider-notification.c.o
+[   58s] Generating pt_PT.mo
+[   58s] Generating ro.mo
+[   58s] [ 90%] Building C object provider/CMakeFiles/download-provider.dir/download-provider-notification-manager.c.o
+[   58s] Generating ru_RU.mo
+[   58s] Building C object provider/CMakeFiles/download-provider.dir/download-provider-main.c.o
+[   58s] Generating sl.mo
+[   58s] [ 91%] Generating sk.mo
+[   58s] [ 92%] Generating sr.mo
+[   58s] Generating sv.mo
+[   58s] [ 93%] [ 95%] [ 96%] Generating tr_TR.mo
+[   58s] [ 98%] [ 98%] Generating uz.mo
+[   58s] Generating uk.mo
+[   58s] [100%] Generating zh_CN.mo
+[   58s] Generating zh_HK.mo
+[   58s] Generating zh_TW.mo
+[   58s] [100%] Built target po
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/agent/download-agent-file.c: In function 'check_drm_convert':
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/agent/download-agent-file.c:819:12: warning: unused variable 'ret_b' [-Wunused-variable]
+[   59s]   da_bool_t ret_b = DA_TRUE;
+[   59s]             ^
+[   59s] In file included from /usr/include/stdlib.h:24:0,
+[   59s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-queue-manager.c:17:
+[   59s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   59s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   59s]     ^
+[   59s] In file included from /usr/include/stdlib.h:24:0,
+[   59s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-notification-manager.c:18:
+[   59s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   59s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   59s]     ^
+[   59s] In file included from /usr/include/stdio.h:27:0,
+[   59s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-main.c:17:
+[   59s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   59s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   59s]     ^
+[   59s] In file included from /usr/include/sys/time.h:21:0,
+[   59s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-client.c:16:
+[   59s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   59s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   59s]     ^
+[   59s] In file included from /usr/include/stdio.h:27:0,
+[   59s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-client-manager.c:17:
+[   59s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   59s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   59s]     ^
+[   59s] In file included from /usr/include/time.h:27:0,
+[   59s]                  from /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-notification.c:18:
+[   59s] /usr/include/features.h:328:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
+[   59s]  #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
+[   59s]     ^
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-queue-manager.c: In function '__dp_queue_manager':
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-queue-manager.c:257:3: warning: implicit declaration of function 'gettimeofday' [-Wimplicit-function-declaration]
+[   59s]    gettimeofday(&now, NULL);
+[   59s]    ^
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-main.c: In function 'main':
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-main.c:38:2: warning: 'g_type_init' is deprecated (declared at /usr/include/glib-2.0/gobject/gtype.h:681) [-Wdeprecated-declarations]
+[   59s]   g_type_init();
+[   59s]   ^
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-notification.c: In function 'dp_notification_new':
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-notification.c:429:2: warning: implicit declaration of function 'notification_set_text_domain' [-Wimplicit-function-declaration]
+[   59s]   err = notification_set_text_domain(noti_handle, DP_DOMAIN, DP_LOCALEDIR);
+[   59s]   ^
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-client-manager.c: In function '__dp_client_new':
+[   59s] /home/abuild/rpmbuild/BUILD/download-provider-2.1.23/provider/download-provider-client-manager.c:383:2: warning: implicit declaration of function 'app_manager_get_package' [-Wimplicit-function-declaration]
+[   59s]   if (app_manager_get_package(credential.pid, &pkgname) !=
+[   59s]   ^
+[   59s] Linking C shared library libdownloadagent2.so
+[   59s] Linking C executable download-provider
+[   59s] [100%] Built target downloadagent2
+[   60s] [100%] Built target download-provider
+[   60s] + exit 0
+[   60s] Executing(%install): /bin/sh -e /var/tmp/rpm-tmp.2D3HEr
+[   60s] + umask 022
+[   60s] + cd /home/abuild/rpmbuild/BUILD
+[   60s] + cd download-provider-2.1.23
+[   60s] + LANG=C
+[   60s] + export LANG
+[   60s] + unset DISPLAY
+[   60s] + rm -rf /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm
+[   60s] + mkdir -p /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm
+[   60s] + rm -rf /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm
+[   60s] + /bin/make DESTDIR=/home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm INSTALL_ROOT=/home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm install
+[   60s] [ 13%] Built target downloadagent2
+[   60s] [ 18%] Built target download-provider-interface
+[   60s] [ 37%] Built target download-provider
+[   60s] [100%] Built target po
+[   60s] Install the project...
+[   60s] -- Install configuration: ""
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/pkgconfig/download-provider.pc
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/systemd/system/download-provider.service
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/systemd/system/download-provider.socket
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_img.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_unknown.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_tpk.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_swf.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_word.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/B03_Processing_download_failed.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_text.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_drm.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/B03_Processing_download_complete.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_html.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_ppt.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_movie.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_pdf.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_xls.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_music.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/images/download_manager_icon_date.png
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/license/download-provider
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/opt/etc/dump.d/module.d/dump-download-provider.sh
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/download-provider.res
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/libdownloadagent2.so.0.1.0
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/libdownloadagent2.so
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/libdownload-provider-interface.so.2.1.23
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/libdownload-provider-interface.so.0
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/libdownload-provider-interface.so
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/include/download-provider/download-provider-interface.h
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/pkgconfig/download-provider-interface.pc
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/bin/download-provider
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/include/download-provider/download-provider.h
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/ar/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/az/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/bg/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/ca/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/cs/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/da/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/de/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/el_GR/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/en/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/en_PH/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/en_US/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/es_ES/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/es_US/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/et/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/eu/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/fi/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/fr/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/fr_CA/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/ga/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/gl/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/hi/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/hr/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/hu/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/hy/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/is/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/it_IT/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/ja_JP/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/ka/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/kk/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/ko_KR/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/lt/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/lv/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/mk/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/nb/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/nl/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/pl/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/pt_BR/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/pt_PT/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/ro/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/ru_RU/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/sk/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/sl/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/sr/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/sv/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/tr_TR/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/uk/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/uz/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/zh_CN/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/zh_HK/LC_MESSAGES/download-provider.mo
+[   60s] -- Installing: /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/locales/zh_TW/LC_MESSAGES/download-provider.mo
+[   60s] + rm -f /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/info/dir
+[   60s] + find /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm -regex '.*\.la$'
+[   60s] + xargs rm -f --
+[   60s] + find /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm -regex '.*\.a$'
+[   60s] + xargs rm -f --
+[   60s] + mkdir -p /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/etc/vasum/vsmzone.resource/
+[   60s] + mv /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/download-provider/download-provider.res /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/etc/vasum/vsmzone.resource/
+[   60s] + mkdir -p /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/share/license
+[   60s] + mkdir -p /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/systemd/system/graphical.target.wants
+[   60s] + mkdir -p /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/systemd/system/sockets.target.wants
+[   60s] + ln -s ../download-provider.service /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/systemd/system/graphical.target.wants/
+[   60s] + ln -s ../download-provider.socket /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/systemd/system/sockets.target.wants/
+[   60s] + /usr/lib/rpm/find-debuginfo.sh --strict-build-id /home/abuild/rpmbuild/BUILD/download-provider-2.1.23
+[   61s] extracting debug info from /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/libdownload-provider-interface.so.2.1.23
+[   61s] extracting debug info from /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/lib/libdownloadagent2.so.0.1.0
+[   62s] extracting debug info from /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm/usr/bin/download-provider
+[   62s] symlinked /usr/lib/debug/usr/lib/libdownload-provider-interface.so.2.1.23.debug to /usr/lib/debug/usr/lib/libdownload-provider-interface.so.debug
+[   62s] symlinked /usr/lib/debug/usr/lib/libdownload-provider-interface.so.2.1.23.debug to /usr/lib/debug/usr/lib/libdownload-provider-interface.so.0.debug
+[   62s] symlinked /usr/lib/debug/usr/lib/libdownloadagent2.so.0.1.0.debug to /usr/lib/debug/usr/lib/libdownloadagent2.so.debug
+[   63s] cpio: gcc-4.9.2/libgcc/config/arm/ieee754-df.S: Cannot stat: No such file or directory
+[   63s] cpio: gcc-4.9.2/obj-armv7l-tizen-linux-gnueabi/armv7l-tizen-linux-gnueabi/libgcc: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/bits/types.h: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/csu: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/csu/elf-init.c: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/csu/init.c: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/io: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/io/fstat.c: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/io/lstat.c: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/io/stat.c: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/io/sys/stat.h: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/sysdeps/arm/crti.S: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/sysdeps/arm/crtn.S: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/sysdeps/arm/start.S: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/sysdeps/unix/sysv/linux/bits/stat.h: Cannot stat: No such file or directory
+[   63s] cpio: glibc-2.21/time/time.h: Cannot stat: No such file or directory
+[   63s] 977 blocks
+[   63s] + /usr/lib/rpm/check-buildroot
+[   63s] + /usr/lib/rpm/brp-compress
+[   63s] + /usr/lib/rpm/brp-tizen
+[   63s] + /usr/lib/rpm/tizen/find-docs.sh /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm
+[   63s] Processing files: download-provider-2.1.23-0.armv7l
+[   63s] Aptk: PG1hbmlmZXN0PgoJPGRlZmluZT4KCQk8ZG9tYWluIG5hbWU9ImRvd25sb2FkLXBy
+[   63s] b3ZpZGVyIiAvPgoJCTxwcm92aWRlPgoJCQk8bGFiZWwgbmFtZT0iZG93bmxvYWQt
+[   63s] cHJvdmlkZXI6OmRiIiAvPgoJCTwvcHJvdmlkZT4KCQk8cmVxdWVzdD4KCQkJPHNt
+[   63s] YWNrIHJlcXVlc3Q9ImRvd25sb2FkLXByb3ZpZGVyOjpkYiIgdHlwZT0icnciIC8+
+[   63s] CgkJCTxzbWFjayByZXF1ZXN0PSJzeXN0ZW06OnVzZV9pbnRlcm5ldCIgdHlwZT0i
+[   63s] dyIgLz4KCQkJPHNtYWNrIHJlcXVlc3Q9InN5cy1hc3NlcnQ6OmNvcmUiIHR5cGU9
+[   63s] InJ3eGF0IiAvPgoJCQk8c21hY2sgcmVxdWVzdD0iZGV2aWNlOjpzeXNfbG9nZ2lu
+[   63s] ZyIgdHlwZT0idyIgLz4KCQkJPHNtYWNrIHJlcXVlc3Q9InN5c3RlbTo6ZXh0X3N0
+[   63s] b3JhZ2UiIHR5cGU9ImFyd3h0IiAvPgoJCQk8c21hY2sgcmVxdWVzdD0ic3lzdGVt
+[   63s] OjpleHRfbWVkaWEiIHR5cGU9ImFyd3h0IiAvPgoJCQk8c21hY2sgcmVxdWVzdD0i
+[   63s] c3lzdGVtOjptZWRpYSIgdHlwZT0icnd4YXQiIC8+CgkJCTxzbWFjayByZXF1ZXN0
+[   63s] PSJzeXN0ZW06Om1lZGlhOjpyb290IiB0eXBlPSJyd3hhdCIgLz4KCQkJPHNtYWNr
+[   63s] IHJlcXVlc3Q9ImNvbm5tYW4iIHR5cGU9InJ3IiAvPgoJCQk8c21hY2sgcmVxdWVz
+[   63s] dD0ibmV0LWNvbmZpZyIgdHlwZT0icnciIC8+CgkJCTxzbWFjayByZXF1ZXN0PSJ3
+[   63s] aWZpLWRpcmVjdDo6aW5mbyIgdHlwZT0iciIgLz4KCQkJPHNtYWNrIHJlcXVlc3Q9
+[   63s] ImNvbm5tYW46OmdldCIgdHlwZT0icnciIC8+CgkJCTxzbWFjayByZXF1ZXN0PSJ0
+[   63s] ZWxlcGhvbnlfZnJhbWV3b3JrOjphcGlfcHNfcHVibGljIiB0eXBlPSJydyIgLz4K
+[   63s] CQk8L3JlcXVlc3Q+CgkJPHBlcm1pdD4KCQkJPHNtYWNrIHBlcm1pdD0ic3lzdGVt
+[   63s] Ojp1c2VfaW50ZXJuZXQiIHR5cGU9InciIC8+CgkJPC9wZXJtaXQ+Cgk8L2RlZmlu
+[   63s] ZT4KCTxyZXF1ZXN0PgoJCTxkb21haW4gbmFtZT0iZG93bmxvYWQtcHJvdmlkZXIi
+[   63s] IC8+Cgk8L3JlcXVlc3Q+Cgk8YXNzaWduPgoJCTxmaWxlc3lzdGVtIHBhdGg9Ii91
+[   63s] c3Ivc2hhcmUvZG93bmxvYWQtcHJvdmlkZXIqIiBsYWJlbD0iXyIgLz4KCQk8Zmls
+[   63s] ZXN5c3RlbSBwYXRoPSIvdXNyL2xpYi9saWJkb3dubG9hZC1wcm92aWRlci1pbnRl
+[   63s] cmZhY2Uuc28qIiBsYWJlbD0iXyIgZXhlY19sYWJlbD0ibm9uZSIgLz4KCQk8Zmls
+[   63s] ZXN5c3RlbSBwYXRoPSIvdXNyL2xpYi9saWJkb3dubG9hZGFnZW50Mi5zbyoiIGxh
+[   63s] YmVsPSJfIiBleGVjX2xhYmVsPSJub25lIiAvPgoJCTxmaWxlc3lzdGVtIHBhdGg9
+[   63s] Ii91c3IvbGliL3N5c3RlbWQvc3lzdGVtL2Rvd25sb2FkLXByb3ZpZGVyLnNlcnZp
+[   63s] Y2UiIGxhYmVsPSJfIiBleGVjX2xhYmVsPSJub25lIiAvPgoJCTxmaWxlc3lzdGVt
+[   63s] IHBhdGg9Ii91c3IvbGliL3N5c3RlbWQvc3lzdGVtL2dyYXBoaWNhbC50YXJnZXQu
+[   63s] d2FudHMvZG93bmxvYWQtcHJvdmlkZXIuc2VydmljZSIgbGFiZWw9Il8iIGV4ZWNf
+[   63s] bGFiZWw9Im5vbmUiIC8+CgkJPGZpbGVzeXN0ZW0gcGF0aD0iL3Vzci9saWIvc3lz
+[   63s] dGVtZC9zeXN0ZW0vZG93bmxvYWQtcHJvdmlkZXIuc29ja2V0IiBsYWJlbD0iXyIg
+[   63s] ZXhlY19sYWJlbD0ibm9uZSIgLz4KCQk8ZmlsZXN5c3RlbSBwYXRoPSIvdXNyL2xp
+[   63s] Yi9zeXN0ZW1kL3N5c3RlbS9zb2NrZXRzLnRhcmdldC53YW50cy9kb3dubG9hZC1w
+[   63s] cm92aWRlci5zb2NrZXQiIGxhYmVsPSJfIiBleGVjX2xhYmVsPSJub25lIiAvPgoJ
+[   63s] CTxmaWxlc3lzdGVtIHBhdGg9Ii9vcHQvZXRjL2R1bXAuZC9tb2R1bGUuZC9kdW1w
+[   63s] LWRvd25sb2FkLXByb3ZpZGVyLnNoIiBsYWJlbD0iXyIgZXhlY19sYWJlbD0ibm9u
+[   63s] ZSIgLz4KIAkJPGZpbGVzeXN0ZW0gcGF0aD0iL3Vzci9zaGFyZS9kb3dubG9hZC1w
+[   63s] cm92aWRlci9kb3dubG9hZC1wcm92aWRlci5yZXMiIGxhYmVsPSJfIiAvPgoJPC9h
+[   63s] c3NpZ24+CjwvbWFuaWZlc3Q+Cg==
+[   63s] 
+[   63s] Provides: libdownload-provider-interface.so.0 libdownloadagent2.so.0.1.0
+[   63s] Requires(interp): /bin/sh
+[   63s] Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+[   63s] Requires(post): /bin/sh connman libdevice-node sqlite sys-assert
+[   63s] Requires: ld-linux.so.3 ld-linux.so.3(GLIBC_2.4) libappsvc.so.0 libbundle.so.0 libc.so.6 libc.so.6(GLIBC_2.4) libc.so.6(GLIBC_2.7) libcapi-appfw-app-control.so.0 libcapi-appfw-app-manager.so.0 libcapi-content-mime-type.so.0 libcapi-network-connection.so.1 libcurl.so.4 libcurl.so.4(CURL_OPENSSL_4) libdl.so.2 libdl.so.2(GLIBC_2.4) libdlog.so.0 libdownloadagent2.so.0.1.0 libgcc_s.so.1 libgcc_s.so.1(GCC_3.0) libgcc_s.so.1(GCC_3.3.1) libgcc_s.so.1(GCC_3.5) libglib-2.0.so.0 libgobject-2.0.so.0 libnotification.so.0 libpthread.so.0 libpthread.so.0(GLIBC_2.4) libsmack.so.1 libsmack.so.1(LIBSMACK) libsqlite3.so.0 libstorage.so.0.1 libsystemd.so.0 libsystemd.so.0(LIBSYSTEMD_209) libvconf.so.0 libwifi-direct.so.0 libxdgmime.so.1
+[   63s] Processing files: download-provider-debuginfo-2.1.23-0.armv7l
+[   63s] Processing files: download-provider-debugsource-2.1.23-0.armv7l
+[   63s] Processing files: download-provider-devel-2.1.23-0.armv7l
+[   64s] Provides: libdownloadagent2.so.0.1.0 pkgconfig(download-provider) = 2.1.23-0 pkgconfig(download-provider-interface) = 2.1.23-0
+[   64s] Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+[   64s] Requires: /usr/bin/pkg-config ld-linux.so.3 ld-linux.so.3(GLIBC_2.4) libappsvc.so.0 libbundle.so.0 libc.so.6 libc.so.6(GLIBC_2.4) libc.so.6(GLIBC_2.7) libcapi-appfw-app-manager.so.0 libcapi-content-mime-type.so.0 libcapi-network-connection.so.1 libcurl.so.4 libcurl.so.4(CURL_OPENSSL_4) libdl.so.2 libdl.so.2(GLIBC_2.4) libdlog.so.0 libdownload-provider-interface.so.0 libdownloadagent2.so.0.1.0 libgcc_s.so.1 libgcc_s.so.1(GCC_3.0) libgcc_s.so.1(GCC_3.3.1) libgcc_s.so.1(GCC_3.5) libglib-2.0.so.0 libgobject-2.0.so.0 libnotification.so.0 libpthread.so.0 libpthread.so.0(GLIBC_2.4) libsmack.so.1 libsmack.so.1(LIBSMACK) libsqlite3.so.0 libstorage.so.0.1 libsystemd.so.0 libsystemd.so.0(LIBSYSTEMD_209) libvconf.so.0 libwifi-direct.so.0 libxdgmime.so.1 pkgconfig(bundle) pkgconfig(capi-appfw-app-manager) pkgconfig(capi-appfw-application) pkgconfig(capi-base-common) pkgconfig(dlog) pkgconfig(glib-2.0) pkgconfig(gobject-2.0)
+[   64s] Checking for unpackaged file(s): /usr/lib/rpm/check-files /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm
+[   64s] warning: Could not canonicalize hostname: santafe
+[   64s] Wrote: /home/abuild/rpmbuild/SRPMS/download-provider-2.1.23-0.src.rpm
+[   64s] Wrote: /home/abuild/rpmbuild/RPMS/armv7l/download-provider-2.1.23-0.armv7l.rpm
+[   64s] Wrote: /home/abuild/rpmbuild/RPMS/armv7l/download-provider-debuginfo-2.1.23-0.armv7l.rpm
+[   64s] Wrote: /home/abuild/rpmbuild/RPMS/armv7l/download-provider-debugsource-2.1.23-0.armv7l.rpm
+[   64s] Wrote: /home/abuild/rpmbuild/RPMS/armv7l/download-provider-devel-2.1.23-0.armv7l.rpm
+[   64s] Executing(%clean): /bin/sh -e /var/tmp/rpm-tmp.u6ZuHj
+[   64s] + umask 022
+[   64s] + cd /home/abuild/rpmbuild/BUILD
+[   64s] + cd download-provider-2.1.23
+[   64s] + /bin/rm -rf /home/abuild/rpmbuild/BUILDROOT/download-provider-2.1.23-0.arm
+[   64s] + exit 0
+[   64s] ... checking for files with abuild user/group
+[   65s] 
+[   65s] santafe finished "build download-provider.spec" at Thu May 14 09:50:54 UTC 2015.
+[   65s] 
+[32minfo: [0mfinished building download-provider
+[32minfo: [0mupdating local repo
+[32minfo: [0m*** Build Status Summary ***
+=== Total succeeded built packages: (1) ===
+[32minfo: [0mgenerated html format report:
+     /home/youngj/GBS-ROOT/local/repos/tizen/armv7l/index.html
+[32minfo: [0mgenerated RPM packages can be found from local repo:
+     /home/youngj/GBS-ROOT/local/repos/tizen/armv7l/RPMS
+[32minfo: [0mgenerated source RPM packages can be found from local repo:
+     /home/youngj/GBS-ROOT/local/repos/tizen/armv7l/SRPMS
+[32minfo: [0mbuild logs can be found in:
+     /home/youngj/GBS-ROOT/local/repos/tizen/armv7l/logs
+[32minfo: [0mbuild roots located in:
+     /home/youngj/GBS-ROOT/local/BUILD-ROOTS/scratch.armv7l.*
+info: Done
+-l: change-booting-mode.sh: command not found
