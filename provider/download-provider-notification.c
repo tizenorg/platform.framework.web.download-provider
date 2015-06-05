@@ -23,6 +23,10 @@
 #include "notification.h"
 #include "appsvc.h"
 
+#include "notification_text_domain.h"
+#include "notification_internal.h"
+#include "notification_error.h"
+
 #include "download-provider-defs.h"
 
 #include "download-provider-notification.h"
@@ -43,10 +47,10 @@ static const char *__noti_error_str(
 		notification_error_e err)
 {
 	switch (err) {
-	case NOTIFICATION_ERROR_INVALID_DATA:
-		return "NOTIFICATION_ERROR_INVALID_DATA";
-	case NOTIFICATION_ERROR_NO_MEMORY:
-		return "NOTIFICATION_ERROR_NO_MEMORY";
+	case NOTIFICATION_ERROR_INVALID_PARAMETER:
+		return "NOTIFICATION_ERROR_INVALID_PARAMETER";
+	case NOTIFICATION_ERROR_OUT_OF_MEMORY:
+		return "NOTIFICATION_ERROR_OUT_OF_MEMORY";
 	case NOTIFICATION_ERROR_FROM_DB:
 		return "NOTIFICATION_ERROR_FROM_DB";
 	case NOTIFICATION_ERROR_ALREADY_EXIST_ID:
