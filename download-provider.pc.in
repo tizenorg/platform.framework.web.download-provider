@@ -1,6 +1,0 @@
-# Package Information
-
-Name: @PROJECT_NAME@ 
-Description: @PACKAGE_DESCRIPTION@
-Version: @VERSION@
-Cflags: -I/usr/include/download-provider
