@@ -31,9 +31,9 @@
 #include <bundle.h>
 #include <notification.h>
 
-#include "notification_text_domain.h"
-#include "notification_internal.h"
-#include "notification_error.h"
+//#include "notification_text_domain.h"
+//#include "notification_internal.h"
+//#include "notification_error.h"
 
 #include <appsvc.h>
 
