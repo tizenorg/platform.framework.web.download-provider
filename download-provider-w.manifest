@@ -1,0 +1,38 @@
+<manifest>
+	<define>
+		<domain name="download-provider" />
+		<provide>
+			<label name="download-provider::db" />
+		</provide>
+		<request>
+			<smack request="download-provider::db" type="rw" />
+			<smack request="system::use_internet" type="w" />
+			<smack request="sys-assert::core" type="rwxat" />
+			<smack request="device::sys_logging" type="w" />
+			<smack request="system::media" type="arwxt" />
+			<smack request="system::ext_media" type="arwxt" />
+			<smack request="connman" type="rw" />
+			<smack request="net-config" type="rw" />
+			<smack request="wifi-direct::info" type="r" />
+			<smack request="connman::get" type="rw" />
+			<smack request="telephony_framework::api_ps_public" type="rw" />
+			<smack request="system::vconf" type="rwxat" />
+		</request>
+		<permit>
+			<smack permit="system::use_internet" type="w" />
+		</permit>
+	</define>
+	<request>
+		<domain name="download-provider" />
+	</request>
+	<assign>
+		<filesystem path="/usr/lib/libdownload-provider-interface.so*" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/libdownloadagent2.so*" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/system/download-provider.service" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/system/graphical.target.wants/download-provider.service" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/system/download-provider.socket" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/system/sockets.target.wants/download-provider.socket" label="_" exec_label="none" />
+		<filesystem path="/opt/etc/dump.d/module.d/dump-download-provider.sh" label="_" exec_label="none" />
+		<filesystem path="/usr/share/download-provider/download-provider.res" label="_" />
+	</assign>
+</manifest>

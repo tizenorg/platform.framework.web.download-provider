@@ -1,0 +1,6 @@
+msgid "IDS_DM_HEADER_DOWNLOAD_COMPLETE"
+msgstr "Lejupielāde pabeigta"
+
+msgid "IDS_DM_BODY_DOWNLOAD_FAILED_M_STATUS_ABB"
+msgstr "Lejupielāde neizdevās"
+

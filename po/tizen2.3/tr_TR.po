@@ -1,0 +1,6 @@
+msgid "IDS_DM_HEADER_DOWNLOAD_COMPLETE"
+msgstr "İndirme tamamlandı"
+
+msgid "IDS_DM_BODY_DOWNLOAD_FAILED_M_STATUS_ABB"
+msgstr "İndirme başarısız"
+
