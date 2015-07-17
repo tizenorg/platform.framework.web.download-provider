@@ -179,9 +179,9 @@ ln -s ../download-provider.socket %{buildroot}%{_libdir}/systemd/system/sockets.
 #make notify dir in post section for smack
 mkdir -p %{_notifydir}
 mkdir -p --mode=0700 %{_databasedir}
-chsmack -a 'download-provider' %{_databasedir}
+#chsmack -a 'download-provider' %{_databasedir}
 mkdir -p --mode=0700 %{_database_client_dir}
-chsmack -a 'download-provider' %{_database_client_dir}
+#chsmack -a 'download-provider' %{_database_client_dir}
 
 %files
 %defattr(-,root,root,-)
