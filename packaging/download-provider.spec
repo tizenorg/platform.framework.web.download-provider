@@ -170,10 +170,10 @@ mv %{buildroot}/usr/share/download-provider/download-provider.res %{buildroot}/e
 #%endif
 
 mkdir -p %{buildroot}%{_licensedir}
-mkdir -p %{buildroot}%{_libdir}/systemd/system/graphical.target.wants
-mkdir -p %{buildroot}%{_libdir}/systemd/system/sockets.target.wants
-ln -s ../download-provider.service %{buildroot}%{_libdir}/systemd/system/graphical.target.wants/
-ln -s ../download-provider.socket %{buildroot}%{_libdir}/systemd/system/sockets.target.wants/
+mkdir -p %{buildroot}/lib/systemd/system/graphical.target.wants
+mkdir -p %{buildroot}/lib/systemd/system/sockets.target.wants
+ln -s ../download-provider.service %{buildroot}/lib/systemd/system/graphical.target.wants/
+ln -s ../download-provider.socket %{buildroot}/lib/systemd/system/sockets.target.wants/
 
 %post
 #make notify dir in post section for smack
@@ -190,10 +190,10 @@ mkdir -p --mode=0700 %{_database_client_dir}
 %{_localedir}/*/*/download-provider.mo
 %{_libdir}/libdownloadagent2.so.0.1.0
 %{_libdir}/libdownloadagent2.so
-%{_libdir}/systemd/system/download-provider.service
-%{_libdir}/systemd/system/graphical.target.wants/download-provider.service
-%{_libdir}/systemd/system/download-provider.socket
-%{_libdir}/systemd/system/sockets.target.wants/download-provider.socket
+/lib/systemd/system/download-provider.service
+/lib/systemd/system/graphical.target.wants/download-provider.service
+/lib/systemd/system/download-provider.socket
+/lib/systemd/system/sockets.target.wants/download-provider.socket
 %{_libdir}/libdownload-provider-interface.so.%{version}
 %{_libdir}/libdownload-provider-interface.so.0
 %{_bindir}/%{name}
