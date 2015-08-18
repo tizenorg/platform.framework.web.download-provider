@@ -34,7 +34,8 @@ typedef unsigned long long da_size_t;
 
 #define SCHEME_HTTP		"http://"
 
-#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE "/opt/usr/media/Downloads"
+//#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE "/opt/usr/media/Downloads" //yjkim
+#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE "/home/owner/content/Downloads"
 
 #define DA_MAX_ID	DA_MAX_DOWNLOAD_REQ_AT_ONCE
 
