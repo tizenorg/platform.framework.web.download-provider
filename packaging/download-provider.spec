@@ -93,6 +93,11 @@ Description: Download the contents in background (development files)
 		-DCMAKE_INSTALL_PREFIX:PATH=%{_prefix} \\\
 		-DBIN_INSTALL_DIR:PATH=%{_bindir} \\\
 		-DLIB_INSTALL_DIR:PATH=%{_libdir} \\\
+		%ifarch armv7l \
+		-DLIB_AGENT_PATH="/usr/lib/libdownloadagent2.so" \\\
+		%else \
+		-DLIB_AGENT_PATH="/usr/lib64/libdownloadagent2.so" \\\
+		%endif \
 		-DINCLUDE_INSTALL_DIR:PATH=%{_includedir} \\\
 		-DPKG_NAME=%{name} \\\
 		-DPKG_VERSION=%{version} \\\
@@ -177,8 +182,9 @@ ln -s ../download-provider.socket %{buildroot}/lib/systemd/system/sockets.target
 
 %post
 #make notify dir in post section for smack
+mkdir /opt/data/download-provider
 mkdir -p %{_notifydir}
-chsmack -a 'System:Shared' %{_notifydir}                                        
+#chsmack -a 'System:Shared' %{_notifydir}                                        
 mkdir -p --mode=0700 %{_databasedir}
 #chsmack -a 'download-provider' %{_databasedir}
 mkdir -p --mode=0700 %{_database_client_dir}

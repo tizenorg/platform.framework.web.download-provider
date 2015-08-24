@@ -634,7 +634,7 @@ static dp_content_type __dp_get_content_type(const char *mime, const char *file_
 int dp_init_agent()
 {
 
-	g_da_handle = dlopen("/usr/lib/libdownloadagent2.so", RTLD_LAZY | RTLD_GLOBAL);
+	g_da_handle = dlopen(LIB_AGENT_PATH, RTLD_LAZY | RTLD_GLOBAL);
 	if (!g_da_handle) {
 		TRACE_ERROR("[dlopen] %s", dlerror());
 		g_da_handle = NULL;
