@@ -184,7 +184,8 @@ ln -s ../download-provider.socket %{buildroot}/lib/systemd/system/sockets.target
 #make notify dir in post section for smack
 mkdir /opt/data/download-provider
 mkdir -p %{_notifydir}
-#chsmack -a 'System:Shared' %{_notifydir}                                        
+chsmack -a 'System::Shared' %{_notifydir}
+chsmack -t %{_notifydir}                                        
 mkdir -p --mode=0700 %{_databasedir}
 #chsmack -a 'download-provider' %{_databasedir}
 mkdir -p --mode=0700 %{_database_client_dir}
