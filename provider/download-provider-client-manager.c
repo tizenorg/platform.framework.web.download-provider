@@ -594,7 +594,7 @@ void *dp_client_manager(void *arg)
 			}
 
 			// blocking & timeout to prevent the lockup by client.
-			struct timeval tv_timeo = {1, 500000}; // 1.5 sec
+			struct timeval tv_timeo = {5, 500000}; // 5.5 sec
 			if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &tv_timeo,
 					sizeof(tv_timeo)) < 0) {
 				TRACE_ERROR("failed to set timeout in blocking socket");

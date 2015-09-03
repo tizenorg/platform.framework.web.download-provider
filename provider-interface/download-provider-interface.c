@@ -429,7 +429,7 @@ static int __connect_to_provider()
 				ts.tv_nsec = 20000000;
 				nanosleep(&ts, NULL);
 			} else if (ret >= 0) {
-				struct timeval tv_timeo = { 1, 500000 }; // 1.5 second
+				struct timeval tv_timeo = { 5, 500000 }; // 5.5 second
 				g_dp_client->channel = ret;
 				if (setsockopt(g_dp_client->channel, SOL_SOCKET, SO_RCVTIMEO, &tv_timeo, sizeof(tv_timeo)) < 0) {
 					TRACE_STRERROR("[CRITICAL] setsockopt SO_RCVTIMEO");
