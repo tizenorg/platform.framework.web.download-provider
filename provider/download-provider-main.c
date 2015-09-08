@@ -27,6 +27,10 @@
 #include "download-provider-client-manager.h"
 #include "download-provider-network.h"
 
+#ifdef SUPPORT_SECURITY_PRIVILEGE
+#include "download-provider-cynara.h"
+#endif
+
 void *dp_client_manager(void *arg);
 
 int main(int argc, char **argv)
@@ -34,6 +38,14 @@ int main(int argc, char **argv)
 	GMainLoop *event_loop;
 	pthread_t tid;
 	TRACE_INFO("download-provider's working is started");
+
+#ifdef SUPPORT_SECURITY_PRIVILEGE
+	//initialize cynara
+	if (dp_cynara_new() < 0) {
+		// TRACE_ERROR is called inside download-provider-cynara.c
+		return 0;
+	}
+#endif
 
 	g_type_init();
 
@@ -60,6 +72,10 @@ int main(int argc, char **argv)
 	g_main_loop_run(event_loop);
 	dp_network_connection_destroy();
 	g_main_loop_unref(event_loop);
+
+#ifdef SUPPORT_SECURITY_PRIVILEGE
+	dp_cynara_free();
+#endif
 
 	TRACE_INFO("download-provider's working is done");
 	return 0;
