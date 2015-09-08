@@ -23,17 +23,16 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <signal.h>
 
 #include <app_manager.h>
 #include <systemd/sd-daemon.h>
 #include <glib-object.h>
 
-#include <cynara-client.h>
-#include <cynara-client-async.h>
-#include <cynara-creds-socket.h>
-#include <cynara-creds-dbus.h>
+#ifdef SUPPORT_SECURITY_PRIVILEGE
+#include <download-provider-cynara.h>
+#endif
 
 #include <download-provider.h>
 #include <download-provider-log.h>
@@ -411,68 +410,11 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 		return DP_ERROR_INVALID_PARAMETER;
 	}
 
-#ifdef SUPPORT_SECURITY_PRIVILEGE_OLD
-	TRACE_DEBUG("SUPPORT_SECURITY_PRIVILEGE_OLD");
-	int result = security_server_check_privilege_by_sockfd(clientfd, SECURITY_PRIVILEGE_INTERNET, "w");
-	if (result != SECURITY_SERVER_API_SUCCESS) {
-		TRACE_ERROR("check privilege permission:%d", result);
+#ifdef SUPPORT_SECURITY_PRIVILEGE
+	int result = dp_cynara_check(clientfd, SECURITY_PRIVILEGE_DOWNLOAD);
+	if (result != CYNARA_API_ACCESS_ALLOWED) {
 		return DP_ERROR_PERMISSION_DENIED;
 	}
-#endif
-
-#if 1
-	TRACE_DEBUG("SUPPORT_SECURITY_PRIVILEGE");
-	// Cynara structure init
-	int ret;
-	cynara *p_cynara;
-	//cynara_configuration conf;
-	ret = cynara_initialize(&p_cynara, NULL);
-	if(ret != CYNARA_API_SUCCESS) { /* error */ }
-
-	// Get client peer credential
-	char *clientSmack;
-	ret = cynara_creds_socket_get_client(clientfd, CLIENT_METHOD_SMACK, &clientSmack);
-	// In case of D-bus peer credential??
-	// ret = cynara_creds_dbus_get_client(DBusConnection *connection, const char *uniqueName,CLIENT_METHOD_SMACK, &clientSmack);
-	if(ret != CYNARA_API_SUCCESS) { /* error */ }
-
-	char *uid;
-	ret = cynara_creds_socket_get_user(clientfd, USER_METHOD_UID, &uid);
-	// In case of D-bus peer credential??
-	// ret = cynara_creds_dbus_get_client(DBusConnection *connection, const char *uniqueName,CLIENT_METHOD_SMACK, &clientSmack);
-	if (ret != CYNARA_API_SUCCESS) { /* error */ }
-
-	/* Concept of session is service-specific.
-	  * Might be empty string if service does not have such concept
-	  */
-	char *client_session="";
-
-	// Cynara check
-
-	ret = cynara_check(p_cynara, clientSmack, client_session, uid, "http://tizen.org/privilege/download");
-
-	if(ret == CYNARA_API_ACCESS_ALLOWED) {
-		TRACE_DEBUG("CYNARA_API_ACCESS_ALLOWED");
-	} else {
-		TRACE_DEBUG("DP_ERROR_PERMISSION_DENIED");
-		return DP_ERROR_PERMISSION_DENIED;
-	}
-
-	// Cleanup of cynara structure
-	if(clientSmack) {
-		//free(clientSmack);
-	}
-
-	if(client_session) {
-		//free(client_session);
-	}
-
-	if(uid) {
-		//free(uid);
-	}
-
-	cynara_finish(p_cynara);
-
 #endif
 
 	// EINVAL: empty slot
@@ -665,7 +607,7 @@ void *dp_client_manager(void *arg)
 
 			dp_ipc_fmt ipc_info;
 			memset(&ipc_info, 0x00, sizeof(dp_ipc_fmt));
-			if (read(clientfd, &ipc_info, sizeof(dp_ipc_fmt)) <= 0 || 
+			if (read(clientfd, &ipc_info, sizeof(dp_ipc_fmt)) <= 0 ||
 					ipc_info.section == DP_SEC_NONE ||
 					ipc_info.property != DP_PROP_NONE ||
 					ipc_info.id != -1 ||
@@ -675,7 +617,6 @@ void *dp_client_manager(void *arg)
 				continue;
 			}
 
-#ifdef SO_PEERCRED // getting the info of client
 			socklen_t cr_len = sizeof(credential);
 			if (getsockopt(clientfd, SOL_SOCKET, SO_PEERCRED,
 					&credential, &cr_len) < 0) {
@@ -683,13 +624,6 @@ void *dp_client_manager(void *arg)
 				close(clientfd);
 				continue;
 			}
-#else // In case of not supported SO_PEERCRED
-			if (read(clientfd, &credential, sizeof(dp_credential)) <= 0) {
-				TRACE_ERROR("failed to cred from client:%d", clientfd);
-				close(clientfd);
-				continue;
-			}
-#endif
 
 			CLIENT_MUTEX_LOCK(&g_db_mutex);
 			if (dp_db_check_connection(g_db_handle) < 0) {
@@ -713,7 +647,7 @@ void *dp_client_manager(void *arg)
 			}
 			if (errorcode == DP_ERROR_NONE) {
 				// write client info into database
-				
+
 			} else {
 				TRACE_ERROR("sock:%d id:%d section:%s property:%s errorcode:%s size:%d",
 					clientfd, ipc_info.id,
