@@ -17,17 +17,11 @@
 #ifndef DOWNLOAD_PROVIDER_SMACK_H
 #define DOWNLOAD_PROVIDER_SMACK_H
 
-#ifdef SUPPORT_SECURITY_PRIVILEGE
-#include <security-server.h>
-#define SECURITY_PRIVILEGE_INTERNET "system::use_internet"
-#endif
-
 int dp_smack_is_mounted();
 int dp_smack_set_label(char *label, char *source, char *target);
 char *dp_smack_get_label_from_socket(int sock);
 int dp_smack_is_valid_dir(int uid, int gid, char *smack_label, char *dir);
 void dp_rebuild_dir(const char *dirpath, mode_t mode);
 int dp_is_valid_dir(const char *dirpath);
-
 
 #endif

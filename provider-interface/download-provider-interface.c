@@ -450,18 +450,6 @@ static int __connect_to_provider()
 			errorcode = DP_ERROR_IO_ERROR;
 			goto EXIT_CONNECT;
 		}
-#ifndef SO_PEERCRED
-		dp_credential cred;
-		cred.pid = getpid();
-		cred.uid = getuid();
-		cred.gid = getgid();
-		// send PID. Not support SO_PEERCRED
-		if (dp_ipc_write(g_dp_client->channel,
-				&cred, sizeof(dp_credential)) < 0) {
-			errorcode = DP_ERROR_IO_ERROR;
-			goto EXIT_CONNECT;
-		}
-#endif
 
 		errorcode = __dp_ipc_response(g_dp_client->channel,
 				-1, DP_SEC_INIT, DP_PROP_NONE, NULL);
