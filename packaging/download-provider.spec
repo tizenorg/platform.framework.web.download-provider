@@ -31,16 +31,12 @@ BuildRequires:  pkgconfig(capi-network-wifi-direct)
 BuildRequires:  pkgconfig(libresourced)
 #BuildRequires:  model-build-features T30
 BuildRequires:  pkgconfig(storage)
-%if "%{?tizen_profile_name}" == "wearable"
-BuildRequires:  pkgconfig(security-server)
-%else if "%{?tizen_profile_name}" == "mobile"
+%if "%{?tizen_profile_name}" == "mobile"
 BuildRequires:  pkgconfig(notification)
 %endif
-
-BuildRequires: pkgconfig(cynara-client)
-BuildRequires: pkgconfig(cynara-client-async)
-BuildRequires: pkgconfig(cynara-creds-socket)
-BuildRequires: pkgconfig(cynara-creds-dbus)
+BuildRequires:  pkgconfig(cynara-client)
+BuildRequires:  pkgconfig(cynara-creds-socket)
+BuildRequires:  pkgconfig(cynara-session)
 
 %description
 Description: Download the contents in background
@@ -58,7 +54,7 @@ Description: Download the contents in background (development files)
 
 %define _data_install_path /opt/usr/data/%{name}
 %define _resource_install_path /usr/share/%{name}
-%define _imagedir %{_resource_install_path}/images 
+%define _imagedir %{_resource_install_path}/images
 %define _localedir %{_resource_install_path}/locales
 %define _databasedir %{_data_install_path}/database
 %define _database_client_dir %{_databasedir}/clients
@@ -72,11 +68,16 @@ Description: Download the contents in background (development files)
 %define sys_resource OFF
 %define support_oma_drm OFF
 %define wifi_direct ON
-%define support_security_privilege OFF
+%define support_security_privilege ON
 %define support_companion_mode OFF
-%define support_notification ON
 %define support_knox ON
 %define _manifest_name %{name}.manifest
+
+%if "%{?tizen_profile_name}" == "mobile"
+%define support_notification ON
+%else
+%define support_notification OFF
+%endif
 
 %if 0%{?model_build_feature_wlan_p2p_disable }
 %define wifi_direct OFF
@@ -190,7 +191,7 @@ ln -s ../download-provider.socket %{buildroot}/lib/systemd/system/sockets.target
 mkdir /opt/data/download-provider
 mkdir -p %{_notifydir}
 chsmack -a 'System::Shared' %{_notifydir}
-chsmack -t %{_notifydir}                                        
+chsmack -t %{_notifydir}
 mkdir -p --mode=0700 %{_databasedir}
 #chsmack -a 'download-provider' %{_databasedir}
 mkdir -p --mode=0700 %{_database_client_dir}
