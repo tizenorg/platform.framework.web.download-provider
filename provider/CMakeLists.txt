@@ -22,9 +22,8 @@ pkg_check_modules(dp2_pkgs REQUIRED glib-2.0
 		libsystemd-daemon
 		vconf
 		cynara-client
-		cynara-client-async
 		cynara-creds-socket
-		cynara-creds-dbus
+		cynara-session
 		)
 
 FOREACH(flag ${dp2_pkgs_CFLAGS})
@@ -41,11 +40,6 @@ ENDFOREACH(flag)
 ELSE (SUPPORT_WIFI_DIRECT)
 MESSAGE("WIFI direct:Off")
 ENDIF(SUPPORT_WIFI_DIRECT)
-
-IF(SUPPORT_SECURITY_PRIVILEGE)
-pkg_check_modules(dp2_security_privilege_pkgs REQUIRED security-server)
-SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${dp2_security_privilege_pkgs_CFLAGS}")
-ENDIF(SUPPORT_SECURITY_PRIVILEGE)
 
 IF(SUPPORT_NOTIFICATION)
 MESSAGE("Notification:On")
@@ -119,6 +113,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-queue-manager.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-client.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-client-manager.c
+	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-cynara.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-notification.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-notification-manager.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-main.c )
