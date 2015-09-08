@@ -23,7 +23,7 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <signal.h>
 
 #include <app_manager.h>
@@ -47,6 +47,10 @@
 #include <download-provider-client-manager.h>
 #include <download-provider-plugin-download-agent.h>
 #include <download-provider-network.h>
+
+#ifdef SUPPORT_SECURITY_PRIVILEGE
+#include <download-provider-cynara.h>
+#endif
 
 int g_dp_sock = -1;
 dp_client_slots_fmt *g_dp_client_slots = NULL;
@@ -407,9 +411,8 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 	}
 
 #ifdef SUPPORT_SECURITY_PRIVILEGE
-	int result = security_server_check_privilege_by_sockfd(clientfd, SECURITY_PRIVILEGE_INTERNET, "w");
-	if (result != SECURITY_SERVER_API_SUCCESS) {
-		TRACE_ERROR("check privilege permission:%d", result);
+	int result = dp_cynara_check(clientfd, SECURITY_PRIVILEGE_INTERNET);
+	if(result != CYNARA_API_ACCESS_ALLOWED) {
 		return DP_ERROR_PERMISSION_DENIED;
 	}
 #endif
@@ -604,7 +607,7 @@ void *dp_client_manager(void *arg)
 
 			dp_ipc_fmt ipc_info;
 			memset(&ipc_info, 0x00, sizeof(dp_ipc_fmt));
-			if (read(clientfd, &ipc_info, sizeof(dp_ipc_fmt)) <= 0 || 
+			if (read(clientfd, &ipc_info, sizeof(dp_ipc_fmt)) <= 0 ||
 					ipc_info.section == DP_SEC_NONE ||
 					ipc_info.property != DP_PROP_NONE ||
 					ipc_info.id != -1 ||
@@ -614,7 +617,6 @@ void *dp_client_manager(void *arg)
 				continue;
 			}
 
-#ifdef SO_PEERCRED // getting the info of client
 			socklen_t cr_len = sizeof(credential);
 			if (getsockopt(clientfd, SOL_SOCKET, SO_PEERCRED,
 					&credential, &cr_len) < 0) {
@@ -622,13 +624,6 @@ void *dp_client_manager(void *arg)
 				close(clientfd);
 				continue;
 			}
-#else // In case of not supported SO_PEERCRED
-			if (read(clientfd, &credential, sizeof(dp_credential)) <= 0) {
-				TRACE_ERROR("failed to cred from client:%d", clientfd);
-				close(clientfd);
-				continue;
-			}
-#endif
 
 			CLIENT_MUTEX_LOCK(&g_db_mutex);
 			if (dp_db_check_connection(g_db_handle) < 0) {
@@ -652,7 +647,7 @@ void *dp_client_manager(void *arg)
 			}
 			if (errorcode == DP_ERROR_NONE) {
 				// write client info into database
-				
+
 			} else {
 				TRACE_ERROR("sock:%d id:%d section:%s property:%s errorcode:%s size:%d",
 					clientfd, ipc_info.id,

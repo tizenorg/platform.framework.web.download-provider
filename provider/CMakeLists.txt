@@ -20,7 +20,10 @@ pkg_check_modules(dp2_pkgs REQUIRED glib-2.0
 		libsmack
 		dlog
 		libsystemd-daemon
-		vconf)
+		vconf
+		cynara-session
+		cynara-client
+		cynara-creds-socket)
 
 FOREACH(flag ${dp2_pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
@@ -36,11 +39,6 @@ ENDFOREACH(flag)
 ELSE (SUPPORT_WIFI_DIRECT)
 MESSAGE("WIFI direct:Off")
 ENDIF(SUPPORT_WIFI_DIRECT)
-
-IF(SUPPORT_SECURITY_PRIVILEGE)
-pkg_check_modules(dp2_security_privilege_pkgs REQUIRED security-server)
-SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${dp2_security_privilege_pkgs_CFLAGS}")
-ENDIF(SUPPORT_SECURITY_PRIVILEGE)
 
 IF(SUPPORT_NOTIFICATION)
 MESSAGE("Notification:On")
@@ -116,7 +114,8 @@ ADD_EXECUTABLE(${PROJECT_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-client-manager.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-notification.c
 	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-notification-manager.c
-	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-main.c )
+	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-main.c
+	${CMAKE_CURRENT_SOURCE_DIR}/download-provider-cynara.c )
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${dp2_pkgs_LDFLAGS} ${DP2_LINK_LIBRARIES} ${dp2_noti_pkgs_LDFLAGS} ${dp2_companion_pkgs_LDFLAGS} ${dp2_wifi_direct_pkgs_LDFLAGS} ${dp2_security_privilege_pkgs_LDFLAGS} -ldl -pie)
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ${BIN_INSTALL_DIR})
 
