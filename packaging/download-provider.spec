@@ -37,6 +37,11 @@ BuildRequires:  pkgconfig(security-server)
 BuildRequires:  pkgconfig(notification)
 %endif
 
+BuildRequires: pkgconfig(cynara-client)
+BuildRequires: pkgconfig(cynara-client-async)
+BuildRequires: pkgconfig(cynara-creds-socket)
+BuildRequires: pkgconfig(cynara-creds-dbus)
+
 %description
 Description: Download the contents in background
 

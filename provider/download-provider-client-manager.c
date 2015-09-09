@@ -30,6 +30,11 @@
 #include <systemd/sd-daemon.h>
 #include <glib-object.h>
 
+#include <cynara-client.h>
+#include <cynara-client-async.h>
+#include <cynara-creds-socket.h>
+#include <cynara-creds-dbus.h>
+
 #include <download-provider.h>
 #include <download-provider-log.h>
 #include <download-provider-config.h>
@@ -406,12 +411,68 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 		return DP_ERROR_INVALID_PARAMETER;
 	}
 
-#ifdef SUPPORT_SECURITY_PRIVILEGE
+#ifdef SUPPORT_SECURITY_PRIVILEGE_OLD
+	TRACE_DEBUG("SUPPORT_SECURITY_PRIVILEGE_OLD");
 	int result = security_server_check_privilege_by_sockfd(clientfd, SECURITY_PRIVILEGE_INTERNET, "w");
 	if (result != SECURITY_SERVER_API_SUCCESS) {
 		TRACE_ERROR("check privilege permission:%d", result);
 		return DP_ERROR_PERMISSION_DENIED;
 	}
+#endif
+
+#if 1
+	TRACE_DEBUG("SUPPORT_SECURITY_PRIVILEGE");
+	// Cynara structure init
+	int ret;
+	cynara *p_cynara;
+	//cynara_configuration conf;
+	ret = cynara_initialize(&p_cynara, NULL);
+	if(ret != CYNARA_API_SUCCESS) { /* error */ }
+
+	// Get client peer credential
+	char *clientSmack;
+	ret = cynara_creds_socket_get_client(clientfd, CLIENT_METHOD_SMACK, &clientSmack);
+	// In case of D-bus peer credential??
+	// ret = cynara_creds_dbus_get_client(DBusConnection *connection, const char *uniqueName,CLIENT_METHOD_SMACK, &clientSmack);
+	if(ret != CYNARA_API_SUCCESS) { /* error */ }
+
+	char *uid;
+	ret = cynara_creds_socket_get_user(clientfd, USER_METHOD_UID, &uid);
+	// In case of D-bus peer credential??
+	// ret = cynara_creds_dbus_get_client(DBusConnection *connection, const char *uniqueName,CLIENT_METHOD_SMACK, &clientSmack);
+	if (ret != CYNARA_API_SUCCESS) { /* error */ }
+
+	/* Concept of session is service-specific.
+	  * Might be empty string if service does not have such concept
+	  */
+	char *client_session="";
+
+	// Cynara check
+
+	ret = cynara_check(p_cynara, clientSmack, client_session, uid, "http://tizen.org/privilege/download");
+
+	if(ret == CYNARA_API_ACCESS_ALLOWED) {
+		TRACE_DEBUG("CYNARA_API_ACCESS_ALLOWED");
+	} else {
+		TRACE_DEBUG("DP_ERROR_PERMISSION_DENIED");
+		return DP_ERROR_PERMISSION_DENIED;
+	}
+
+	// Cleanup of cynara structure
+	if(clientSmack) {
+		//free(clientSmack);
+	}
+
+	if(client_session) {
+		//free(client_session);
+	}
+
+	if(uid) {
+		//free(uid);
+	}
+
+	cynara_finish(p_cynara);
+
 #endif
 
 	// EINVAL: empty slot
@@ -594,7 +655,7 @@ void *dp_client_manager(void *arg)
 			}
 
 			// blocking & timeout to prevent the lockup by client.
-			struct timeval tv_timeo = {5, 500000}; // 5.5 sec
+			struct timeval tv_timeo = {1, 500000}; // 1.5 sec
 			if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &tv_timeo,
 					sizeof(tv_timeo)) < 0) {
 				TRACE_ERROR("failed to set timeout in blocking socket");

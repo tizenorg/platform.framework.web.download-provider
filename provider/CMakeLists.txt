@@ -20,7 +20,12 @@ pkg_check_modules(dp2_pkgs REQUIRED glib-2.0
 		libsmack
 		dlog
 		libsystemd-daemon
-		vconf)
+		vconf
+		cynara-client
+		cynara-client-async
+		cynara-creds-socket
+		cynara-creds-dbus
+		)
 
 FOREACH(flag ${dp2_pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
