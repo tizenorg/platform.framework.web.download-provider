@@ -4,7 +4,7 @@ Summary:    Download the contents in background
 Version:    2.1.24
 Release:    0
 Group:      Development/Libraries
-License:    Apache License, Version 2.0
+License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 Requires(post): libdevice-node
 Requires(post): sqlite
@@ -28,7 +28,6 @@ BuildRequires:  gettext-devel
 BuildRequires:  pkgconfig(libsystemd-daemon)
 BuildRequires:  pkgconfig(capi-network-wifi-direct)
 BuildRequires:  pkgconfig(libresourced)
-#BuildRequires:  model-build-features T30
 BuildRequires:  pkgconfig(storage)
 %if "%{?tizen_profile_name}" == "wearable"
 BuildRequires:  pkgconfig(security-server)
@@ -43,22 +42,30 @@ BuildRequires: pkgconfig(cynara-creds-dbus)
 BuildRequires: pkgconfig(tpkp-curl)
 
 %description
-Description: Download the contents in background
+Download the specified contents in background
 
 %package devel
-Summary:    download-provider
+Summary:    Libraries for download-provider
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description devel
-Description: Download the contents in background (development files)
+Download the contents in background (development files)
+
+%package locale
+Summary:    The download-provider locale package
+Group:      Development/Languages
+Requires:   %{name} = %{version}-%{release}
+
+%description locale
+Package providing locale for download-provider
 
 %prep
 %setup -q
 
 %define _data_install_path /opt/usr/data/%{name}
 %define _resource_install_path /usr/share/%{name}
-%define _imagedir %{_resource_install_path}/images 
+%define _imagedir %{_resource_install_path}/images
 %define _localedir %{_resource_install_path}/locales
 %define _databasedir %{_data_install_path}/database
 %define _database_client_dir %{_databasedir}/clients
@@ -66,6 +73,9 @@ Description: Download the contents in background (development files)
 %define _ipc_socket /opt/data/%{name}/%{name}.sock
 %define _licensedir /usr/share/license
 %define _logdump_script_dir /opt/etc/dump.d/module.d
+%define _manifest_name %{name}.manifest
+%define _manifest_devel_name %{name}-devel.manifest
+%define _manifest_locale_name %{name}-locale.manifest
 %define _http_lib libcurl
 
 %define download_booster OFF
@@ -76,7 +86,6 @@ Description: Download the contents in background (development files)
 %define support_companion_mode OFF
 %define support_notification ON
 %define support_knox ON
-%define _manifest_name %{name}.manifest
 
 %if 0%{?model_build_feature_wlan_p2p_disable }
 %define wifi_direct OFF
@@ -84,84 +93,83 @@ Description: Download the contents in background (development files)
 %if "%{?tizen_profile_name}" == "wearable"
 %define download_booster OFF
 %define support_notification OFF
-%define _manifest_name %{name}-w.manifest
 %endif
 %if 0%{?sec_product_feature_container_enable}
 %define support_knox ON
 %endif
 
 %define cmake \
-	CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -fvisibility=hidden"; export CFLAGS \
-	FFLAGS="${FFLAGS:-%optflags} -fPIC -fvisibility=hidden"; export FFLAGS \
-	LDFLAGS+=" -Wl,--as-needed -Wl,--hash-style=both"; export LDFLAGS \
-	%__cmake \\\
-		-DCMAKE_INSTALL_PREFIX:PATH=%{_prefix} \\\
-		-DBIN_INSTALL_DIR:PATH=%{_bindir} \\\
-		-DLIB_INSTALL_DIR:PATH=%{_libdir} \\\
-		%ifarch armv7l \
-		-DLIB_AGENT_PATH="/usr/lib/libdownloadagent2.so" \\\
-		%else \
-		-DLIB_AGENT_PATH="/usr/lib64/libdownloadagent2.so" \\\
-		%endif \
-		-DINCLUDE_INSTALL_DIR:PATH=%{_includedir} \\\
-		-DPKG_NAME=%{name} \\\
-		-DPKG_VERSION=%{version} \\\
-		-DPKG_RELEASE=%{release} \\\
-		-DIPC_SOCKET:PATH=%{_ipc_socket} \\\
-		-DPROVIDER_DIR:PATH=%{_data_install_path} \\\
-		-DNOTIFY_DIR:PATH=%{_notifydir} \\\
-		-DDATABASE_DIR:PATH=%{_databasedir} \\\
-		-DDATABASE_CLIENT_DIR:PATH=%{_database_client_dir} \\\
-		-DIMAGE_DIR:PATH=%{_imagedir} \\\
-		-DLOCALE_DIR:PATH=%{_localedir} \\\
-		-DLICENSE_DIR:PATH=%{_licensedir} \\\
-		-DSUPPORT_WIFI_DIRECT:BOOL=OFF \\\
-		%if "%{?sys_resource}" == "ON" \
-		-DSUPPORT_SYS_RESOURCE:BOOL=ON \\\
-		%else \
-		-DSUPPORT_SYS_RESOURCE:BOOL=OFF \\\
-		%endif \
-		%if "%{?download_booster}" == "ON" \
-		-DSUPPORT_DOWNLOAD_BOOSTER:BOOL=ON \\\
-		%else \
-		-DSUPPORT_DOWNLOAD_BOOSTER:BOOL=OFF \\\
-		%endif \
-		%if "%{?support_notification}" == "ON" \
-		-DSUPPORT_NOTIFICATION:BOOL=ON \\\
-		%else \
-		-DSUPPORT_NOTIFICATION:BOOL=OFF \\\
-		%endif \
-		-DSUPPORT_LOG_MESSAGE:BOOL=ON \\\
-		%if "%{?support_oma_drm}" == "ON" \
-		-DSUPPORT_OMA_DRM:BOOL=ON \\\
-		%else \
-		-DSUPPORT_OMA_DRM:BOOL=OFF \\\
-		%endif \
-		%if "%{?support_security_privilege}" == "ON" \
-		-DSUPPORT_SECURITY_PRIVILEGE:BOOL=ON \\\
-		%else \
-		-DSUPPORT_SECURITY_PRIVILEGE:BOOL=OFF \\\
-		%endif \
-		%if "%{?support_companion_mode}" == "ON" \
-		-DSUPPORT_COMPANION_MODE:BOOL=ON \\\
-		%else \
-		-DSUPPORT_COMPANION_MODE:BOOL=OFF \\\
-		%endif \
-		%if "%{?support_knox}" == "ON" \
-		-DSUPPORT_KNOX:BOOL=ON \\\
-		%else \
-		-DSUPPORT_KNOX:BOOL=OFF \\\
-		%endif \
-		%if "%{?_ux_define}" == "tizen2.3" \
-		-DTIZEN_2_3_UX:BOOL=ON \\\
-		%endif \
-		-DCMAKE_LOG_DUMP_SCRIPT_DIR=%{_logdump_script_dir} \\\
-		-DHTTP_LIB=%{_http_lib} \\\
-		%if "%{?_lib}" == "lib64" \
-		%{?_cmake_lib_suffix64} \\\
-		%endif \
-		%{?_cmake_skip_rpath} \\\
-		-DBUILD_SHARED_LIBS:BOOL=ON
+    CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -fvisibility=hidden"; export CFLAGS \
+    FFLAGS="${FFLAGS:-%optflags} -fPIC -fvisibility=hidden"; export FFLAGS \
+    LDFLAGS+=" -Wl,--as-needed -Wl,--hash-style=both"; export LDFLAGS \
+    %__cmake \\\
+        -DCMAKE_INSTALL_PREFIX:PATH=%{_prefix} \\\
+        -DBIN_INSTALL_DIR:PATH=%{_bindir} \\\
+        -DLIB_INSTALL_DIR:PATH=%{_libdir} \\\
+        %ifarch armv7l \
+        -DLIB_AGENT_PATH="/usr/lib/libdownloadagent2.so" \\\
+        %else \
+        -DLIB_AGENT_PATH="/usr/lib64/libdownloadagent2.so" \\\
+        %endif \
+        -DINCLUDE_INSTALL_DIR:PATH=%{_includedir} \\\
+        -DPKG_NAME=%{name} \\\
+        -DPKG_VERSION=%{version} \\\
+        -DPKG_RELEASE=%{release} \\\
+        -DIPC_SOCKET:PATH=%{_ipc_socket} \\\
+        -DPROVIDER_DIR:PATH=%{_data_install_path} \\\
+        -DNOTIFY_DIR:PATH=%{_notifydir} \\\
+        -DDATABASE_DIR:PATH=%{_databasedir} \\\
+        -DDATABASE_CLIENT_DIR:PATH=%{_database_client_dir} \\\
+        -DIMAGE_DIR:PATH=%{_imagedir} \\\
+        -DLOCALE_DIR:PATH=%{_localedir} \\\
+        -DLICENSE_DIR:PATH=%{_licensedir} \\\
+        -DSUPPORT_WIFI_DIRECT:BOOL=OFF \\\
+        %if "%{?sys_resource}" == "ON" \
+        -DSUPPORT_SYS_RESOURCE:BOOL=ON \\\
+        %else \
+        -DSUPPORT_SYS_RESOURCE:BOOL=OFF \\\
+        %endif \
+        %if "%{?download_booster}" == "ON" \
+        -DSUPPORT_DOWNLOAD_BOOSTER:BOOL=ON \\\
+        %else \
+        -DSUPPORT_DOWNLOAD_BOOSTER:BOOL=OFF \\\
+        %endif \
+        %if "%{?support_notification}" == "ON" \
+        -DSUPPORT_NOTIFICATION:BOOL=ON \\\
+        %else \
+        -DSUPPORT_NOTIFICATION:BOOL=OFF \\\
+        %endif \
+        -DSUPPORT_LOG_MESSAGE:BOOL=ON \\\
+        %if "%{?support_oma_drm}" == "ON" \
+        -DSUPPORT_OMA_DRM:BOOL=ON \\\
+        %else \
+        -DSUPPORT_OMA_DRM:BOOL=OFF \\\
+        %endif \
+        %if "%{?support_security_privilege}" == "ON" \
+        -DSUPPORT_SECURITY_PRIVILEGE:BOOL=ON \\\
+        %else \
+        -DSUPPORT_SECURITY_PRIVILEGE:BOOL=OFF \\\
+        %endif \
+        %if "%{?support_companion_mode}" == "ON" \
+        -DSUPPORT_COMPANION_MODE:BOOL=ON \\\
+        %else \
+        -DSUPPORT_COMPANION_MODE:BOOL=OFF \\\
+        %endif \
+        %if "%{?support_knox}" == "ON" \
+        -DSUPPORT_KNOX:BOOL=ON \\\
+        %else \
+        -DSUPPORT_KNOX:BOOL=OFF \\\
+        %endif \
+        %if "%{?_ux_define}" == "tizen2.3" \
+        -DTIZEN_2_3_UX:BOOL=ON \\\
+        %endif \
+        -DCMAKE_LOG_DUMP_SCRIPT_DIR=%{_logdump_script_dir} \\\
+        -DHTTP_LIB=%{_http_lib} \\\
+        %if "%{?_lib}" == "lib64" \
+        %{?_cmake_lib_suffix64} \\\
+        %endif \
+        %{?_cmake_skip_rpath} \\\
+        -DBUILD_SHARED_LIBS:BOOL=ON
 
 %build
 export CFLAGS="$CFLAGS -DTIZEN_DEBUG_ENABLE"
@@ -173,56 +181,102 @@ make %{?jobs:-j%jobs}
 %install
 rm -rf %{buildroot}
 %make_install
-
-#%if 0%{?sec_product_feature_container_enable}
 mkdir -p %{buildroot}/etc/vasum/vsmzone.resource/
 mv %{buildroot}/usr/share/download-provider/download-provider.res %{buildroot}/etc/vasum/vsmzone.resource/
-#%endif
-
 mkdir -p %{buildroot}%{_licensedir}
-mkdir -p %{buildroot}/lib/systemd/system/graphical.target.wants
-mkdir -p %{buildroot}/lib/systemd/system/sockets.target.wants
-ln -s ../download-provider.service %{buildroot}/lib/systemd/system/graphical.target.wants/
-ln -s ../download-provider.socket %{buildroot}/lib/systemd/system/sockets.target.wants/
+%install_service graphical.target.wants download-provider.service
+%install_service sockets.target.wants download-provider.socket
 
 %post
 #make notify dir in post section for smack
 mkdir /opt/data/download-provider
 mkdir -p %{_notifydir}
 chsmack -a 'System::Shared' %{_notifydir}
-chsmack -t %{_notifydir}                                        
+chsmack -t %{_notifydir}
 mkdir -p --mode=0700 %{_databasedir}
-#chsmack -a 'download-provider' %{_databasedir}
 mkdir -p --mode=0700 %{_database_client_dir}
-#chsmack -a 'download-provider' %{_database_client_dir}
+/sbin/ldconfig
+
+%postun
+/sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
 %manifest %{_manifest_name}
-%{_imagedir}/*.png
-%{_localedir}/*/*/download-provider.mo
+%{_imagedir}/B03_Processing_download_complete.png
+%{_imagedir}/B03_Processing_download_failed.png
+%{_imagedir}/download_manager_icon_*.png
 %{_libdir}/libdownloadagent2.so.0.1.0
 %{_libdir}/libdownloadagent2.so
-/lib/systemd/system/download-provider.service
-/lib/systemd/system/graphical.target.wants/download-provider.service
-/lib/systemd/system/download-provider.socket
-/lib/systemd/system/sockets.target.wants/download-provider.socket
+%{_unitdir}/download-provider.service
+%{_unitdir}/graphical.target.wants/download-provider.service
+%{_unitdir}/download-provider.socket
+%{_unitdir}/sockets.target.wants/download-provider.socket
 %{_libdir}/libdownload-provider-interface.so.%{version}
 %{_libdir}/libdownload-provider-interface.so.0
-%{_bindir}/%{name}
-%{_licensedir}/%{name}
-%attr(0544,root,root) %{_logdump_script_dir}/dump-%{name}.sh
-#%if 0%{?sec_product_feature_container_enable}
-%attr(0644,root,root) /etc/vasum/vsmzone.resource/download-provider.res
-#%endif
+%{_bindir}/download-provider
+%{_licensedir}/download-provider
+%attr(0544,root,root) %{_logdump_script_dir}/dump-download-provider.sh
+%config(noreplace) /etc/vasum/vsmzone.resource/download-provider.res
 
 %files devel
-%defattr(-,root,root,-)
-%{_libdir}/libdownloadagent2.so.0.1.0
+%manifest %{_manifest_devel_name}
 %{_libdir}/libdownloadagent2.so
 %{_libdir}/libdownload-provider-interface.so
 %{_includedir}/download-provider/download-provider.h
 %{_includedir}/download-provider/download-provider-interface.h
-%{_bindir}/%{name}
+%{_bindir}/download-provider
 %{_libdir}/pkgconfig/download-provider.pc
 %{_libdir}/pkgconfig/download-provider-interface.pc
+
+%files locale
+%manifest %{_manifest_locale_name}
+%lang(bg) %{_localedir}/bg/LC_MESSAGES/%{name}.mo
+%lang(cs) %{_localedir}/cs/LC_MESSAGES/%{name}.mo
+%lang(de) %{_localedir}/de/LC_MESSAGES/%{name}.mo
+%lang(eu) %{_localedir}/eu/LC_MESSAGES/%{name}.mo
+%lang(fi) %{_localedir}/fi/LC_MESSAGES/%{name}.mo
+%lang(fr) %{_localedir}/fr/LC_MESSAGES/%{name}.mo
+%lang(gl) %{_localedir}/gl/LC_MESSAGES/%{name}.mo
+%lang(hr) %{_localedir}/hr/LC_MESSAGES/%{name}.mo
+%lang(hu) %{_localedir}/hu/LC_MESSAGES/%{name}.mo
+%lang(ka) %{_localedir}/ka/LC_MESSAGES/%{name}.mo
+%lang(kk) %{_localedir}/kk/LC_MESSAGES/%{name}.mo
+%lang(lv) %{_localedir}/lv/LC_MESSAGES/%{name}.mo
+%lang(nl) %{_localedir}/nl/LC_MESSAGES/%{name}.mo
+%lang(pl) %{_localedir}/pl/LC_MESSAGES/%{name}.mo
+%lang(pt_BR) %{_localedir}/pt_BR/LC_MESSAGES/%{name}.mo
+%lang(sk) %{_localedir}/sk/LC_MESSAGES/%{name}.mo
+%lang(sl) %{_localedir}/sl/LC_MESSAGES/%{name}.mo
+%lang(sr) %{_localedir}/sr/LC_MESSAGES/%{name}.mo
+%lang(sv) %{_localedir}/sv/LC_MESSAGES/%{name}.mo
+%lang(uk) %{_localedir}/uk/LC_MESSAGES/%{name}.mo
+%lang(zh_CN) %{_localedir}/zh_CN/LC_MESSAGES/%{name}.mo
+%lang(zh_HK) %{_localedir}/zh_HK/LC_MESSAGES/%{name}.mo
+%lang(zh_TW) %{_localedir}/zh_TW/LC_MESSAGES/%{name}.mo
+%lang(ar) %{_localedir}/ar/LC_MESSAGES/%{name}.mo
+%lang(az) %{_localedir}/az/LC_MESSAGES/%{name}.mo
+%lang(ca) %{_localedir}/ca/LC_MESSAGES/%{name}.mo
+%lang(da) %{_localedir}/da/LC_MESSAGES/%{name}.mo
+%lang(el_GR) %{_localedir}/el_GR/LC_MESSAGES/%{name}.mo
+%lang(en) %{_localedir}/en/LC_MESSAGES/%{name}.mo
+%lang(en_PH) %{_localedir}/en_PH/LC_MESSAGES/%{name}.mo
+%lang(en_US) %{_localedir}/en_US/LC_MESSAGES/%{name}.mo
+%lang(es_ES) %{_localedir}/es_ES/LC_MESSAGES/%{name}.mo
+%lang(es_US) %{_localedir}/es_US/LC_MESSAGES/%{name}.mo
+%lang(et) %{_localedir}/et/LC_MESSAGES/%{name}.mo
+%lang(fr_CA) %{_localedir}/fr_CA/LC_MESSAGES/%{name}.mo
+%lang(ga) %{_localedir}/ga/LC_MESSAGES/%{name}.mo
+%lang(hi) %{_localedir}/hi/LC_MESSAGES/%{name}.mo
+%lang(hy) %{_localedir}/hy/LC_MESSAGES/%{name}.mo
+%lang(is) %{_localedir}/is/LC_MESSAGES/%{name}.mo
+%lang(it_IT) %{_localedir}/it_IT/LC_MESSAGES/%{name}.mo
+%lang(ja_JP) %{_localedir}/ja_JP/LC_MESSAGES/%{name}.mo
+%lang(ko_KR) %{_localedir}/ko_KR/LC_MESSAGES/%{name}.mo
+%lang(lt) %{_localedir}/lt/LC_MESSAGES/%{name}.mo
+%lang(mk) %{_localedir}/mk/LC_MESSAGES/%{name}.mo
+%lang(nb) %{_localedir}/nb/LC_MESSAGES/%{name}.mo
+%lang(pt_PT) %{_localedir}/pt_PT/LC_MESSAGES/%{name}.mo
+%lang(ro) %{_localedir}/ro/LC_MESSAGES/%{name}.mo
+%lang(ru_RU) %{_localedir}/ru_RU/LC_MESSAGES/%{name}.mo
+%lang(tr_TR) %{_localedir}/tr_TR/LC_MESSAGES/%{name}.mo
+%lang(uz) %{_localedir}/uz/LC_MESSAGES/%{name}.mo
