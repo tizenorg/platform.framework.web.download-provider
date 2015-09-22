@@ -1,11 +1,11 @@
 %define _ux_define tizen2.3
 Name:       download-provider
-Summary:    Download the contents in background
-Version:    2.1.23
-Release:    0
+Summary:	Download the contents in background
+Version:	2.1.23
+Release:	0
 Group:      Development/Libraries
-License:    Apache License, Version 2.0
-Source0:    %{name}-%{version}.tar.gz
+License:	Apache-2.0
+Source0:	%{name}-%{version}.tar.gz
 Requires(post): sys-assert
 Requires(post): libdevice-node
 Requires(post): sqlite
@@ -43,22 +43,30 @@ BuildRequires: pkgconfig(cynara-creds-socket)
 BuildRequires: pkgconfig(cynara-creds-dbus)
 
 %description
-Description: Download the contents in background
+Download the specified contents in background
 
 %package devel
-Summary:    download-provider
+Summary:    Libraries for download-provider
 Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description devel
-Description: Download the contents in background (development files)
+Download the contents in background (development files)
+
+%package locale
+Summary:    The download-provider locale package
+Group:      Development/Languages
+Requires:   %{name} = %{version}-%{release}
+
+%description locale
+Package providing locale for download-provider
 
 %prep
 %setup -q
 
 %define _data_install_path /opt/usr/data/%{name}
 %define _resource_install_path /usr/share/%{name}
-%define _imagedir %{_resource_install_path}/images 
+%define _imagedir %{_resource_install_path}/images
 %define _localedir %{_resource_install_path}/locales
 %define _databasedir %{_data_install_path}/database
 %define _database_client_dir %{_databasedir}/clients
@@ -174,10 +182,10 @@ make %{?jobs:-j%jobs}
 rm -rf %{buildroot}
 %make_install
 
-#%if 0%{?sec_product_feature_container_enable}
+#%%if 0%{?sec_product_feature_container_enable}
 mkdir -p %{buildroot}/etc/vasum/vsmzone.resource/
 mv %{buildroot}/usr/share/download-provider/download-provider.res %{buildroot}/etc/vasum/vsmzone.resource/
-#%endif
+#%%endif
 
 mkdir -p %{buildroot}%{_licensedir}
 mkdir -p %{buildroot}/lib/systemd/system/graphical.target.wants
@@ -190,17 +198,71 @@ ln -s ../download-provider.socket %{buildroot}/lib/systemd/system/sockets.target
 mkdir /opt/data/download-provider
 mkdir -p %{_notifydir}
 chsmack -a 'System::Shared' %{_notifydir}
-chsmack -t %{_notifydir}                                        
+chsmack -t %{_notifydir}
 mkdir -p --mode=0700 %{_databasedir}
-#chsmack -a 'download-provider' %{_databasedir}
+#chsmack -a 'download-provider' %%{_databasedir}
 mkdir -p --mode=0700 %{_database_client_dir}
-#chsmack -a 'download-provider' %{_database_client_dir}
+#chsmack -a 'download-provider' %%{_database_client_dir}
+/sbin/ldconfig
+
+%postun
+/sbin/ldconfig
+
+%files locale
+%lang(bg) %{_localedir}/bg/LC_MESSAGES/download-provider.mo
+%lang(cs) %{_localedir}/cs/LC_MESSAGES/download-provider.mo
+%lang(de) %{_localedir}/de/LC_MESSAGES/download-provider.mo
+%lang(eu) %{_localedir}/eu/LC_MESSAGES/download-provider.mo
+%lang(fi) %{_localedir}/fi/LC_MESSAGES/download-provider.mo
+%lang(fr) %{_localedir}/fr/LC_MESSAGES/download-provider.mo
+%lang(gl) %{_localedir}/gl/LC_MESSAGES/download-provider.mo
+%lang(hr) %{_localedir}/hr/LC_MESSAGES/download-provider.mo
+%lang(hu) %{_localedir}/hu/LC_MESSAGES/download-provider.mo
+%lang(ka) %{_localedir}/ka/LC_MESSAGES/download-provider.mo
+%lang(kk) %{_localedir}/kk/LC_MESSAGES/download-provider.mo
+%lang(lv) %{_localedir}/lv/LC_MESSAGES/download-provider.mo
+%lang(nl) %{_localedir}/nl/LC_MESSAGES/download-provider.mo
+%lang(pl) %{_localedir}/pl/LC_MESSAGES/download-provider.mo
+%lang(pt_BR) %{_localedir}/pt_BR/LC_MESSAGES/download-provider.mo
+%lang(sk) %{_localedir}/sk/LC_MESSAGES/download-provider.mo
+%lang(sl) %{_localedir}/sl/LC_MESSAGES/download-provider.mo
+%lang(sr) %{_localedir}/sr/LC_MESSAGES/download-provider.mo
+%lang(sv) %{_localedir}/sv/LC_MESSAGES/download-provider.mo
+%lang(uk) %{_localedir}/uk/LC_MESSAGES/download-provider.mo
+%lang(zh_CN) %{_localedir}/zh_CN/LC_MESSAGES/download-provider.mo
+%lang(zh_HK) %{_localedir}/zh_HK/LC_MESSAGES/download-provider.mo
+%lang(zh_TW) %{_localedir}/zh_TW/LC_MESSAGES/download-provider.mo
+%lang(ar) %{_localedir}/ar/LC_MESSAGES/download-provider.mo
+%lang(az) %{_localedir}/az/LC_MESSAGES/download-provider.mo
+%lang(ca) %{_localedir}/ca/LC_MESSAGES/download-provider.mo
+%lang(da) %{_localedir}/da/LC_MESSAGES/download-provider.mo
+%lang(el_GR) %{_localedir}/el_GR/LC_MESSAGES/download-provider.mo
+%lang(en) %{_localedir}/en/LC_MESSAGES/download-provider.mo
+%lang(en_PH) %{_localedir}/en_PH/LC_MESSAGES/download-provider.mo
+%lang(en_US) %{_localedir}/en_US/LC_MESSAGES/download-provider.mo
+%lang(es_ES) %{_localedir}/es_ES/LC_MESSAGES/download-provider.mo
+%lang(es_US) %{_localedir}/es_US/LC_MESSAGES/download-provider.mo
+%lang(et) %{_localedir}/et/LC_MESSAGES/download-provider.mo
+%lang(fr_CA) %{_localedir}/fr_CA/LC_MESSAGES/download-provider.mo
+%lang(ga) %{_localedir}/ga/LC_MESSAGES/download-provider.mo
+%lang(hi) %{_localedir}/hi/LC_MESSAGES/download-provider.mo
+%lang(hy) %{_localedir}/hy/LC_MESSAGES/download-provider.mo
+%lang(is) %{_localedir}/is/LC_MESSAGES/download-provider.mo
+%lang(it_IT) %{_localedir}/it_IT/LC_MESSAGES/download-provider.mo
+%lang(ja_JP) %{_localedir}/ja_JP/LC_MESSAGES/download-provider.mo
+%lang(ko_KR) %{_localedir}/ko_KR/LC_MESSAGES/download-provider.mo
+%lang(lt) %{_localedir}/lt/LC_MESSAGES/download-provider.mo
+%lang(mk) %{_localedir}/mk/LC_MESSAGES/download-provider.mo
+%lang(nb) %{_localedir}/nb/LC_MESSAGES/download-provider.mo
+%lang(pt_PT) %{_localedir}/pt_PT/LC_MESSAGES/download-provider.mo
+%lang(ro) %{_localedir}/ro/LC_MESSAGES/download-provider.mo
+%lang(ru_RU) %{_localedir}/ru_RU/LC_MESSAGES/download-provider.mo
+%lang(tr_TR) %{_localedir}/tr_TR/LC_MESSAGES/download-provider.mo
+%lang(uz) %{_localedir}/uz/LC_MESSAGES/download-provider.mo
 
 %files
-%defattr(-,root,root,-)
 %manifest %{_manifest_name}
 %{_imagedir}/*.png
-%{_localedir}/*/*/download-provider.mo
 %{_libdir}/libdownloadagent2.so.0.1.0
 %{_libdir}/libdownloadagent2.so
 /lib/systemd/system/download-provider.service
@@ -212,13 +274,11 @@ mkdir -p --mode=0700 %{_database_client_dir}
 %{_bindir}/%{name}
 %{_licensedir}/%{name}
 %attr(0544,root,root) %{_logdump_script_dir}/dump-%{name}.sh
-#%if 0%{?sec_product_feature_container_enable}
-%attr(0644,root,root) /etc/vasum/vsmzone.resource/download-provider.res
-#%endif
+#%%if 0%{?sec_product_feature_container_enable}
+%config(noreplace) /etc/vasum/vsmzone.resource/download-provider.res
+#%%endif
 
 %files devel
-%defattr(-,root,root,-)
-%{_libdir}/libdownloadagent2.so.0.1.0
 %{_libdir}/libdownloadagent2.so
 %{_libdir}/libdownload-provider-interface.so
 %{_includedir}/download-provider/download-provider.h
