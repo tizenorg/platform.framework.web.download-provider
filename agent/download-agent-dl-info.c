@@ -16,12 +16,69 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <curl/curl.h>
+#include <openssl/crypto.h>
 
 #include "download-agent-dl-info.h"
 #include "download-agent-http-mgr.h"
 #include "download-agent-http-msg-handler.h"
 
 static pthread_mutex_t mutex_da_info_list = PTHREAD_MUTEX_INITIALIZER;
+
+
+/* locking mechnism for safe use of openssl context */
+static void openssl_lock_callback(int mode, int type, char *file, int line)
+{
+	DA_LOGV("type [%d], mode [%d]", type, mode);
+	(void)file;
+	(void)line;
+
+	if (mode & CRYPTO_LOCK)
+		pthread_mutex_lock(&(g_openssl_locks_list[type]));
+	else
+		pthread_mutex_unlock(&(g_openssl_locks_list[type]));
+}
+
+static unsigned long thread_id(void)
+{
+	unsigned long ret = (unsigned long)pthread_self();
+	return ret;
+}
+
+da_ret_t init_openssl_locks(void)
+{
+	DA_LOGD("");
+	int index;
+	int crypto_num_locks = CRYPTO_num_locks();
+	DA_LOGD("crypto_num_locks [%d]", crypto_num_locks);
+	g_openssl_locks_list = (pthread_mutex_t *)OPENSSL_malloc(crypto_num_locks * sizeof(pthread_mutex_t));
+	if (g_openssl_locks_list == DA_NULL) {
+		DA_LOGE("Failed to OPENSSL_malloc");
+		return DA_ERR_FAIL_TO_MEMALLOC;
+	}
+	for (index = 0; index < crypto_num_locks; index++) {
+		pthread_mutex_init(&(g_openssl_locks_list[index]), NULL);
+	}
+	CRYPTO_set_id_callback((unsigned long (*)())thread_id);
+	CRYPTO_set_locking_callback((void (*)())openssl_lock_callback);
+
+	return DA_RESULT_OK;
+}
+da_ret_t deinit_openssl_locks(void)
+{
+	DA_LOGD("");
+	int index;
+	int crypto_num_locks = CRYPTO_num_locks();
+	for (index = 0; index < crypto_num_locks; index++) {
+		pthread_mutex_destroy(&(g_openssl_locks_list[index]));
+	}
+	CRYPTO_set_id_callback(NULL);
+	CRYPTO_set_locking_callback(NULL);
+	OPENSSL_free(g_openssl_locks_list);
+	g_openssl_locks_list = NULL;
+
+	return DA_RESULT_OK;
+}
 
 static void __init_da_info(int id)
 {

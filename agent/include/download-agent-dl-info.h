@@ -169,6 +169,7 @@ typedef struct {
 	int update_time;
 } da_info_t;
 
+pthread_mutex_t *g_openssl_locks_list;
 da_info_t *da_info_list[DA_MAX_ID];
 
 #define GET_STATE_MUTEX(INFO) (INFO->mutex_state)
@@ -180,6 +181,8 @@ da_info_t *da_info_list[DA_MAX_ID];
 	DA_MUTEX_UNLOCK (&GET_STATE_MUTEX(INFO));\
 	}
 
+da_ret_t init_openssl_locks(void);
+da_ret_t deinit_openssl_locks(void);
 da_ret_t get_available_da_id(int *available_id);
 da_ret_t copy_user_input_data(da_info_t *da_info, const char *url,
 		req_data_t *ext_data, da_cb_t *da_cb_data);

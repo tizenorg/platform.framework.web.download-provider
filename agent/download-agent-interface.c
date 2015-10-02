@@ -21,6 +21,7 @@ int da_init()
 {
 	DA_LOGV("");
 	da_ret_t ret = DA_RESULT_OK;
+	ret = init_openssl_locks();
 	DA_LOGI("Return ret = %d", ret);
 	return ret;
 }
@@ -31,6 +32,7 @@ int da_deinit()
 
 	DA_LOGV("");
 	destroy_da_info_list();
+	deinit_openssl_locks();
 	DA_LOGI("====== da_deint EXIT =====");
 	return ret;
 }
