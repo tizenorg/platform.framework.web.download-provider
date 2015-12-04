@@ -551,12 +551,6 @@ da_ret_t PI_http_start(da_info_t *da_info)
 	res = curl_easy_perform(curl);
 	DA_LOGD("perform done! res[%d]",res);
 	if (res != CURLE_OK) {
-			//DA_LOGE("Fail to send data :%d[%s]", res, curl_easy_strerror(res));
-			DA_LOGE("Fail to perform :%d[%s]", res, curl_multi_strerror(res));
-			if (strlen(err_buffer) > 1)
-				DA_LOGE("Fail to error buffer[%s]", err_buffer);
-	}
-	if (res != CURLE_OK) {
 		//DA_LOGE("Fail to send data :%d[%s]", res, curl_easy_strerror(res));
 		DA_LOGE("Fail to send data :%d[%s]", res, curl_easy_strerror(res));
 		if (strlen(err_buffer) > 1)
