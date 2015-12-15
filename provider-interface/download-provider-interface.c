@@ -36,9 +36,8 @@
 #include <download-provider-utils.h>
 
 #include <bundle.h> // for notification bundle
-#ifdef T30
 #include <bundle_internal.h>
-#endif
+
 #include <app_control.h>
 #include <app_control_internal.h>
 
