@@ -29,6 +29,7 @@
 #include "download-provider-utils.h"
 
 #include <bundle.h>
+#include <bundle_internal.h>
 #include <notification.h>
 
 #include "notification_text_domain.h"
