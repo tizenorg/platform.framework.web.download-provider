@@ -41,6 +41,7 @@ BuildRequires: pkgconfig(cynara-client)
 BuildRequires: pkgconfig(cynara-client-async)
 BuildRequires: pkgconfig(cynara-creds-socket)
 BuildRequires: pkgconfig(cynara-creds-dbus)
+BuildRequires: pkgconfig(tpkp-curl)
 
 %description
 Description: Download the contents in background

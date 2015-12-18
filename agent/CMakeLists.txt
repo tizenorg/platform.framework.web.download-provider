@@ -42,6 +42,7 @@ pkg_check_modules(subpkgs REQUIRED
 	dlog
 	system-resource
 	storage
+	tpkp-curl
 )
 ELSE (SUPPORT_SYS_RESOURCE)
 pkg_check_modules(subpkgs REQUIRED
@@ -50,6 +51,7 @@ pkg_check_modules(subpkgs REQUIRED
 	capi-network-connection
 	dlog
 	storage
+	tpkp-curl
 )
 ENDIF (SUPPORT_SYS_RESOURCE)
 
