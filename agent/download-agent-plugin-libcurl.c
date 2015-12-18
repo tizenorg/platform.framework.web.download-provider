@@ -20,6 +20,8 @@
 
 #include "glib.h"
 
+#include <tpkp_curl.h>
+
 #include "download-agent-dl-info.h"
 #include "download-agent-http-msg-handler.h"
 #include "download-agent-plugin-libcurl.h"
@@ -532,6 +534,7 @@ da_ret_t PI_http_start(da_info_t *da_info)
 //	curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, my_trace);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, err_buffer);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
 #ifdef _RAF_SUPPORT
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, __http_progress_cb);
 	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, da_info);
@@ -548,6 +551,7 @@ da_ret_t PI_http_start(da_info_t *da_info)
 #endif
 	}
 	http_msg->curl = curl;
+	curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, tpkp_curl_ssl_ctx_callback);
 	res = curl_easy_perform(curl);
 	DA_LOGD("perform done! res[%d]",res);
 	if (res != CURLE_OK) {
@@ -596,6 +600,7 @@ da_ret_t PI_http_start(da_info_t *da_info)
 	if (DA_NULL != headers)
 		curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
+	tpkp_curl_cleanup();
 	http_msg->curl = DA_NULL;
 	DA_MUTEX_INIT(&(http_msg->mutex), DA_NULL);
 ERR:
