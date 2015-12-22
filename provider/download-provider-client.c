@@ -947,6 +947,9 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 						break;
 					}
 				}
+				if(ids) {
+					free(ids);
+				}
 			}
 		}
 
