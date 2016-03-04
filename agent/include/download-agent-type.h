@@ -18,6 +18,7 @@
 #define _DOWNLOAD_AGENT_TYPE_H
 
 #include "download-agent-defs.h"
+#include <tzplatform_config.h>
 
 typedef int	da_ret_t;
 typedef int	da_bool_t;
@@ -34,8 +35,7 @@ typedef unsigned long long da_size_t;
 
 #define SCHEME_HTTP		"http://"
 
-//#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE "/opt/usr/media/Downloads" //yjkim
-#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE "/home/owner/content/Downloads"
+#define DA_DEFAULT_INSTALL_PATH_FOR_PHONE tzplatform_getenv(TZ_USER_DOWNLOADS)
 
 #define DA_MAX_ID	DA_MAX_DOWNLOAD_REQ_AT_ONCE
 

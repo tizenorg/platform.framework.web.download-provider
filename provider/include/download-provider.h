@@ -89,7 +89,7 @@ typedef enum {
 
 
 #ifndef IPC_SOCKET
-#define IPC_SOCKET "/opt/data/download-provider/download-provider.sock"
+#define IPC_SOCKET "/tmp/.download-provider.sock"
 #endif
 
 #define MAX_DOWNLOAD_HANDLE 32
