@@ -1,5 +1,5 @@
 [Socket]
-ListenStream=/opt/data/download-provider/download-provider.sock
+ListenStream=/tmp/.download-provider.sock
 SocketMode=0777
 PassCredentials=yes
 Accept=false
