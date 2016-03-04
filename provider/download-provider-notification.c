@@ -41,6 +41,9 @@
 #include <vconf.h>
 #include <locale.h>
 #include <libintl.h>
+
+#include <tzplatform_config.h>
+
 #define __(s) dgettext(PKG_NAME, s)
 
 #define DP_DOMAIN PKG_NAME
@@ -64,11 +67,12 @@
 #define DP_NOTIFICATION_VCAL_ICON_PATH IMAGE_DIR"/download_manager_icon_date.png"
 
 // base path
-#define QP_PRELOAD_NOTI_ICON_PATH "/usr/apps/com.samsung.quickpanel/shared/res/noti_icons"
+#define QP_PRELOAD_NOTI_ICON_PATH tzplatform_mkpath(TZ_SYS_RO_APP, "com.samsung.quickpanel/shared/res/noti_icons")
+
 // each application path
-#define QP_PRELOAD_COMMON_PATH QP_PRELOAD_NOTI_ICON_PATH"/Common"
-#define DP_NOTIFICATION_COMPLETED_ICON_PATH QP_PRELOAD_COMMON_PATH"/noti_download_complete.png"
-#define DP_NOTIFICATION_FAILED_ICON_PATH QP_PRELOAD_COMMON_PATH"/noti_download_failed.png"
+#define QP_PRELOAD_COMMON_PATH tzplatform_mkpath(TZ_SYS_RO_APP, "com.samsung.quickpanel/shared/res/noti_icons/Common")
+#define DP_NOTIFICATION_COMPLETED_ICON_PATH tzplatform_mkpath(TZ_SYS_RO_APP, "com.samsung.quickpanel/shared/res/noti_icons/Common/noti_download_complete.png")
+#define DP_NOTIFICATION_FAILED_ICON_PATH tzplatform_mkpath(TZ_SYS_RO_APP, "com.samsung.quickpanel/shared/res/noti_icons/Common/noti_download_failed.png")
 
 #define DP_NOTIFICATION_ONGOING_ICON_PATH "reserved://quickpanel/ani/downloading"
 #define DP_NOTIFICATION_DOWNLOADING_ICON_PATH "reserved://indicator/ani/downloading"

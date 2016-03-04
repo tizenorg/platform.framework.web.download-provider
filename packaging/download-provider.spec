@@ -41,6 +41,7 @@ BuildRequires: pkgconfig(cynara-client-async)
 BuildRequires: pkgconfig(cynara-creds-socket)
 BuildRequires: pkgconfig(cynara-creds-dbus)
 BuildRequires: pkgconfig(tpkp-curl)
+BuildRequires: pkgconfig(libtzplatform-config)
 
 %description
 Description: Download the contents in background
@@ -56,16 +57,16 @@ Description: Download the contents in background (development files)
 %prep
 %setup -q
 
-%define _data_install_path /opt/usr/data/%{name}
+%define _data_install_path %{TZ_SYS_DATA}/%{name}
 %define _resource_install_path /usr/share/%{name}
 %define _imagedir %{_resource_install_path}/images 
 %define _localedir %{_resource_install_path}/locales
 %define _databasedir %{_data_install_path}/database
 %define _database_client_dir %{_databasedir}/clients
 %define _notifydir %{_data_install_path}/notify
-%define _ipc_socket /opt/data/%{name}/%{name}.sock
+%define _ipc_socket /tmp/.download-provider.sock
 %define _licensedir /usr/share/license
-%define _logdump_script_dir /opt/etc/dump.d/module.d
+%define _logdump_script_dir %{TZ_SYS_ETC}/dump.d/module.d
 %define _http_lib libcurl
 
 %define download_booster OFF
@@ -167,7 +168,8 @@ Description: Download the contents in background (development files)
 export CFLAGS="$CFLAGS -DTIZEN_DEBUG_ENABLE"
 export CXXFLAGS="$CXXFLAGS -DTIZEN_DEBUG_ENABLE"
 export FFLAGS="$FFLAGS -DTIZEN_DEBUG_ENABLE"
-%cmake .
+%cmake . -DTZ_SYS_DATA=%TZ_SYS_DATA 
+
 make %{?jobs:-j%jobs}
 
 %install
@@ -187,7 +189,7 @@ ln -s ../download-provider.socket %{buildroot}/lib/systemd/system/sockets.target
 
 %post
 #make notify dir in post section for smack
-mkdir /opt/data/download-provider
+mkdir %{TZ_SYS_DATA}/download-provider
 mkdir -p %{_notifydir}
 chsmack -a 'System::Shared' %{_notifydir}
 chsmack -t %{_notifydir}                                        
