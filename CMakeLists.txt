@@ -79,6 +79,7 @@ PROJECT(${PKG_NAME} C)
 SET(PACKAGE_DESCRIPTION "Defines for ${PROJECT_NAME}")
 
 CONFIGURE_FILE(download-provider.pc.in download-provider.pc @ONLY)
+
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/download-provider.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/download-provider.service DESTINATION /lib/systemd/system)

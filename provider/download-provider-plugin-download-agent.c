@@ -42,10 +42,12 @@
 
 #include <download-agent-defs.h>
 #include <download-agent-interface.h>
+#include <tzplatform_config.h>
+
 #include "xdgmime.h"
 #include "content/mime_type.h"
 
-#define DP_SDCARD_MNT_POINT "/opt/storage/sdcard"
+#define DP_SDCARD_MNT_POINT tzplatform_mkpath(TZ_SYS_STORAGE, "sdcard")
 #define DP_MAX_FILE_PATH_LEN 256
 #define DP_MAX_MIME_TABLE_NUM 15
 
