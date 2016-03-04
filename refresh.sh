@@ -1,6 +1,6 @@
 #!/bin/bash
 
 git fetch --all
-git reset --hard origin/tizen_2.4
+git reset --hard origin/tizen
 git pull
 
