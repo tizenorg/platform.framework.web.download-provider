@@ -881,9 +881,9 @@ da_ret_t get_available_memory(char *dir_path, da_size_t len)
 	if (!dir_path)
 		return DA_ERR_INVALID_INSTALL_PATH;
 
-	//fs_ret = statfs(dir_path, &filesys_info);
+	fs_ret = statfs(dir_path, &filesys_info);
 	// Using this as it considers FOTA memory while returning available memory
-	fs_ret = storage_get_internal_memory_size(&filesys_info);
+	//fs_ret = storage_get_internal_memory_size(&filesys_info);
 
 	if (fs_ret != 0) {
 	//	DA_LOGE("statfs error[%s]", strerror(errno));
@@ -891,7 +891,7 @@ da_ret_t get_available_memory(char *dir_path, da_size_t len)
 	//	return DA_ERR_INVALID_INSTALL_PATH;
 	}
 
-	double available_size =  (double)filesys_info.f_bsize * filesys_info.f_bavail;
+	double available_size =  (double)filesys_info.f_frsize * filesys_info.f_bavail;
 	double total_size = (double)filesys_info.f_frsize * filesys_info.f_blocks;
 	DA_SECURE_LOGI(" total = %lf ", total_size);
 	DA_SECURE_LOGI(" available = %lf ",available_size);
