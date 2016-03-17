@@ -432,6 +432,7 @@ static int __connect_to_provider()
 				g_dp_client->channel = ret;
 				if (setsockopt(g_dp_client->channel, SOL_SOCKET, SO_RCVTIMEO, &tv_timeo, sizeof(tv_timeo)) < 0) {
 					TRACE_STRERROR("[CRITICAL] setsockopt SO_RCVTIMEO");
+					goto EXIT_CONNECT;
 				}
 			} else {
 				errorcode = -ret;
