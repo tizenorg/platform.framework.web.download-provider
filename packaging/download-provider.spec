@@ -99,7 +99,7 @@ Description: Download the contents in background (development files)
 		-DCMAKE_INSTALL_PREFIX:PATH=%{_prefix} \\\
 		-DBIN_INSTALL_DIR:PATH=%{_bindir} \\\
 		-DLIB_INSTALL_DIR:PATH=%{_libdir} \\\
-		%ifarch armv7l \
+		%ifarch armv7l i586 \
 		-DLIB_AGENT_PATH="/usr/lib/libdownloadagent2.so" \\\
 		%else \
 		-DLIB_AGENT_PATH="/usr/lib64/libdownloadagent2.so" \\\
