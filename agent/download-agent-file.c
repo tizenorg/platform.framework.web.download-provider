@@ -607,7 +607,7 @@ da_ret_t file_write_complete_for_raf(file_info_t *file_info) {
 	if (wrriten_size < file_size) {
 		DA_LOGD("Try truncate");
 		if (truncate(file_info->file_path, wrriten_size) < 0) {
-			DA_LOGE("Fail to ftruncate: errno[%d,%s]", errno, strerror(errno));
+			DA_LOGE("Fail to ftruncate: errno[%d]", errno);
 		}
 		DA_LOGD("Try truncate done");
 	}

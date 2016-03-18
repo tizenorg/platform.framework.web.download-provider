@@ -421,7 +421,7 @@ int __check_wait_for_auto_retry(http_info_t *http_info)
 	if (ret == ETIMEDOUT) {
 		DA_LOGI("Waiting is done by timeout");
 	} else if (ret != 0) {
-		DA_LOGE("fail to pthread_cond_waittime[%d][%s]",ret, strerror(ret));
+		DA_LOGE("fail to pthread_cond_waittime[%d]",ret);
 	} else {
 		DA_LOGI("Waiting is done by control");
 		DA_MUTEX_LOCK(&(http_info->mutex_state));
@@ -646,8 +646,8 @@ da_ret_t request_to_cancel_http_download(da_info_t *da_info)
 		DA_MUTEX_UNLOCK(&(http_info->mutex_state));
 		if (da_info->thread_id > 0) {
 			if (pthread_cancel(da_info->thread_id) != 0) {
-				DA_LOGE("Fail to cancel thread id[%d] err[%s]",
-						da_info->thread_id, strerror(errno));
+				DA_LOGE("Fail to cancel thread id[%d]",
+						da_info->thread_id);
 			} else {
 				DA_LOGI("====Exit thread with cancel:da_id[%d]===",
 						da_info->da_id);
@@ -1256,11 +1256,11 @@ da_ret_t __handle_event_http_packet(http_raw_data_t *raw_data, da_info_t *da_inf
 					ret = send_client_update_progress_info(da_info);
 				}
 			} else {
-				DA_LOGE("Fail to call localtime[%s]",strerror(errno));
+				DA_LOGE("Fail to call localtime");
 				ret = send_client_update_progress_info(da_info);
 			}
 		} else {
-			DA_LOGE("Fail to call time[%s]",strerror(errno));
+			DA_LOGE("Fail to call time");
 			ret = send_client_update_progress_info(da_info);
 		}
 		break;
