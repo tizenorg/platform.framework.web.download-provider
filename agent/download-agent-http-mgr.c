@@ -1172,7 +1172,7 @@ da_ret_t __handle_event_http_packet(http_raw_data_t *raw_data, da_info_t *da_inf
 	http_info_t *http_info = DA_NULL;
 	file_info_t *file_info = DA_NULL;
 	time_t t;
-	struct tm *lc_time;
+	struct tm lc_time;
 	DA_LOGV("");
 
 	NULL_CHECK_RET(da_info);
@@ -1250,9 +1250,9 @@ da_ret_t __handle_event_http_packet(http_raw_data_t *raw_data, da_info_t *da_inf
 #endif
 		// send event every 1 second.
 		if ((t = time(DA_NULL)) > 0) {
-			if ((lc_time = localtime(&t)) != DA_NULL) {
-				if (da_info->update_time != lc_time->tm_sec) {
-					da_info->update_time = lc_time->tm_sec;
+			if ((localtime_r(&t,&lc_time)) != DA_NULL) {
+				if (da_info->update_time != lc_time.tm_sec) {
+					da_info->update_time = lc_time.tm_sec;
 					ret = send_client_update_progress_info(da_info);
 				}
 			} else {

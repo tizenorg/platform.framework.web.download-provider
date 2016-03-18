@@ -535,10 +535,14 @@ static void __progress_cb(int download_id, unsigned long long received_size,
 	if (request->state == DP_STATE_DOWNLOADING) {
 		request->received_size = received_size;
 		time_t tt = time(NULL);
-		struct tm *localTime = localtime(&tt);
+		struct tm localTime ;
+		if(localtime_r(&tt,&localTime)==NULL){
+		    TRACE_ERROR("Error localtime_r");
+		    return;
+		}
 		// send event every 1 second.
-		if (request->progress_lasttime != localTime->tm_sec) {
-			request->progress_lasttime = localTime->tm_sec;
+		if (request->progress_lasttime != localTime.tm_sec) {
+			request->progress_lasttime = localTime.tm_sec;
 
 			if (request->progress_cb == 1) {
 				if (slot->client.notify < 0 ||
