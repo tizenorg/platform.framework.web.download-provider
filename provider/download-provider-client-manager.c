@@ -26,7 +26,7 @@
 #include <fcntl.h> 
 #include <signal.h>
 
-#include <app_manager.h>
+#include <aul.h>
 #include <systemd/sd-daemon.h>
 #include <glib-object.h>
 
@@ -382,13 +382,12 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 	int errorcode = DP_ERROR_NONE;
 	int i = 0;
 	int pkg_len = 0;
-	char *pkgname = NULL;
+	char *pkgname[256] = { 0 };
 
 	// getting the package name via pid
-	if (app_manager_get_app_id(credential.pid, &pkgname) !=
-			APP_MANAGER_ERROR_NONE)
-		TRACE_ERROR("[CRITICAL] app_manager_get_app_id");
-
+	if (aul_app_get_appid_bypid_for_uid(credential.pid, pkgname, 256, credential.uid) != AUL_R_OK)
+		TRACE_ERROR("[CRITICAL] aul_app_get_appid_bypid_for_uid");
+/*
 	//// TEST CODE ... to allow sample client ( no package name ).
 	if (pkgname == NULL) {
 		//pkgname = dp_strdup("unknown_app");
@@ -405,6 +404,7 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 		TRACE_ERROR("[CRITICAL] app_manager_get_app_id");
 		return DP_ERROR_INVALID_PARAMETER;
 	}
+*/
 	if ((pkg_len = strlen(pkgname)) <= 0) {
 		TRACE_ERROR("[CRITICAL] pkgname:%s", pkgname);
 		free(pkgname);
