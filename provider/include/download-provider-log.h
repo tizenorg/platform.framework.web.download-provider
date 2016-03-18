@@ -30,7 +30,7 @@
 #define TRACE_DEBUG(...) do { } while(0)
 #endif
 #define TRACE_ERROR(format, ARG...) LOGE(format, ##ARG)
-#define TRACE_STRERROR(format, ARG...) LOGE(format" [%s]", ##ARG, strerror(errno))
+#define TRACE_STRERROR(format, ARG...) LOGE(format" [%s]", ##ARG)
 #define TRACE_INFO(format, ARG...) LOGI(format, ##ARG)
 #define TRACE_WARN(format, ARG...) LOGW(format, ##ARG)
 
