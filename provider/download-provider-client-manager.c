@@ -545,7 +545,7 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 
 	TRACE_SECURE_INFO("busy client[%s] pid:%d sock:%d", pkgname,
 		credential.pid, clientfd);
-	free(pkgname);
+
 	return DP_ERROR_TOO_MANY_DOWNLOADS;
 }
 
