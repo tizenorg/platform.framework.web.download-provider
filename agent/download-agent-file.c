@@ -880,6 +880,7 @@ da_ret_t get_available_memory(char *dir_path, da_size_t len)
 
 	if (!dir_path)
 		return DA_ERR_INVALID_INSTALL_PATH;
+	DA_LOGD("Dir_path : %s", dir_path);
 
 	fs_ret = statfs(dir_path, &filesys_info);
 	// Using this as it considers FOTA memory while returning available memory
