@@ -407,7 +407,6 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 */
 	if ((pkg_len = strlen(pkgname)) <= 0) {
 		TRACE_ERROR("[CRITICAL] pkgname:%s", pkgname);
-		free(pkgname);
 		return DP_ERROR_INVALID_PARAMETER;
 	}
 
