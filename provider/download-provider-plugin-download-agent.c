@@ -958,8 +958,11 @@ int dp_start_agent_download(void *slot, void *request)
 		int len = 0;
 		int i = 0;
 		len = req_data->request_header_count;
-		for (i = 0; i < len; i++)
-			free((void *)(req_data->request_header[i]));
+		if (req_data->request_header != NULL) {
+		    for (i = 0; i < len; i++){
+		        free((void *)(req_data->request_header[i]));
+		    }
+		}
 		free(req_data->request_header);
 	}
 	free(url);
