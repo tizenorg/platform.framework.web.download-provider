@@ -1,7 +1,7 @@
 %define _ux_define tizen2.3
 Name:       download-provider
 Summary:    Download the contents in background
-Version:    2.1.27
+Version:    2.1.28
 Release:    0
 Group:      Development/Libraries
 License:    Apache-2.0
@@ -72,7 +72,11 @@ Description: Download the contents in background (development files)
 %define download_booster OFF
 %define sys_resource OFF
 %define support_oma_drm OFF
+%ifarch armv7l
 %define wifi_direct ON
+%else
+%define wifi_direct OFF
+%endif
 %define support_security_privilege OFF
 %define support_companion_mode OFF
 %define support_notification ON
