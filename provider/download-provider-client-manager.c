@@ -334,7 +334,7 @@ static int __dp_client_run(int clientfd, dp_client_slots_fmt *slot,
 	// make notify fifo
 	slot->client.notify = dp_notify_init(credential.pid);
 	if (slot->client.notify < 0) {
-		TRACE_STRERROR("failed to open fifo slot:%d", clientfd);
+		TRACE_ERROR("failed to open fifo slot:%d", clientfd);
 		errorcode = DP_ERROR_IO_ERROR;
 	} else {
 		char *smack_label = NULL;
@@ -565,7 +565,7 @@ void *dp_client_manager(void *arg)
 
 	g_dp_sock = __dp_accept_socket_new();
 	if (g_dp_sock < 0) {
-		TRACE_STRERROR("failed to open listen socket");
+		TRACE_ERROR("failed to open listen socket");
 		g_main_loop_quit(event_loop);
 		return 0;
 	}
@@ -627,7 +627,7 @@ void *dp_client_manager(void *arg)
 		eset = except_fdset;
 
 		if (select((maxfd + 1), &rset, 0, &eset, &timeout) < 0) {
-			TRACE_STRERROR("interrupted by terminating");
+			TRACE_ERROR("interrupted by terminating");
 			break;
 		}
 
@@ -637,7 +637,7 @@ void *dp_client_manager(void *arg)
 		}
 
 		if (FD_ISSET(g_dp_sock, &eset) > 0) {
-			TRACE_STRERROR("exception of socket");
+			TRACE_ERROR("exception of socket");
 			break;
 		} else if (FD_ISSET(g_dp_sock, &rset) > 0) {
 
@@ -646,7 +646,7 @@ void *dp_client_manager(void *arg)
 			clientfd = accept(g_dp_sock, (struct sockaddr *)&clientaddr,
 					&clientlen);
 			if (clientfd < 0) {
-				TRACE_STRERROR("too many client ? accept failure");
+				TRACE_ERROR("too many client ? accept failure");
 				// provider need the time of refresh.
 				errorcode = DP_ERROR_DISK_BUSY;
 			}

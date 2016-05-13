@@ -498,7 +498,7 @@ static int __dp_request_read_string(int sock, dp_ipc_fmt *ipc_info, char **strin
 	if (ipc_info->size > 0) {
 		char *recv_str = (char *)calloc((ipc_info->size + (size_t)1), sizeof(char));
 		if (recv_str == NULL) {
-			TRACE_STRERROR("sock:%d check memory length:%d", sock, ipc_info->size);
+			TRACE_ERROR("sock:%d check memory length:%d", sock, ipc_info->size);
 			errorcode = DP_ERROR_OUT_OF_MEMORY;
 		} else {
 			if (dp_ipc_read(sock, recv_str, ipc_info->size, __FUNCTION__) <= 0) {
@@ -1325,7 +1325,7 @@ static int __dp_request_set_info(dp_client_slots_fmt *slot, dp_ipc_fmt *ipc_info
 			if (raw_info != NULL && raw_info->size > 0) {
 				unsigned char *recv_raws = (unsigned char *)calloc(raw_info->size, sizeof(unsigned char));
 				if (recv_raws == NULL) {
-					TRACE_STRERROR("sock:%d check memory length:%d", client->channel, raw_info->size);
+					TRACE_ERROR("sock:%d check memory length:%d", client->channel, raw_info->size);
 					errorcode = DP_ERROR_OUT_OF_MEMORY;
 				} else {
 					if (dp_ipc_read(client->channel, recv_raws, raw_info->size, __FUNCTION__) <= 0) {
@@ -1998,7 +1998,7 @@ void *dp_client_request_thread(void *arg)
 				CLIENT_MUTEX_UNLOCK(&slot->mutex);
 				continue;
 			} else {
-				TRACE_STRERROR("interrupted by client-manager sock:%d", client_sock);
+				TRACE_ERROR("interrupted by client-manager sock:%d", client_sock);
 				break;
 			}
 		}
@@ -2014,7 +2014,7 @@ void *dp_client_request_thread(void *arg)
 			// read ipc_fmt first. below func will deal followed packets
 			dp_ipc_fmt *ipc_info = dp_ipc_get_fmt(client_sock);
 			if (ipc_info == NULL) {
-				TRACE_STRERROR("sock:%d maybe closed", client_sock);
+				TRACE_ERROR("sock:%d maybe closed", client_sock);
 				errorcode = DP_ERROR_IO_ERROR;
 			} else {
 				TRACE_DEBUG("sock:%d id:%d section:%s property:%s errorcode:%s size:%d",

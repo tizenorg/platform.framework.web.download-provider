@@ -28,19 +28,19 @@ int dp_ipc_check_stderr(int basecode)
 {
 	int errorcode = basecode;
 	if (errno == EPIPE) {
-		TRACE_STRERROR("[EPIPE:%d] Broken Pipe", errno);
+		TRACE_ERROR("[EPIPE:%d] Broken Pipe", errno);
 		errorcode = DP_ERROR_IO_ERROR;
 	} else if (errno == EAGAIN) {
-		TRACE_STRERROR("[EAGAIN:%d]", errno);
+		TRACE_ERROR("[EAGAIN:%d]", errno);
 		errorcode = DP_ERROR_IO_EAGAIN;
 	} else if (errno == EINTR) {
-		TRACE_STRERROR("[EINTR:%d]", errno);
+		TRACE_ERROR("[EINTR:%d]", errno);
 		errorcode = DP_ERROR_IO_EINTR;
 	} else if (errno == ENOENT) {
-		TRACE_STRERROR("[ENOENT:%d]", errno);
+		TRACE_ERROR("[ENOENT:%d]", errno);
 		errorcode = DP_ERROR_IO_ERROR;
 	} else {
-		TRACE_STRERROR("[errno:%d]", errno);
+		TRACE_ERROR("[errno:%d]", errno);
 	}
 	return errorcode;
 }
@@ -54,7 +54,7 @@ int dp_ipc_write(int sock, void *value, size_t type_size)
 		TRACE_ERROR("[ERROR] check buffer sock:%d", sock);
 		return -1;
 	} else if (write(sock, value, type_size) <= 0) {
-		TRACE_STRERROR("[IPC.Write] exception sock:%d", sock);
+		TRACE_ERROR("[IPC.Write] exception sock:%d", sock);
 		return -1;
 	}
 	return 0;
@@ -101,7 +101,7 @@ dp_ipc_fmt *dp_ipc_get_fmt(int sock)
 	memset(ipc_info, 0x00, sizeof(dp_ipc_fmt));
 	ssize_t recv_size = read(sock, ipc_info, sizeof(dp_ipc_fmt));
 	if (recv_size <= 0 || recv_size != sizeof(dp_ipc_fmt)) {
-		TRACE_STRERROR("socket read ipcinfo read size:%d", recv_size);
+		TRACE_ERROR("socket read ipcinfo read size:%d", recv_size);
 		free(ipc_info);
 		return NULL;
 	}

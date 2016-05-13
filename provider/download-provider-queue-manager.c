@@ -278,7 +278,7 @@ static int __dp_queue_manager_start()
 		TRACE_DEBUG("try to create queue-manager");
 		if (pthread_create(&g_dp_queue_manager_tid, NULL,
 				__dp_queue_manager, NULL) != 0) {
-			TRACE_STRERROR("failed to create queue-manager");
+			TRACE_ERROR("failed to create queue-manager");
 			return -1;
 		}
 	}

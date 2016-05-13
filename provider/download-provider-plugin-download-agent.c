@@ -219,16 +219,16 @@ static int __set_file_permission_to_client(dp_client_slots_fmt *slot, dp_request
 					if ((fchown(fd, cred.uid, cred.gid) != 0) ||
 						(fchmod(fd, S_IRUSR | S_IWUSR |
 							S_IRGRP | S_IROTH) != 0)) {
-						TRACE_STRERROR("[ERROR][%d] permission user:%d group:%d",
+						TRACE_ERROR("[ERROR][%d] permission user:%d group:%d",
 							request->id, cred.uid, cred.gid);
 						errorcode = DP_ERROR_PERMISSION_DENIED;
 					}
 				} else {
-					TRACE_STRERROR("fstat & lstat info have not matched");
+					TRACE_ERROR("fstat & lstat info have not matched");
 					errorcode = DP_ERROR_PERMISSION_DENIED;
 				}
 			} else {
-				TRACE_STRERROR("fstat call failed");
+				TRACE_ERROR("fstat call failed");
 				errorcode = DP_ERROR_PERMISSION_DENIED;
 			}
 			close(fd);
@@ -237,7 +237,7 @@ static int __set_file_permission_to_client(dp_client_slots_fmt *slot, dp_request
 			errorcode = DP_ERROR_IO_ERROR;
 		}
 	} else {
-		TRACE_STRERROR("lstat call failed");
+		TRACE_ERROR("lstat call failed");
 		errorcode = DP_ERROR_PERMISSION_DENIED;
 	}
 	if (errorcode == DP_ERROR_NONE && dp_smack_is_mounted() == 1) {
@@ -254,7 +254,7 @@ static int __set_file_permission_to_client(dp_client_slots_fmt *slot, dp_request
 				errorcode = dp_smack_set_label(smack_label, dir_path, saved_path);
 				free(dir_path);
 			} else {
-				TRACE_STRERROR("[ERROR] calloc");
+				TRACE_ERROR("[ERROR] calloc");
 				errorcode = DP_ERROR_OUT_OF_MEMORY;
 			}
 			free(smack_label);
@@ -925,7 +925,7 @@ int dp_start_agent_download(void *slot, void *request)
 				base_req->id, tmp_saved_path);
 			if (dp_is_file_exist(tmp_saved_path) == 0) {
 				if (unlink(tmp_saved_path) != 0)
-					TRACE_STRERROR("failed to remove file id:%d", base_req->id);
+					TRACE_ERROR("failed to remove file id:%d", base_req->id);
 			}
 		}
 	}

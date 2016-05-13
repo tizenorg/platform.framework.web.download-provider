@@ -30,11 +30,11 @@ static char *__dp_notify_get_path(pid_t pid)
 	size_t path_size = sizeof(NOTIFY_DIR) + 21;
 	char *notify_fifo = (char *)calloc(path_size, sizeof(char));
 	if (notify_fifo == NULL) {
-		TRACE_STRERROR("failed to alocalte fifo path pid:%d", (int)pid);
+		TRACE_ERROR("failed to alocalte fifo path pid:%d", (int)pid);
 		return NULL;
 	}
 	if (snprintf(notify_fifo, path_size,"%s/%d", NOTIFY_DIR, pid) < 0) {
-		TRACE_STRERROR("failed to make fifo path pid:%d", (int)pid);
+		TRACE_ERROR("failed to make fifo path pid:%d", (int)pid);
 		free(notify_fifo);
 		return NULL;
 	}
@@ -51,7 +51,7 @@ int dp_notify_init(pid_t pid)
 	if (stat(notify_fifo, &fifo_state) == 0) // found
 		unlink(notify_fifo);
 	if (mkfifo(notify_fifo, 0644/*-rwrr*/) < 0) {
-		TRACE_STRERROR("failed to make fifo %s", notify_fifo);
+		TRACE_ERROR("failed to make fifo %s", notify_fifo);
 	} else {
 		notify_fd = open(notify_fifo, O_RDWR | O_NONBLOCK, 0644);
 	}
