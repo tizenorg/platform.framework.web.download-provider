@@ -21,18 +21,19 @@
 
 #include <systemd/sd-daemon.h>
 #include <glib-object.h>
+#include <curl/curl.h>
 
 #include "download-provider-config.h"
 #include "download-provider-log.h"
 #include "download-provider-client-manager.h"
 #include "download-provider-network.h"
 
+pthread_t g_client_manager_tid;
 void *dp_client_manager(void *arg);
 
 int main(int argc, char **argv)
 {
 	GMainLoop *event_loop;
-	pthread_t tid;
 	TRACE_INFO("download-provider's working is started");
 
 	g_type_init();
@@ -47,17 +48,22 @@ int main(int argc, char **argv)
 		TRACE_ERROR("failed to init network-manager");
 		return 0;
 	}
-	// create a thread for main thread
-	if (pthread_create(&tid, NULL, dp_client_manager, (void *)event_loop) != 0) {
-		TRACE_ERROR("failed to create main thread");
-		return 0;
-	} else {
-		pthread_detach(tid);
-		TRACE_INFO("download main thread is created[%lu]", tid);
-	}
+    //Requested By platform team, It should be in main thread.
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    // create a thread for main thread
+    if (pthread_create(&g_client_manager_tid, NULL, dp_client_manager, (void *)event_loop) != 0) {
+        TRACE_ERROR("failed to create main thread");
+        curl_global_cleanup();
+        return 0;
+    } else {
+        pthread_detach(g_client_manager_tid);
+        TRACE_INFO("download main thread is created[%lu]", g_client_manager_tid);
+    }
 
 	TRACE_INFO("g main loop is started");
 	g_main_loop_run(event_loop);
+	curl_global_cleanup();
 	dp_network_connection_destroy();
 	g_main_loop_unref(event_loop);
 

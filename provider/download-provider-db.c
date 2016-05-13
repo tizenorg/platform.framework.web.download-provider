@@ -118,33 +118,41 @@ static int __rebuild_client_manager_tables(sqlite3 *handle)
 	return 0;
 }
 
-static int __db_open(sqlite3 **handle, char *database)
+static int __db_open(sqlite3 **handle, char *database, int *errorcode)
 {
-	if (sqlite3_open_v2(database, handle, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) {
-		int errorcode = sqlite3_errcode(*handle);
-		TRACE_ERROR("error(%d):%s", errorcode, sqlite3_errmsg(*handle));
-		*handle = 0;
-		if (errorcode == SQLITE_CORRUPT) { // remove & re-create
-			TRACE_SECURE_INFO("unlink [%s]", database);
-			unlink(database);
-			errorcode = SQLITE_CANTOPEN;
-		}
-		if (errorcode == SQLITE_CANTOPEN) {
-			// create empty database
-			if (sqlite3_open(database, handle) != SQLITE_OK ) {
-				TRACE_SECURE_INFO("failed to connect:%s", database);
-				unlink(database);
-				*handle = 0;
-				return -1;
-			}
-		} else {
-			TRACE_ERROR("can not handle this error:%d", errorcode);
-			*handle = 0;
-			return -1;
-		}
-	}
-	__basic_property(*handle);
-	return 0;
+    if (sqlite3_open_v2(database, handle, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) {
+        int sqlerrcode = sqlite3_errcode(*handle);
+        TRACE_ERROR("database open error(%d):%s", sqlerrcode, sqlite3_errmsg(*handle));
+        if (sqlerrcode == SQLITE_CORRUPT) { // remove & re-create
+            TRACE_SECURE_INFO("unlink [%s]", database);
+            unlink(database);
+            sqlerrcode = SQLITE_CANTOPEN;
+        }
+        if (sqlerrcode == SQLITE_CANTOPEN) {
+            *handle = 0;
+            // create empty database
+            if (sqlite3_open(database, handle) != SQLITE_OK ) {
+                sqlerrcode = sqlite3_errcode(*handle);
+                TRACE_SECURE_ERROR("failed to create %s error:%d", database, sqlerrcode);
+                TRACE_ERROR("database new error(%d):%s", sqlerrcode, sqlite3_errmsg(*handle));
+                if (sqlerrcode == SQLITE_FULL || sqlerrcode == SQLITE_CANTOPEN) { // can not create temporary file for connection
+                    *errorcode = DP_ERROR_NO_SPACE; // DP_ERROR_OUT_OF_MEMORY
+                } else {
+                    *errorcode = DP_ERROR_DISK_BUSY;
+                    unlink(database);
+                }
+                *handle = 0;
+                return -1;
+            }
+        } else {
+            TRACE_ERROR("can not handle this error(%d):%s", sqlerrcode, sqlite3_errmsg(*handle));
+            *errorcode = DP_ERROR_OUT_OF_MEMORY;
+            *handle = 0;
+            return -1;
+        }
+    }
+    __basic_property(*handle);
+    return 0;
 }
 
 int dp_db_check_connection(void *handle)
@@ -163,27 +171,29 @@ int dp_db_check_connection(void *handle)
 	return 0;
 }
 
-int dp_db_open_client_manager(void **handle)
+int dp_db_open_client_manager(void **handle, int *errorcode)
 {
-	if (*handle == 0) {
-		char *database = sqlite3_mprintf("%s/%s", DATABASE_DIR, DP_DBFILE_CLIENTS);
-		if (database == NULL) {
-			TRACE_ERROR("failed to make clients database file path");
-			return -1;
-		}
-		if (__db_open((sqlite3 **)handle, database) < 0) {
-			TRACE_ERROR("failed to open %s", database);
-			*handle = 0;
-		} else {
-			// whenever open new handle, check all tables. it's simple
-			if (__rebuild_client_manager_tables(*handle) < 0) {
-				dp_db_close(*handle);
-				*handle = 0;
-			}
-		}
-		sqlite3_free(database);
-	}
-	return *handle ? 0 : -1;
+    if (*handle == 0) {
+        char *database = sqlite3_mprintf("%s/%s", DATABASE_DIR, DP_DBFILE_CLIENTS);
+        if (database == NULL) {
+            TRACE_ERROR("failed to make clients database file path");
+            *errorcode = DP_ERROR_OUT_OF_MEMORY;
+            return -1;
+        }
+        if (__db_open((sqlite3 **)handle, database, errorcode) < 0) {
+            TRACE_ERROR("failed to open clients database file");
+            *handle = 0;
+        } else {
+            // whenever open new handle, check all tables. it's simple
+            if (__rebuild_client_manager_tables(*handle) < 0) {
+                *errorcode = DP_ERROR_NO_SPACE;
+                dp_db_close(*handle);
+                *handle = 0;
+            }
+        }
+        sqlite3_free(database);
+    }
+    return *handle ? 0 : -1;
 }
 
 static char *__dp_db_get_client_db_path(char *pkgname)
@@ -247,27 +257,29 @@ int dp_db_open_client_v2(void **handle, char *pkgname)
 	return 0;
 }
 
-int dp_db_open_client(void **handle, char *pkgname)
+int dp_db_open_client(void **handle, char *pkgname, int *errorcode)
 {
-	if (*handle == 0) {
-		char *database = __dp_db_get_client_db_path(pkgname);
-		if (database == NULL) {
-			TRACE_ERROR("failed to make db file path");
-			return -1;
-		}
-		if (__db_open((sqlite3 **)handle, database) < 0) {
-			TRACE_SECURE_ERROR("failed to open %s", database);
-			*handle = 0;
-		} else {
-			// whenever open new handle, check all tables. it's simple
-			if (__rebuild_client_tables(*handle) < 0) {
-				dp_db_close(*handle);
-				*handle = 0;
-			}
-		}
-		sqlite3_free(database);
-	}
-	return *handle ? 0 : -1;
+    if (*handle == 0) {
+        char *database = __dp_db_get_client_db_path(pkgname);
+        if (database == NULL) {
+            TRACE_ERROR("failed to make db file path");
+            *errorcode = DP_ERROR_OUT_OF_MEMORY;
+            return -1;
+        }
+        if (__db_open((sqlite3 **)handle, database, errorcode) < 0) {
+            TRACE_SECURE_ERROR("failed to open %s", database);
+            *handle = 0;
+        } else {
+            // whenever open new handle, check all tables. it's simple
+            if (__rebuild_client_tables(*handle) < 0) {
+                *errorcode = DP_ERROR_NO_SPACE;
+                dp_db_close(*handle);
+                *handle = 0;
+            }
+        }
+        sqlite3_free(database);
+    }
+    return *handle ? 0 : -1;
 }
 
 void dp_db_close(void *handle)
@@ -1319,4 +1331,48 @@ int dp_db_get_http_headers_list(void *handle, int id, char **headers, int *error
 
 	return headers_index;
 }
+
+int dp_db_get_max_download_id(void *handle, const char *table, int *pvalue, int *error)
+{
+    TRACE_DEBUG("");
+    int errorcode = SQLITE_OK;
+    sqlite3_stmt *stmt = NULL;
+    *error = DP_ERROR_NONE;
+    DP_DB_PARAM_NULL_CHECK;
+
+    char *query = sqlite3_mprintf("SELECT MAX(%s) FROM %s", DP_DB_COL_ID, table);
+    DP_DB_BUFFER_NULL_CHECK(query);
+    //TRACE_DEBUG("debug query:%s", query);
+    errorcode = sqlite3_prepare_v2(handle, query, -1, &stmt, NULL);
+    DP_DB_BASIC_EXCEPTION_CHECK;
+
+    errorcode = sqlite3_step(stmt);
+    if (errorcode == SQLITE_ROW) {
+        int data_type = sqlite3_column_type(stmt, 0);
+        if (data_type == SQLITE_INTEGER) {
+            int recv_int = sqlite3_column_int(stmt, 0);
+            *pvalue = recv_int;
+        } else if (data_type == SQLITE_NULL) {
+            /* table has no any entry */
+            TRACE_DEBUG("table has no entry");
+            *error = DP_ERROR_NO_DATA;
+        } else {
+            TRACE_ERROR("check column type:%d", data_type);
+            *error = DP_ERROR_INVALID_PARAMETER;
+        }
+    } else if (errorcode == SQLITE_DONE) {
+        TRACE_DEBUG("no data");
+        *error = DP_ERROR_NO_DATA;
+    } else {
+        if ((*error = dp_db_get_errorcode(handle)) == DP_ERROR_NONE) {
+            TRACE_ERROR("ERROR :: unknown");
+            *error = DP_ERROR_DISK_BUSY;
+        }
+    }
+    __dp_finalize(stmt);
+    if (*error != DP_ERROR_NONE)
+        return -1;
+    return 0;
+}
+
 

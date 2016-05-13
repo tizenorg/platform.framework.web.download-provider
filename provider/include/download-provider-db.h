@@ -18,8 +18,8 @@
 #define DOWNLOAD_PROVIDER_DB_H
 
 int dp_db_check_connection(void *handle);
-int dp_db_open_client_manager(void **handle);
-int dp_db_open_client(void **handle, char *pkgname);
+int dp_db_open_client_manager(void **handle, int *errorcode);
+int dp_db_open_client(void **handle, char *pkgname, int *errorcode);
 int dp_db_open_client_v2(void **handle, char *pkgname);
 int dp_db_remove_database(char *pkgname, long now_time, long diff_time);
 int dp_db_get_ids(void *handle, const char *table, char *idcolumn, int *ids, const char *where, const int limit, char *ordercolumn, char *ordering, int *error);
@@ -51,5 +51,6 @@ int dp_db_get_cond_string(void *handle, const char *table, char *wherecolumn, co
 int dp_db_limit_rows(void *handle, const char *table, int limit, int *error);
 int dp_db_limit_time(void *handle, const char *table, int hours, int *error);
 int dp_db_get_http_headers_list(void *handle, int id, char **headers, int *error);
+int dp_db_get_max_download_id(void *handle, const char *table, int *pvalue, int *error);
 
 #endif

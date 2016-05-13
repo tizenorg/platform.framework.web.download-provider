@@ -98,7 +98,8 @@ typedef enum {
 
 // string to check invalid characters in path before using open() and fopen() API's
 #define DP_INVALID_PATH_STRING ";\\\":*?<>|()"
-
+// download provider first download id.
+#define DP_FIRST_DOWNLOAD_ID 1
 
 #include <unistd.h>
 
