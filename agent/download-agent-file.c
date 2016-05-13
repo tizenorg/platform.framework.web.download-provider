@@ -497,6 +497,9 @@ da_ret_t start_file_writing(da_info_t *da_info)
 		file_info->file_path = strdup(file_path);
 		free(origin_path);
 		ret = __decide_file_path_for_resume(file_info);
+        if(file_info) {
+            ret = __decide_file_path_for_resume(file_info);
+        }
 	} else {
 		ret = __decide_file_path(da_info);
 	}
