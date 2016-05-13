@@ -159,7 +159,7 @@ void dp_rebuild_dir(const char *dirpath, mode_t mode)
 				TRACE_SECURE_ERROR("failed to set smack label:%s", dirpath);
 			}
 		} else {
-			TRACE_STRERROR("failed to create directory:%s", dirpath);
+			TRACE_ERROR("failed to create directory:%s", dirpath);
 		}
 	}
 }

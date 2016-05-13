@@ -45,7 +45,7 @@ char *dp_strdup(char *src)
 
 	dest = (char *)calloc(src_len + 1, sizeof(char));
 	if (dest == NULL) {
-		TRACE_STRERROR("[CHECK] allocation");
+		TRACE_ERROR("[CHECK] allocation");
 		return NULL;
 	}
 	memcpy(dest, src, src_len * sizeof(char));
@@ -94,7 +94,7 @@ int dp_remove_file(const char *file_path)
 	if ((file_path != NULL && strlen(file_path) > 0) &&
 			dp_is_file_exist(file_path) == 0) {
 		if (unlink(file_path) != 0) {
-			TRACE_STRERROR("failed to remove file");
+			TRACE_ERROR("failed to remove file");
 			return -1;
 		}
 		return 0;

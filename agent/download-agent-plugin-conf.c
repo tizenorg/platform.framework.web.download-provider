@@ -49,7 +49,7 @@ da_ret_t get_user_agent_string(char **uagent_str)
 		DA_LOGE("Invalid Argument");
 		return DA_ERR_INVALID_ARGUMENT;
 	}
-
+#if 0
 	key = VCONFKEY_BROWSER_USER_AGENT;
 	ret = __get_conf_string(key, uagent_str);
 	if(ret == DA_RESULT_OK) {
@@ -58,6 +58,7 @@ da_ret_t get_user_agent_string(char **uagent_str)
 			return ret;
 		}
 	}
+#endif
 	DA_LOGI("No UA information from vconf !!");
 	*uagent_str = strdup(DEFAULT_UA_STR);
 	DA_LOGV("Set default UA");

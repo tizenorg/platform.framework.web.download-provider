@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <limits.h>
 
 #include <download-provider-log.h>
 #include <download-provider-config.h>
@@ -219,42 +220,56 @@ char *dp_print_property(unsigned property)
 
 static int __dp_get_download_id(dp_client_fmt *client)
 {
-	int download_id = -1;
-	static int last_download_id = 0;
-	int check_duplicate = 0;
-	int errorcode = DP_ERROR_NONE;
+    int download_id = -1;
+    int check_duplicate = 1;
+    int retry_count = 0;
+    int errorcode = DP_ERROR_NONE;
+    struct timeval tval;
 
-	do {
-		do {
-			struct timeval tval;
-			int cipher = 1;
-			int c = 0;
+    if (dp_db_get_max_download_id(client->dbhandle,
+                DP_TABLE_LOGGING, &download_id, &errorcode) < 0) {
+        TRACE_ERROR("ERROR [%d]", errorcode);
+        // database is empty start with id : 1
+        download_id = DP_FIRST_DOWNLOAD_ID;
+    } else {
+        if (download_id < INT_MAX)
+            download_id++;
+    }
 
-			download_id = -1;
-			gettimeofday(&tval, NULL);
-
-			int usec = tval.tv_usec;
-			for (c = 0; ; c++, cipher++) {
-				if ((usec /= 10) <= 0)
-					break;
-			}
-			if (tval.tv_usec == 0)
-				tval.tv_usec = (tval.tv_sec & 0x0fff);
-			int disit_unit = 10;
-			for (c = 0; c < cipher - 3; c++)
-				disit_unit = disit_unit * 10;
-			download_id = tval.tv_sec + ((tval.tv_usec << 2) * 100) +
-					((tval.tv_usec >> (cipher - 1)) * disit_unit) +
-					((tval.tv_usec + (tval.tv_usec % 10)) & 0x0fff);
-		} while (last_download_id == download_id);
-		last_download_id = download_id;
-		check_duplicate = dp_db_check_duplicated_int(client->dbhandle,
-				DP_TABLE_LOGGING, DP_DB_COL_ID, download_id, &errorcode);
-		if (errorcode != DP_ERROR_NONE) {
-			TRACE_ERROR("ERROR [%d]", errorcode);
-		}
-	} while (check_duplicate != 0); // means duplicated id
-	return download_id;
+    retry_count = 0;
+    do {
+        retry_count++;
+        if (download_id < INT_MAX) {
+            TRACE_DEBUG("download_id [%d]", download_id);
+            check_duplicate = dp_db_check_duplicated_int(client->dbhandle,
+                    DP_TABLE_LOGGING, DP_DB_COL_ID, download_id, &errorcode);
+            if (errorcode == DP_ERROR_NONE) {
+                if (check_duplicate == 0) {
+                    break;
+                }
+            } else {
+                TRACE_ERROR("ERROR [%d]", errorcode);
+            }
+            if (retry_count < 3) {
+                download_id++;
+            } else if (retry_count < 10) {
+                gettimeofday(&tval, NULL);
+                tval.tv_usec = (tval.tv_usec & 0x0fff);
+                download_id += 1171 * retry_count + tval.tv_usec;
+            } else if (retry_count < 20) {
+                gettimeofday(&tval, NULL);
+                tval.tv_usec = (tval.tv_usec & 0xff33ff) + retry_count;
+                download_id += tval.tv_usec;
+            } else {
+                TRACE_ERROR("failed to generate unique download_id [%d]", download_id);
+                return -1;
+            }
+        } else {
+            TRACE_ERROR("reached INT_MAX limit");
+            download_id = DP_FIRST_DOWNLOAD_ID;
+        }
+    } while (check_duplicate != 0);
+    return download_id;
 }
 
 void dp_request_create(dp_client_fmt *client, dp_request_fmt *request)
@@ -293,11 +308,11 @@ static int __dp_request_create(dp_client_fmt *client, dp_ipc_fmt *ipc_info)
 		return DP_ERROR_OUT_OF_MEMORY;
 	}
 
-	if (dp_db_new_logging(client->dbhandle, download_id, DP_STATE_READY, DP_ERROR_NONE, &errorcode) < 0) {
-		TRACE_ERROR("new log sock:%d download-id:%d", client->channel, download_id);
-		free(request);
-		return DP_ERROR_DISK_BUSY;
-	}
+    if (dp_db_new_logging(client->dbhandle, download_id, DP_STATE_READY, DP_ERROR_NONE, &errorcode) < 0) {
+        TRACE_ERROR("new log sock:%d download-id:%d errorcode:%s", client->channel, download_id, dp_print_errorcode(errorcode));
+        free(request);
+        return errorcode;
+    }
 
 	request->id = download_id;
 	request->agent_id = -1;
@@ -483,7 +498,7 @@ static int __dp_request_read_string(int sock, dp_ipc_fmt *ipc_info, char **strin
 	if (ipc_info->size > 0) {
 		char *recv_str = (char *)calloc((ipc_info->size + (size_t)1), sizeof(char));
 		if (recv_str == NULL) {
-			TRACE_STRERROR("sock:%d check memory length:%d", sock, ipc_info->size);
+			TRACE_ERROR("sock:%d check memory length:%d", sock, ipc_info->size);
 			errorcode = DP_ERROR_OUT_OF_MEMORY;
 		} else {
 			if (dp_ipc_read(sock, recv_str, ipc_info->size, __FUNCTION__) <= 0) {
@@ -579,7 +594,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 			callback = requestp->state_cb;
 		} else {
 			if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_REQUEST, DP_DB_COL_STATE_EVENT, &callback, &errorcode) < 0) {
-				TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+				TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 				errorcode = DP_ERROR_NO_DATA;
 			}
 		}
@@ -597,7 +612,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 			callback = requestp->progress_cb;
 		} else {
 			if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_REQUEST, DP_DB_COL_PROGRESS_EVENT, &callback, &errorcode) < 0) {
-				TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+				TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 				errorcode = DP_ERROR_NO_DATA;
 			}
 		}
@@ -612,7 +627,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 	{
 		int autodownload = 0;
 		if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_LOGGING, DP_DB_COL_AUTO_DOWNLOAD, &autodownload, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_int(client->channel, ipc_info, (void *)&autodownload, errorcode, sizeof(int));
@@ -629,7 +644,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 			network = requestp->network_type;
 		} else {
 			if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_REQUEST, DP_DB_COL_NETWORK_TYPE, &network, &errorcode) < 0) {
-				TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+				TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 				errorcode = DP_ERROR_NO_DATA;
 			}
 		}
@@ -644,7 +659,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 	{
 		int network_bonding = 0;
 		if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_REQUEST, DP_DB_COL_NETWORK_BONDING, &network_bonding, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_int(client->channel, ipc_info, (void *)&network_bonding, errorcode, sizeof(int));
@@ -659,7 +674,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 		char *string = NULL;
 		unsigned length = 0;
 		if (dp_db_get_property_string(client->dbhandle, ipc_info->id, DP_TABLE_DOWNLOAD, DP_DB_COL_SAVED_PATH, (unsigned char **)&string, &length, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_string(client->channel, ipc_info, string, length, errorcode);
@@ -675,7 +690,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 		char *string = NULL;
 		unsigned length = 0;
 		if (dp_db_get_property_string(client->dbhandle, ipc_info->id, DP_TABLE_DOWNLOAD, DP_DB_COL_TMP_SAVED_PATH, (unsigned char **)&string, &length, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_string(client->channel, ipc_info, string, length, errorcode);
@@ -691,7 +706,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 		char *string = NULL;
 		unsigned length = 0;
 		if (dp_db_get_property_string(client->dbhandle, ipc_info->id, DP_TABLE_DOWNLOAD, DP_DB_COL_MIMETYPE, (unsigned char **)&string, &length, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_string(client->channel, ipc_info, string, length, errorcode);
@@ -725,7 +740,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 		} else {
 			// load content_size(INT64) from database;
 			if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_DOWNLOAD, DP_DB_COL_CONTENT_SIZE, &file_size, &errorcode) < 0) {
-				TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+				TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 				errorcode = DP_ERROR_NO_DATA;
 			}
 		}
@@ -741,7 +756,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 		char *string = NULL;
 		unsigned length = 0;
 		if (dp_db_get_property_string(client->dbhandle, ipc_info->id, DP_TABLE_DOWNLOAD, DP_DB_COL_CONTENT_NAME, (unsigned char **)&string, &length, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_string(client->channel, ipc_info, string, length, errorcode);
@@ -756,7 +771,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 	{
 		int httpstatus = 0;
 		if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_DOWNLOAD, DP_DB_COL_HTTP_STATUS, &httpstatus, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_int(client->channel, ipc_info, (void *)&httpstatus, errorcode, sizeof(int));
@@ -771,7 +786,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 		char *string = NULL;
 		unsigned length = 0;
 		if (dp_db_get_property_string(client->dbhandle, ipc_info->id, DP_TABLE_DOWNLOAD, DP_DB_COL_ETAG, (unsigned char **)&string, &length, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_string(client->channel, ipc_info, string, length, errorcode);
@@ -789,7 +804,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 			state = requestp->state;
 		} else {
 			if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_LOGGING, DP_DB_COL_STATE, &state, &errorcode) < 0) {
-				TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+				TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 				errorcode = DP_ERROR_ID_NOT_FOUND;
 			}
 		}
@@ -807,7 +822,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 			errorvalue = requestp->error;
 		} else {
 			if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_LOGGING, DP_DB_COL_ERRORCODE, &errorvalue, &errorcode) < 0) {
-				TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+				TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 				errorcode = DP_ERROR_ID_NOT_FOUND;
 			}
 		}
@@ -826,7 +841,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 			// if already notification, unregister from notification bar.
 		} else {
 			if (dp_db_get_property_int(client->dbhandle, ipc_info->id, DP_TABLE_NOTIFICATION, DP_DB_COL_NOTI_TYPE, &noti_type, &errorcode) < 0) {
-				TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+				TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 				errorcode = DP_ERROR_NO_DATA;
 			}
 		}
@@ -842,7 +857,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 		char *string = NULL;
 		unsigned length = 0;
 		if (dp_db_get_property_string(client->dbhandle, ipc_info->id, DP_TABLE_NOTIFICATION, DP_DB_COL_NOTI_SUBJECT, (unsigned char **)&string, &length, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_string(client->channel, ipc_info, string, length, errorcode);
@@ -858,7 +873,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 		char *string = NULL;
 		unsigned length = 0;
 		if (dp_db_get_property_string(client->dbhandle, ipc_info->id, DP_TABLE_NOTIFICATION, DP_DB_COL_NOTI_DESCRIPTION, (unsigned char **)&string, &length, &errorcode) < 0) {
-			TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+			TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 			errorcode = DP_ERROR_NO_DATA;
 		}
 		int result = __dp_request_feedback_string(client->channel, ipc_info, string, length, errorcode);
@@ -884,7 +899,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 
 		if (raw_column == NULL) {
 			errorcode = DP_ERROR_INVALID_PARAMETER;
-			TRACE_ERROR("invalid type %d type:%d", dp_print_property(ipc_info->property), bundle_type);
+			TRACE_ERROR("invalid type %s type:%d", dp_print_property(ipc_info->property), bundle_type);
 			if (dp_ipc_query(client->channel, ipc_info->id, ipc_info->section, ipc_info->property, errorcode, 0) < 0) {
 				errorcode = DP_ERROR_IO_ERROR;
 				TRACE_ERROR("check ipc sock:%d", client->channel);
@@ -895,7 +910,7 @@ static int __dp_request_get_info(dp_client_fmt *client, dp_ipc_fmt *ipc_info, dp
 			unsigned length = 0;
 			// get blob binary from database by raw_column
 			if (dp_db_get_property_string(client->dbhandle, ipc_info->id, DP_TABLE_NOTIFICATION, raw_column, &raws_buffer, &length, &errorcode) < 0) {
-				TRACE_ERROR("failed to get %d", dp_print_property(ipc_info->property));
+				TRACE_ERROR("failed to get %s", dp_print_property(ipc_info->property));
 				errorcode = DP_ERROR_NO_DATA;
 			}
 			int result = __dp_request_feedback_string(client->channel, ipc_info, raws_buffer, (size_t)length, errorcode);
@@ -1310,7 +1325,7 @@ static int __dp_request_set_info(dp_client_slots_fmt *slot, dp_ipc_fmt *ipc_info
 			if (raw_info != NULL && raw_info->size > 0) {
 				unsigned char *recv_raws = (unsigned char *)calloc(raw_info->size, sizeof(unsigned char));
 				if (recv_raws == NULL) {
-					TRACE_STRERROR("sock:%d check memory length:%d", client->channel, raw_info->size);
+					TRACE_ERROR("sock:%d check memory length:%d", client->channel, raw_info->size);
 					errorcode = DP_ERROR_OUT_OF_MEMORY;
 				} else {
 					if (dp_ipc_read(client->channel, recv_raws, raw_info->size, __FUNCTION__) <= 0) {
@@ -1983,7 +1998,7 @@ void *dp_client_request_thread(void *arg)
 				CLIENT_MUTEX_UNLOCK(&slot->mutex);
 				continue;
 			} else {
-				TRACE_STRERROR("interrupted by client-manager sock:%d", client_sock);
+				TRACE_ERROR("interrupted by client-manager sock:%d", client_sock);
 				break;
 			}
 		}
@@ -1991,13 +2006,7 @@ void *dp_client_request_thread(void *arg)
 
 			CLIENT_MUTEX_LOCK(&slot->mutex);
 
-			if (client->dbhandle == 0 || dp_db_check_connection(client->dbhandle) < 0) {
-				if (dp_db_open_client(&client->dbhandle, slot->pkgname) < 0) {
-					TRACE_ERROR("failed to open database for sock:%d", client_sock);
-					CLIENT_MUTEX_UNLOCK(&slot->mutex);
-					break;
-				}
-			}
+			errorcode = DP_ERROR_NONE;
 
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 			client->access_time = (int)time(NULL);
@@ -2005,7 +2014,7 @@ void *dp_client_request_thread(void *arg)
 			// read ipc_fmt first. below func will deal followed packets
 			dp_ipc_fmt *ipc_info = dp_ipc_get_fmt(client_sock);
 			if (ipc_info == NULL) {
-				TRACE_STRERROR("sock:%d maybe closed", client_sock);
+				TRACE_ERROR("sock:%d maybe closed", client_sock);
 				errorcode = DP_ERROR_IO_ERROR;
 			} else {
 				TRACE_DEBUG("sock:%d id:%d section:%s property:%s errorcode:%s size:%d",
@@ -2015,8 +2024,21 @@ void *dp_client_request_thread(void *arg)
 					dp_print_errorcode(ipc_info->errorcode),
 					ipc_info->size);
 
-				// JOB
-				errorcode = __dp_client_requests(slot, ipc_info);
+				if (client->dbhandle == 0 || dp_db_check_connection(client->dbhandle) < 0) {
+				    if (dp_db_open_client(&client->dbhandle, slot->pkgname, &errorcode) < 0) {
+				        TRACE_ERROR("failed to open database for sock:%d errorcode:%s", client_sock, dp_print_errorcode(errorcode));
+				        if (dp_ipc_query(client->channel, ipc_info->id,
+				                ipc_info->section, ipc_info->property, errorcode, 0) < 0) {
+				            TRACE_ERROR("check ipc sock:%d", client->channel);
+				         }
+                    }
+                }
+
+              if (errorcode == DP_ERROR_NONE) {
+                    // JOB
+                    errorcode = __dp_client_requests(slot, ipc_info);
+                }
+
 			}
 			free(ipc_info);
 
@@ -2041,15 +2063,16 @@ void *dp_client_request_thread(void *arg)
 				// 1. clear zombie requests. clean requests finished. paused or ready for long time
 				dp_client_clear_requests(slot);
 
-				int sql_errorcode = DP_ERROR_NONE;
-
-				// 2. maintain only 1000 rows for each client
-				if (dp_db_limit_rows(client->dbhandle, DP_TABLE_LOGGING, DP_LOG_DB_LIMIT_ROWS, &sql_errorcode) < 0) {
-					TRACE_INFO("limit rows error:%s", dp_print_errorcode(sql_errorcode));
-				}
-				// 3. maintain for 48 hours
-				if (dp_db_limit_time(client->dbhandle, DP_TABLE_LOGGING, DP_CARE_CLIENT_INFO_PERIOD, &sql_errorcode) < 0) {
-					TRACE_INFO("limit rows error:%s", dp_print_errorcode(sql_errorcode));
+				if (client->dbhandle != 0) {
+				    int sql_errorcode = DP_ERROR_NONE;
+				    // 2. maintain only 1000 rows for each client
+				    if (dp_db_limit_rows(client->dbhandle, DP_TABLE_LOGGING, DP_LOG_DB_LIMIT_ROWS, &sql_errorcode) < 0) {
+				        TRACE_INFO("limit rows error:%s", dp_print_errorcode(sql_errorcode));
+				    }
+				    // 3. maintain for 48 hours
+				    if (dp_db_limit_time(client->dbhandle, DP_TABLE_LOGGING, DP_CARE_CLIENT_INFO_PERIOD, &sql_errorcode) < 0) {
+				        TRACE_INFO("limit rows error:%s", dp_print_errorcode(sql_errorcode));
+				    }
 				}
 				// 4. if no requests, exit by itself.
 				if (slot->client.requests == NULL) {
@@ -2068,7 +2091,7 @@ void *dp_client_request_thread(void *arg)
 	// if no requests, clear slot after disconnect with client.
 	CLIENT_MUTEX_LOCK(&slot->mutex);
 
-	TRACE_INFO("thread done slot %p thread:%0x sock:%d", slot, slot->thread, client_sock);
+	TRACE_INFO("thread done slot %p thread:%0x", slot, slot->thread);
 
 	slot->thread = 0;// to prevent kill thread twice
 

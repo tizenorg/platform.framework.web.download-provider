@@ -182,6 +182,8 @@ char *__dp_noti_get_sender(char *url)
 		snprintf(sender, len + 1, "%s", temp);
 	} else {
 		sender = dp_strdup(temp);
+        if (sender == NULL)
+            return NULL;
 	}
 
 	// For credential URL

@@ -57,12 +57,15 @@ int g_dp_sock = -1;
 dp_client_slots_fmt *g_dp_client_slots = NULL;
 static void *g_db_handle = 0;
 static pthread_mutex_t g_db_mutex = PTHREAD_MUTEX_INITIALIZER;
+extern pthread_t g_client_manager_tid;
 
 void dp_terminate(int signo)
 {
 	TRACE_DEBUG("Received SIGTERM:%d", signo);
 	close(g_dp_sock);
 	g_dp_sock = -1;
+	if (g_client_manager_tid > 0)
+	    pthread_kill(g_client_manager_tid, SIGUSR1);
 }
 
 void dp_broadcast_signal()
@@ -98,14 +101,15 @@ char *dp_db_get_client_smack_label(const char *pkgname)
 
 static int __dp_db_open_client_manager()
 {
-	CLIENT_MUTEX_LOCK(&g_db_mutex);
-	if (dp_db_open_client_manager(&g_db_handle) < 0) {
-		TRACE_ERROR("[CRITICAL] can not open SQL");
-		CLIENT_MUTEX_UNLOCK(&g_db_mutex);
-		return -1;
-	}
-	CLIENT_MUTEX_UNLOCK(&g_db_mutex);
-	return 0;
+    int errorcode = DP_ERROR_NONE;
+    CLIENT_MUTEX_LOCK(&g_db_mutex);
+    if (g_db_handle == 0 || dp_db_check_connection(g_db_handle) < 0) {
+        if (dp_db_open_client_manager(&g_db_handle, &errorcode) < 0) {
+            TRACE_ERROR("failed to open database errorcode:%d", errorcode);
+        }
+    }
+    CLIENT_MUTEX_UNLOCK(&g_db_mutex);
+    return errorcode;
 }
 
 static void __dp_db_free_client_manager()
@@ -330,7 +334,7 @@ static int __dp_client_run(int clientfd, dp_client_slots_fmt *slot,
 	// make notify fifo
 	slot->client.notify = dp_notify_init(credential.pid);
 	if (slot->client.notify < 0) {
-		TRACE_STRERROR("failed to open fifo slot:%d", clientfd);
+		TRACE_ERROR("failed to open fifo slot:%d", clientfd);
 		errorcode = DP_ERROR_IO_ERROR;
 	} else {
 		char *smack_label = NULL;
@@ -561,7 +565,7 @@ void *dp_client_manager(void *arg)
 
 	g_dp_sock = __dp_accept_socket_new();
 	if (g_dp_sock < 0) {
-		TRACE_STRERROR("failed to open listen socket");
+		TRACE_ERROR("failed to open listen socket");
 		g_main_loop_quit(event_loop);
 		return 0;
 	}
@@ -588,12 +592,6 @@ void *dp_client_manager(void *arg)
 #ifdef NOTIFY_DIR
 	dp_rebuild_dir(NOTIFY_DIR, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
-
-	if (__dp_db_open_client_manager() < 0) {
-		TRACE_STRERROR("failed to open database for client-manager");
-		g_main_loop_quit(event_loop);
-		return 0;
-	}
 
 	dp_client_slots_fmt *clients =
 		(dp_client_slots_fmt *)calloc(DP_MAX_CLIENTS,
@@ -629,7 +627,7 @@ void *dp_client_manager(void *arg)
 		eset = except_fdset;
 
 		if (select((maxfd + 1), &rset, 0, &eset, &timeout) < 0) {
-			TRACE_STRERROR("interrupted by terminating");
+			TRACE_ERROR("interrupted by terminating");
 			break;
 		}
 
@@ -639,7 +637,7 @@ void *dp_client_manager(void *arg)
 		}
 
 		if (FD_ISSET(g_dp_sock, &eset) > 0) {
-			TRACE_STRERROR("exception of socket");
+			TRACE_ERROR("exception of socket");
 			break;
 		} else if (FD_ISSET(g_dp_sock, &rset) > 0) {
 
@@ -648,9 +646,9 @@ void *dp_client_manager(void *arg)
 			clientfd = accept(g_dp_sock, (struct sockaddr *)&clientaddr,
 					&clientlen);
 			if (clientfd < 0) {
-				TRACE_STRERROR("too many client ? accept failure");
+				TRACE_ERROR("too many client ? accept failure");
 				// provider need the time of refresh.
-				break;
+				errorcode = DP_ERROR_DISK_BUSY;
 			}
 
 			// blocking & timeout to prevent the lockup by client.
@@ -658,8 +656,6 @@ void *dp_client_manager(void *arg)
 			if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &tv_timeo,
 					sizeof(tv_timeo)) < 0) {
 				TRACE_ERROR("failed to set timeout in blocking socket");
-				close(clientfd);
-				continue;
 			}
 
 			dp_ipc_fmt ipc_info;
@@ -670,8 +666,7 @@ void *dp_client_manager(void *arg)
 					ipc_info.id != -1 ||
 					ipc_info.size != 0) {
 				TRACE_ERROR("peer terminate ? ignore this connection");
-				close(clientfd);
-				continue;
+				errorcode = DP_ERROR_INVALID_PARAMETER;
 			}
 
 #ifdef SO_PEERCRED // getting the info of client
@@ -679,49 +674,44 @@ void *dp_client_manager(void *arg)
 			if (getsockopt(clientfd, SOL_SOCKET, SO_PEERCRED,
 					&credential, &cr_len) < 0) {
 				TRACE_ERROR("failed to cred from sock:%d", clientfd);
-				close(clientfd);
-				continue;
+				errorcode = DP_ERROR_PERMISSION_DENIED;
 			}
 #else // In case of not supported SO_PEERCRED
 			if (read(clientfd, &credential, sizeof(dp_credential)) <= 0) {
 				TRACE_ERROR("failed to cred from client:%d", clientfd);
-				close(clientfd);
-				continue;
+				errorcode = DP_ERROR_PERMISSION_DENIED;
 			}
 #endif
 
-			CLIENT_MUTEX_LOCK(&g_db_mutex);
-			if (dp_db_check_connection(g_db_handle) < 0) {
-				TRACE_ERROR("check database, provider can't work anymore");
-				CLIENT_MUTEX_UNLOCK(&g_db_mutex);
-				close(clientfd);
-				break;
-			}
-			CLIENT_MUTEX_UNLOCK(&g_db_mutex);
+            errorcode = __dp_db_open_client_manager();
 
-			if (ipc_info.section == DP_SEC_INIT) {
+            if (errorcode == DP_ERROR_NONE) {
+                if (ipc_info.section == DP_SEC_INIT) {
 
-				// new client
-				errorcode = __dp_client_new(clientfd, clients, credential);
+                    // new client
+                    errorcode = __dp_client_new(clientfd, clients, credential);
 
-			} else {
-				errorcode = DP_ERROR_INVALID_PARAMETER;
-			}
-			if (dp_ipc_query(clientfd, -1, DP_SEC_INIT, DP_PROP_NONE, errorcode, 0) < 0) {
-				TRACE_ERROR("check ipc sock:%d", clientfd);
-			}
-			if (errorcode == DP_ERROR_NONE) {
-				// write client info into database
-				
-			} else {
-				TRACE_ERROR("sock:%d id:%d section:%s property:%s errorcode:%s size:%d",
-					clientfd, ipc_info.id,
-					dp_print_section(ipc_info.section),
-					dp_print_property(ipc_info.property),
-					dp_print_errorcode(ipc_info.errorcode),
-					ipc_info.size);
-				close(clientfd); // ban this client
-			}
+                } else {
+                    errorcode = DP_ERROR_INVALID_PARAMETER;
+                }
+            }
+            if (dp_ipc_query(clientfd, -1, ipc_info.section, DP_PROP_NONE, errorcode, 0) < 0) {
+                TRACE_ERROR("check ipc sock:%d", clientfd);
+            }
+
+            if (errorcode != DP_ERROR_NONE) {
+                TRACE_ERROR("sock:%d id:%d section:%s property:%s errorcode:%s size:%d",
+                        clientfd, ipc_info.id,
+                        dp_print_section(ipc_info.section),
+                        dp_print_property(ipc_info.property),
+                        dp_print_errorcode(ipc_info.errorcode),
+                        ipc_info.size);
+                close(clientfd); // ban this client
+            }
+            if (errorcode == DP_ERROR_NO_SPACE || errorcode == DP_ERROR_DISK_BUSY) {
+                TRACE_ERROR("provider can't work anymore errorcode:%s", dp_print_errorcode(errorcode));
+                //break;  // provider will be terminated after sending errorcode by each thread
+            }
 
 		} else {
 

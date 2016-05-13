@@ -53,7 +53,7 @@
 #else
 #define TRACE_DEBUG(...) do { } while(0)
 #define TRACE_ERROR(...) do { } while(0)
-#define TRACE_STRERROR(...) do { } while(0)
+#define TRACE_ERROR(...) do { } while(0)
 #define TRACE_INFO(...) do { } while(0)
 #define TRACE_WARN(...) do { } while(0)
 #define TRACE_SECURE_DEBUG(...) do { } while(0)

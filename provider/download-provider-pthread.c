@@ -45,7 +45,7 @@ int dp_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 	if (0 == ret || EBUSY == ret)
 		return 0;
 	else
-		TRACE_STRERROR("error:%d.%s", ret, __print_pthread_error(ret));
+		TRACE_ERROR("error:%d.%s", ret, __print_pthread_error(ret));
 	return -1;
 }
 
@@ -53,7 +53,7 @@ void dp_mutex_lock(pthread_mutex_t *mutex, const char *func, int line)
 {
 	int ret = pthread_mutex_lock(mutex);
 	if (ret != 0)
-		TRACE_STRERROR("%s:%d error:%d.%s", func, line, ret,
+		TRACE_ERROR("%s:%d error:%d.%s", func, line, ret,
 			__print_pthread_error(ret));
 }
 
@@ -61,7 +61,7 @@ int dp_mutex_check_lock(pthread_mutex_t *mutex, const char *func, int line)
 {
 	int ret = pthread_mutex_lock(mutex);
 	if (ret != 0)
-		TRACE_STRERROR("%s:%d error:%d.%s", func, line, ret,
+		TRACE_ERROR("%s:%d error:%d.%s", func, line, ret,
 			__print_pthread_error(ret));
 	return ret;
 }
@@ -70,7 +70,7 @@ int dp_mutex_trylock(pthread_mutex_t *mutex, const char *func, int line)
 {
 	int ret = pthread_mutex_trylock(mutex);
 	if (ret != 0 && ret != EINVAL) {
-		TRACE_STRERROR("%s:%d error:%d.%s", func, line, ret,
+		TRACE_ERROR("%s:%d error:%d.%s", func, line, ret,
 			__print_pthread_error(ret));
 	}
 	return ret;
@@ -83,7 +83,7 @@ int dp_mutex_timedlock(pthread_mutex_t *mutex, int sec, const char *func, int li
 	deltatime.tv_nsec = 0;
 	int ret = pthread_mutex_timedlock(mutex, &deltatime);
 	if (ret != 0) {
-		TRACE_STRERROR("%s:%d error:%d.%s", func, line, ret,
+		TRACE_ERROR("%s:%d error:%d.%s", func, line, ret,
 			__print_pthread_error(ret));
 	}
 	return ret;
@@ -93,7 +93,7 @@ void dp_mutex_unlock(pthread_mutex_t *mutex, const char *func, int line)
 {
 	int ret = pthread_mutex_unlock(mutex);
 	if (ret != 0)
-		TRACE_STRERROR("%s:%d error:%d.%s", func, line, ret,
+		TRACE_ERROR("%s:%d error:%d.%s", func, line, ret,
 			__print_pthread_error(ret));
 }
 
@@ -101,7 +101,7 @@ void dp_mutex_destroy(pthread_mutex_t *mutex)
 {
 	int ret = pthread_mutex_destroy(mutex);
 	if (ret != 0) {
-		TRACE_STRERROR("error:%d.%s", ret, __print_pthread_error(ret));
+		TRACE_ERROR("error:%d.%s", ret, __print_pthread_error(ret));
 		if(EBUSY == ret) {
 			if (pthread_mutex_unlock(mutex) == 0)
 				pthread_mutex_destroy(mutex);

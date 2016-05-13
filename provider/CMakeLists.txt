@@ -21,6 +21,7 @@ pkg_check_modules(dp2_pkgs REQUIRED glib-2.0
 		dlog
 		libsystemd-daemon
 		vconf
+		libcurl
 		cynara-client
 		cynara-client-async
 		cynara-creds-socket
