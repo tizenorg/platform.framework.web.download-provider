@@ -2091,7 +2091,7 @@ void *dp_client_request_thread(void *arg)
 	// if no requests, clear slot after disconnect with client.
 	CLIENT_MUTEX_LOCK(&slot->mutex);
 
-	TRACE_INFO("thread done slot %p thread:%0x sock:%d", slot, slot->thread, client_sock);
+	TRACE_INFO("thread done slot %p thread:%0x", slot, slot->thread);
 
 	slot->thread = 0;// to prevent kill thread twice
 

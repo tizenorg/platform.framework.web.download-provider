@@ -439,6 +439,9 @@ da_ret_t __decide_file_path_for_resume(file_info_t *file_info)
 	NULL_CHECK_RET(file_info);
 
 	file_path = file_info->file_path;
+
+	NULL_CHECK_RET(file_path);
+
 	ptr = strrchr(file_path, '/');
 	if (ptr) {
 		ptr++;
