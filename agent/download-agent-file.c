@@ -520,18 +520,17 @@ da_ret_t start_file_writing(da_info_t *da_info)
 
 	/* resume case */
 	if (req_info->etag || req_info->temp_file_path) {
-		char *file_path = DA_NULL;
-		char *origin_path = DA_NULL;
-		file_path = req_info->temp_file_path;
-		if (!file_path)
-			return DA_ERR_INVALID_ARGUMENT;
-		origin_path = file_info->file_path;
-		file_info->file_path = strdup(file_path);
-		free(origin_path);
-		ret = __decide_file_path_for_resume(file_info);
-        if(file_info) {
-            ret = __decide_file_path_for_resume(file_info);
-        }
+	    char *file_path = DA_NULL;
+	    char *origin_path = DA_NULL;
+	    file_path = req_info->temp_file_path;
+	    if (!file_path)
+	        return DA_ERR_INVALID_ARGUMENT;
+	    origin_path = file_info->file_path;
+	    file_info->file_path = strdup(file_path);
+	    free(origin_path);
+	    if(file_info) {
+	        ret = __decide_file_path_for_resume(file_info);
+	    }
 	} else {
 		ret = __decide_file_path(da_info);
 	}

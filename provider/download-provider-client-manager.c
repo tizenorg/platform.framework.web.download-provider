@@ -661,7 +661,8 @@ void *dp_client_manager(void *arg)
 			struct timeval tv_timeo = {1, 500000}; // 1.5 sec
 			if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &tv_timeo,
 					sizeof(tv_timeo)) < 0) {
-				TRACE_ERROR("failed to set timeout in blocking socket");
+			    TRACE_ERROR("failed to set timeout in blocking socket");
+			    errorcode = DP_ERROR_IO_ERROR;
 			}
 
 			dp_ipc_fmt ipc_info;
@@ -689,9 +690,11 @@ void *dp_client_manager(void *arg)
 			}
 #endif
 
+			if (errorcode == DP_ERROR_NONE) {
             errorcode = __dp_db_open_client_manager();
+			}
 
-            if (errorcode == DP_ERROR_NONE) {
+			if (errorcode == DP_ERROR_NONE) {
                 if (ipc_info.section == DP_SEC_INIT) {
 
                     // new client
@@ -701,11 +704,11 @@ void *dp_client_manager(void *arg)
                     errorcode = DP_ERROR_INVALID_PARAMETER;
                 }
             }
-            if (dp_ipc_query(clientfd, -1, ipc_info.section, DP_PROP_NONE, errorcode, 0) < 0) {
+          if (dp_ipc_query(clientfd, -1, ipc_info.section, DP_PROP_NONE, errorcode, 0) < 0) {
                 TRACE_ERROR("check ipc sock:%d", clientfd);
             }
 
-            if (errorcode != DP_ERROR_NONE) {
+          if (errorcode != DP_ERROR_NONE) {
                 TRACE_ERROR("sock:%d id:%d section:%s property:%s errorcode:%s size:%d",
                         clientfd, ipc_info.id,
                         dp_print_section(ipc_info.section),
@@ -714,7 +717,7 @@ void *dp_client_manager(void *arg)
                         ipc_info.size);
                 close(clientfd); // ban this client
             }
-            if (errorcode == DP_ERROR_NO_SPACE || errorcode == DP_ERROR_DISK_BUSY) {
+          if (errorcode == DP_ERROR_NO_SPACE || errorcode == DP_ERROR_DISK_BUSY) {
                 TRACE_ERROR("provider can't work anymore errorcode:%s", dp_print_errorcode(errorcode));
                 //break;  // provider will be terminated after sending errorcode by each thread
             }
