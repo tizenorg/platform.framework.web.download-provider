@@ -24,7 +24,7 @@
 #include "download-agent-type.h"
 #include "download-agent-dl-info.h"
 
-#define DA_FILE_BUF_SIZE (1024*32) //bytes
+#define DA_FILE_BUF_SIZE (1024*32*2) //bytes
 
 da_ret_t check_drm_convert(file_info_t *file_info);
 da_bool_t is_file_exist(const char *file_path);

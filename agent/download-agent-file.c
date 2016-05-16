@@ -177,8 +177,8 @@ da_ret_t __file_write_buf_flush_buf(file_info_t *file_info)
 {
 	da_ret_t ret = DA_RESULT_OK;
 	char *buffer = DA_NULL;
-	int buffer_size = 0;
-	int write_success_len = 0;
+	size_t buffer_size = 0;
+	size_t write_success_len = 0;
 	void *fd = DA_NULL;
 
 	//	DA_LOGV("");
@@ -224,7 +224,7 @@ da_ret_t __file_write_buf_copy_to_buf(file_info_t *file_info, char *body,
 {
 	da_ret_t ret = DA_RESULT_OK;
 	char *buffer = DA_NULL;
-	int buffer_size = 0;
+	size_t buffer_size = 0;
 
 	DA_LOGV("");
 
@@ -571,7 +571,7 @@ da_ret_t start_file_append(file_info_t *file_info)
 da_ret_t file_write_ongoing(file_info_t *file_info, char *body, int body_len)
 {
 	da_ret_t ret = DA_RESULT_OK;
-	int buffer_size = 0;
+	size_t buffer_size = 0;
 	char *buffer = DA_NULL;
 
 	DA_LOGV("");

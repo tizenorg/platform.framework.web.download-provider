@@ -1,7 +1,7 @@
 %define _ux_define tizen2.3
 Name:       download-provider
 Summary:    Download the contents in background
-Version:    2.1.40
+Version:    2.1.50
 Release:    0
 Group:      Development/Libraries
 License:    Apache-2.0
@@ -96,7 +96,7 @@ Description: Download the contents in background (development files)
 %endif
 
 %define cmake \
-	CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -fvisibility=hidden"; export CFLAGS \
+	CFLAGS="${CFLAGS:-%optflags} -fPIC -D_REENTRANT -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -fvisibility=hidden"; export CFLAGS \
 	FFLAGS="${FFLAGS:-%optflags} -fPIC -fvisibility=hidden"; export FFLAGS \
 	LDFLAGS+=" -Wl,--as-needed -Wl,--hash-style=both"; export LDFLAGS \
 	%__cmake \\\

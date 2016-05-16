@@ -95,7 +95,7 @@ void http_msg_request_destroy(http_msg_request_t **http_msg_request)
 			temp_http_msg_request->http_body = NULL;
 		}
 		__http_header_destroy_all_field(&(temp_http_msg_request->head));
-		free(temp_http_msg_request);
+		free(*http_msg_request);
 		*http_msg_request = NULL;
 	}
 }
@@ -178,7 +178,7 @@ void http_msg_response_destroy(http_msg_response_t **http_msg_response)
 	DA_LOGV("");
 	if (temp_http_msg_response) {
 		__http_header_destroy_all_field(&(temp_http_msg_response->head));
-		free(temp_http_msg_response);
+		free(*http_msg_response);
 		*http_msg_response = DA_NULL;
 	}
 }
