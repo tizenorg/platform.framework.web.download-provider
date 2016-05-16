@@ -68,7 +68,7 @@ ERR:
 	return ret;
 }
 
-da_ret_t __divide_file_name_into_pure_name_N_extesion(const char *in_file_name, char *url, char **out_pure_file_name, char **out_extension)
+da_ret_t __divide_file_name_into_pure_name_N_extesion(const char *in_file_name, char **out_pure_file_name, char **out_extension)
 {
     char *file_name = DA_NULL;
     char *tmp_ptr = DA_NULL;
@@ -83,32 +83,13 @@ da_ret_t __divide_file_name_into_pure_name_N_extesion(const char *in_file_name, 
         return DA_ERR_INVALID_ARGUMENT;
 
     file_name = (char *)in_file_name;
-
-    if(url) {
-        char *extension = DA_NULL;
-        da_bool_t b_ret = da_get_extension_name_from_url(url, &extension);
-        if (b_ret && !extension) {
-#if 0
-            tmp_ptr = strrchr(file_name, '.');
-            if (tmp_ptr)
-                tmp_ptr++;
-            if (tmp_ptr && out_extension) {
-                strncpy((char*) tmp_ext, tmp_ptr, sizeof(tmp_ext) - 1);
-                *out_extension = strdup((const char*) tmp_ext);
-                DA_SECURE_LOGD("extension [%s]", *out_extension);
-            }
-#endif
-           *out_extension = NULL;
-        }
-    } else {
-        tmp_ptr = strrchr(file_name, '.');
-        if (tmp_ptr)
-            tmp_ptr++;
-        if (tmp_ptr && out_extension) {
-            strncpy((char*) tmp_ext, tmp_ptr, sizeof(tmp_ext) - 1);
-            *out_extension = strdup((const char*) tmp_ext);
-            DA_SECURE_LOGD("extension [%s]", *out_extension);
-        }
+    tmp_ptr = strrchr(file_name, '.');
+    if (tmp_ptr)
+        tmp_ptr++;
+    if (tmp_ptr && out_extension) {
+        strncpy((char*) tmp_ext, tmp_ptr, sizeof(tmp_ext) - 1);
+        *out_extension = strdup((const char*) tmp_ext);
+        DA_SECURE_LOGD("extension [%s]", *out_extension);
     }
 
     if (!out_pure_file_name)
@@ -136,7 +117,7 @@ da_ret_t __divide_file_name_into_pure_name_N_extesion(const char *in_file_name, 
                 (const char*) temp_file);
     }
 
-    DA_LOGD( "pure file name [%s]", *out_pure_file_name);
+    DA_LOGV( "pure file name [%s]", *out_pure_file_name);
     return ret;
 }
 
@@ -303,12 +284,12 @@ char *__get_extension_name(char *mime_type,
 	}
 	/* Priority 2-1 */
 	if (file_name_from_header) {
-	    char *extension = DA_NULL;
-	    DA_SECURE_LOGI("Content-Disposition :[%s]", file_name_from_header);
-	    __divide_file_name_into_pure_name_N_extesion(file_name_from_header, DA_NULL,
-	            DA_NULL, &extension);
-	    if (extension)
-	        return extension;
+		char *extension = DA_NULL;
+		DA_SECURE_LOGI("Content-Disposition :[%s]", file_name_from_header);
+		__divide_file_name_into_pure_name_N_extesion(file_name_from_header,
+				DA_NULL, &extension);
+		if (extension)
+			return extension;
 	}
 	/* Priority 2-2 */
 	if (url) {
@@ -336,16 +317,16 @@ da_ret_t __get_candidate_file_name(char *user_file_name, char *url,
 
 	/* Priority 1 */
 	if (user_file_name) {
-	    __divide_file_name_into_pure_name_N_extesion(
-	            user_file_name, url, out_pure_file_name, out_extension);
+		__divide_file_name_into_pure_name_N_extesion(
+				user_file_name, out_pure_file_name, out_extension);
 	}
 	if (*out_pure_file_name)
 		return ret;
 	/* Priority 2 */
 	if (file_name_from_header) {
-	    DA_SECURE_LOGI("Content-Disposition:[%s]", file_name_from_header);
-	    __divide_file_name_into_pure_name_N_extesion(file_name_from_header, DA_NULL,
-	            out_pure_file_name, DA_NULL);
+		DA_SECURE_LOGI("Content-Disposition:[%s]", file_name_from_header);
+		__divide_file_name_into_pure_name_N_extesion(file_name_from_header,
+				out_pure_file_name, DA_NULL);
 	}
 	if (*out_pure_file_name)
 		return ret ;
