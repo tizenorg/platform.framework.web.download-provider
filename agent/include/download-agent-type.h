@@ -17,6 +17,7 @@
 #ifndef _DOWNLOAD_AGENT_TYPE_H
 #define _DOWNLOAD_AGENT_TYPE_H
 
+#include "linux/limits.h"
 #include "download-agent-defs.h"
 #include <tzplatform_config.h>
 
@@ -27,8 +28,8 @@ typedef unsigned long long da_size_t;
 #define IS_NOT_VALID_ID(x)  (x <= DA_INVALID_ID)
 
 #define DA_MAX_URI_LEN			1024
-#define DA_MAX_FULL_PATH_LEN	356	// need configuration
-#define DA_MAX_FILE_PATH_LEN		256	// need configuration
+#define DA_MAX_FULL_PATH_LEN    PATH_MAX - 1 /* 4096 -1 chars in a path name excluding NULL */
+#define DA_MAX_FILE_NAME_LEN    NAME_MAX /* 255 chars in a file name excluding NULL */
 #define DA_MAX_STR_LEN			256
 #define DA_MAX_MIME_STR_LEN     	256
 #define DA_MAX_PROXY_ADDR_LEN	64		// e.g. 100.200.300.400:10000

@@ -23,7 +23,7 @@
 #include "download-agent-mime-util.h"
 #include "download-agent-pthread.h"
 
-#define IS_PROHIBITED_CHAR(c)	((c) == ';' || (c) == '\\' || (c) == '/' || (c) == ':' || (c) == '*' || (c) == '?' || (c) == '"' || (c) == '>' || (c) == '<' || (c) == '|' || (c) == '(' || (c) == ')')
+#define IS_PROHIBITED_CHAR(c)   ((c) == '/' || (c) == '\\' || (c) == '?' || (c) == '%' || (c) == '*' || (c) == ':' || (c) == '|' || (c) == '"' || (c) == '<' || (c) == '>')
 #define IS_SPACE_CHARACTER(c)	((c) == '\t')
 
 #define MAX_EXT_TABLE_INDEX 16
@@ -254,7 +254,7 @@ da_bool_t da_get_file_name_from_url(char *url, char **name)
 	int i = 0;
 	int j = 0;
 	int len_name = 0;
-	char name_buff[DA_MAX_FILE_PATH_LEN] = {0,};
+    char name_buff[DA_MAX_FILE_NAME_LEN + 1] = {0,};
 
 	DA_LOGV("");
 
@@ -289,23 +289,23 @@ da_bool_t da_get_file_name_from_url(char *url, char **name)
 	}
 	End = strstr(buff, "?");
 	if (DA_NULL != End) {
-		Start = End -1;
-		while(*(Start) != '/') {
-			Start--;
-		}
-		if ((*(Start) == '/') && ((len_name = (End - Start)) > 1)) {
-			Start++;
-			if (DA_MAX_FILE_PATH_LEN <= len_name)	{
-				strncpy(name_buff, Start, DA_MAX_FILE_PATH_LEN-1);
-				name_buff[DA_MAX_FILE_PATH_LEN-1] = '\0';
-			} else {
-				strncpy(name_buff, Start, len_name);
-				name_buff[len_name] = '\0';
-			}
-		} else {
-			ret = DA_FALSE;
-			goto ERR ; /*Name not found*/
-		}
+	    Start = End -1;
+	    while(*(Start) != '/') {
+	        Start--;
+	    }
+	    if ((*(Start) == '/') && ((len_name = (End - Start)) > 1)) {
+	        Start++;
+	        if (DA_MAX_FILE_NAME_LEN <= len_name)   {
+	            strncpy(name_buff, Start, DA_MAX_FILE_NAME_LEN);
+	            name_buff[DA_MAX_FILE_NAME_LEN] = '\0';
+	        } else {
+	            strncpy(name_buff, Start, len_name);
+	            name_buff[len_name] = '\0';
+	        }
+	    } else {
+	        ret = DA_FALSE;
+	        goto ERR ; /*Name not found*/
+	    }
 	} else {
 		int urlLen = strlen (buff);
 		int Start_pos = 0;
@@ -318,15 +318,15 @@ da_bool_t da_get_file_name_from_url(char *url, char **name)
 		}
 		Start_pos++;
 		if (Start_pos == 0 || urlLen - Start_pos <= 0) {
-			ret = DA_FALSE;
-			goto ERR;
+		    ret = DA_FALSE;
+		    goto ERR;
 		}
 		while(Start_pos < urlLen) {
-			name_buff[len_name++] = buff[Start_pos++];
-			if (DA_MAX_FILE_PATH_LEN <= len_name) {
-				name_buff[DA_MAX_FILE_PATH_LEN-1] ='\0';
-				break;
-			}
+		    name_buff[len_name++] = buff[Start_pos++];
+		    if (DA_MAX_FILE_NAME_LEN <= len_name) {
+		        name_buff[DA_MAX_FILE_NAME_LEN] ='\0';
+		        break;
+		    }
 		}
 	}
 
@@ -358,7 +358,7 @@ void delete_prohibited_char(char *szTarget, int str_len)
 	int i = 0;
 	int j = 0;
 	int tar_len = 0;
-
+    DA_LOGD("");
 	if(szTarget == NULL || str_len <= 0 || strlen(szTarget) != str_len) {
 		DA_LOGE("Invaild Parameter\n");
 		return;

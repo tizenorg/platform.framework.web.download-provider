@@ -256,7 +256,7 @@ void dp_notification_clear_ongoings()
 	int err = NOTIFICATION_ERROR_NONE;
 	err = notification_delete_all_by_type(NULL, NOTIFICATION_TYPE_ONGOING);
 	if (err != NOTIFICATION_ERROR_NONE) {
-		TRACE_ERROR("[FAIL] clear noti [%s]", __dp_noti_error_str(err));
+		TRACE_DEBUG("[FAIL] clear noti [%s]", __dp_noti_error_str(err));
 	}
 	return;
 }

@@ -79,7 +79,7 @@
 #define DA_ERR_DRM_FAIL			-600
 
 // string to check invalid characters in path before using open() and fopen() API's
-#define DA_INVALID_PATH_STRING ";\\\":*?<>|"
+#define DA_INVALID_PATH_STRING "/\\?%*:|\"<>"
 
 #endif
 

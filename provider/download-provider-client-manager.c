@@ -127,6 +127,12 @@ static int __dp_accept_socket_new()
 {
 	int fd_base, listen_fds = sd_listen_fds(1);
 	TRACE_DEBUG("sd_listen_fds:%d", listen_fds);
+
+    if(listen_fds > INT_MAX) {
+        TRACE_DEBUG("sd_listen_fds:%d", listen_fds);
+        return -1;
+    }
+
 	for (fd_base = 0 ; fd_base < listen_fds; fd_base++) {
 		if (sd_is_socket_unix(fd_base + SD_LISTEN_FDS_START, SOCK_STREAM, 1, IPC_SOCKET, 0) >= 0) {
 			TRACE_INFO("listen systemd socket:%d", fd_base + SD_LISTEN_FDS_START);

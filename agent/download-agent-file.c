@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -69,54 +70,55 @@ ERR:
 
 da_ret_t __divide_file_name_into_pure_name_N_extesion(const char *in_file_name, char **out_pure_file_name, char **out_extension)
 {
-	char *file_name = DA_NULL;
-	char *tmp_ptr = DA_NULL;
-	char temp_file[DA_MAX_FILE_PATH_LEN] = {0,};
-	char tmp_ext[DA_MAX_STR_LEN] = {0,};
-	int len = 0;
-	da_ret_t ret = DA_RESULT_OK;
+    char *file_name = DA_NULL;
+    char *tmp_ptr = DA_NULL;
+    char temp_file[DA_MAX_FILE_NAME_LEN + 1] = {0,};
+    char tmp_ext[DA_MAX_STR_LEN] = {0,};
+    int len = 0;
+    da_ret_t ret = DA_RESULT_OK;
 
-	DA_LOGV("");
+    DA_LOGD("");
 
-	if (!in_file_name)
-		return DA_ERR_INVALID_ARGUMENT;
+    if (!in_file_name)
+        return DA_ERR_INVALID_ARGUMENT;
 
-	file_name = (char *)in_file_name;
-	tmp_ptr = strrchr(file_name, '.');
-	if (tmp_ptr)
-		tmp_ptr++;
-	if (tmp_ptr && out_extension) {
-		strncpy((char*) tmp_ext, tmp_ptr, sizeof(tmp_ext) - 1);
-		*out_extension = strdup((const char*) tmp_ext);
-		DA_SECURE_LOGD("extension [%s]", *out_extension);
-	}
+    file_name = (char *)in_file_name;
+    tmp_ptr = strrchr(file_name, '.');
+    if (tmp_ptr)
+        tmp_ptr++;
+    if (tmp_ptr && out_extension) {
+        strncpy((char*) tmp_ext, tmp_ptr, sizeof(tmp_ext) - 1);
+        *out_extension = strdup((const char*) tmp_ext);
+        DA_SECURE_LOGD("extension [%s]", *out_extension);
+    }
 
-	if (!out_pure_file_name)
-		return ret;
+    if (!out_pure_file_name)
+        return ret;
 
-	if (tmp_ptr)
-		len = tmp_ptr - file_name - 1;
-	else
-		len = strlen(file_name);
+    if (tmp_ptr)
+        len = tmp_ptr - file_name - 1;
+    else
+        len = strlen(file_name);
 
-	if (len >= DA_MAX_FILE_PATH_LEN) {
-		strncpy((char*) temp_file, file_name,
-				DA_MAX_FILE_PATH_LEN - 1);
-	} else {
-		strncpy((char*) temp_file, file_name, len);
-	}
+    if (len >= DA_MAX_FILE_NAME_LEN) {
+        strncpy((char*) temp_file, file_name, DA_MAX_FILE_NAME_LEN);
+        temp_file[DA_MAX_FILE_NAME_LEN] = '\0';
+    } else {
+        strncpy((char*) temp_file, file_name, len);
+        temp_file[len] = '\0';
+    }
 
-	delete_prohibited_char((char*) temp_file,
-			strlen((char*) temp_file));
-	if (strlen(temp_file) < 1) {
-		*out_pure_file_name = strdup(NO_NAME_TEMP_STR);
-	} else {
-		*out_pure_file_name = strdup(
-				(const char*) temp_file);
-	}
+    delete_prohibited_char((char*) temp_file,
+            strlen((char*) temp_file));
+    if (strlen(temp_file) < 1) {
+        *out_pure_file_name = strdup(NO_NAME_TEMP_STR);
+    } else {
+        *out_pure_file_name = strdup(
+                (const char*) temp_file);
+    }
 
-	DA_LOGV( "pure file name [%s]", *out_pure_file_name);
-	return ret;
+    DA_LOGV( "pure file name [%s]", *out_pure_file_name);
+    return ret;
 }
 
 da_ret_t __file_write_buf_make_buf(file_info_t *file_info)
@@ -269,10 +271,16 @@ char *__get_extension_name(char *mime_type,
 
 	/* Priority 1 */
 	if (mime_type && !is_ambiguous_MIME_Type(mime_type)) {
-		char *extension = DA_NULL;
-		da_ret_t ret = get_extension_from_mime_type(mime_type, &extension);
-		if (ret == DA_RESULT_OK && extension)
-			return extension;
+	    if (url) {
+	        DA_LOGV("If the file extension exists and mime type exists, choose the file extension over mime type");
+	        da_bool_t b_ret = da_get_extension_name_from_url(url, &extension);
+	        if (b_ret && extension)
+	            return extension;
+	    }
+	    char *extension = DA_NULL;
+	    da_ret_t ret = get_extension_from_mime_type(mime_type, &extension);
+	    if (ret == DA_RESULT_OK && extension)
+	        return extension;
 	}
 	/* Priority 2-1 */
 	if (file_name_from_header) {
@@ -305,7 +313,7 @@ da_ret_t __get_candidate_file_name(char *user_file_name, char *url,
 {
 	da_ret_t ret = DA_RESULT_OK;
 
-	DA_LOGV("");
+	DA_LOGD("");
 
 	/* Priority 1 */
 	if (user_file_name) {
@@ -324,7 +332,7 @@ da_ret_t __get_candidate_file_name(char *user_file_name, char *url,
 		return ret ;
 	/* Priority 3 */
 	if (url) {
-		DA_LOGV("Get file name from url");
+		DA_LOGD("Get file name from url");
 		da_get_file_name_from_url(url, out_pure_file_name);
 	}
 	if (*out_pure_file_name)
@@ -408,19 +416,21 @@ da_ret_t __decide_file_path(da_info_t *da_info)
 
 	// for resume
 	tmp_file_path = get_full_path_avoided_duplication(install_dir,
-			file_info->pure_file_name, file_info->extension);
+	        file_info->pure_file_name, file_info->extension);
 	if (tmp_file_path) {
-		file_info->file_path = tmp_file_path;
-		tmp_file_path = DA_NULL;
+	    file_info->file_path = tmp_file_path;
+	    tmp_file_path = DA_NULL;
 	} else {
-		ret = DA_ERR_FAIL_TO_ACCESS_FILE;
-		goto ERR;
+	    ret = DA_ERR_FAIL_TO_ACCESS_FILE;
+	    goto ERR;
 	}
 
 ERR:
 	DA_SECURE_LOGI("decided file path [%s]", file_info->file_path);
-	free(file_name);
-	free(extension);
+	if(file_name)
+	    free(file_name);
+	if(extension)
+	    free(extension);
 	return ret;
 }
 
