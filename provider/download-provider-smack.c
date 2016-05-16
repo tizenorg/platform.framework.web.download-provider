@@ -32,15 +32,22 @@
 
 static int __dp_smack_is_transmute(char *path)
 {
-	char *dir_label = NULL;
-	int ret = -1;
-	if (smack_getlabel(path, &dir_label, SMACK_LABEL_TRANSMUTE) == 0 &&
-			dir_label != NULL) {
-		if (strncmp(dir_label, "TRUE", strlen(dir_label)) == 0)
-			ret = 0;
-	}
-	free(dir_label);
-	return ret;
+    char *dir_label = NULL;
+    int ret = -1;
+    if (smack_getlabel(path, &dir_label, SMACK_LABEL_TRANSMUTE) == 0 && dir_label != NULL) {
+        if (strncmp(dir_label, "TRUE", strlen(dir_label)) == 0) {
+            ret = 0;
+        }
+    }
+
+    if (smack_getlabel(path, &dir_label, SMACK_LABEL_ACCESS) == 0 && dir_label != NULL) {
+        if (strncmp(dir_label, "*", strlen(dir_label)) == 0) {
+            ret = 0;
+        }
+    }
+
+    free(dir_label);
+    return ret;
 }
 
 int dp_smack_is_mounted()
