@@ -6,7 +6,7 @@ DUMP_DIR=$1/$PKG_NAME
 /bin/mkdir -p $DUMP_DIR
 
 # Download DB
-DB_DIR=/opt/usr/data/download-provider/database
+DB_DIR=@TZ_SYS_DATA@/download-provider/database
 if [ "$DB_DIR" ]
 then
 	/bin/echo "copy download DB ..."
