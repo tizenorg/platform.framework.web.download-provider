@@ -392,7 +392,7 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 	int errorcode = DP_ERROR_NONE;
 	int i = 0;
 	int pkg_len = 0;
-	char *pkgname[256] = { 0 };
+	char pkgname[256] = { 0, };
 
 	// getting the package name via pid
 	if (aul_app_get_appid_bypid_for_uid(credential.pid, pkgname, 256, credential.uid) != AUL_R_OK)
@@ -517,7 +517,7 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 					CLIENT_MUTEX_UNLOCK(&clients[i].mutex);
 					if (errorcode != DP_ERROR_NONE)
 						dp_mutex_destroy(&clients[i].mutex);
-					free(pkgname);
+//					free(pkgname);
 					return errorcode;
 				}
 			}
