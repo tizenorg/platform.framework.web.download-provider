@@ -433,10 +433,17 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 	TRACE_DEBUG("SUPPORT_SECURITY_PRIVILEGE");
 	// Cynara structure init
 	int ret;
-	cynara *p_cynara;
+	cynara *p_cynara = NULL;
+	cynara_configuration *p_conf;
+	size_t cache_size = 100;
 	//cynara_configuration conf;
+
+	if (CYNARA_API_SUCCESS != cynara_configuration_create(&p_conf))  { /* error */}
+	if (CYNARA_API_SUCCESS != cynara_configuration_set_cache_size(p_conf, cache_size)) { /* error */ }
+
 	ret = cynara_initialize(&p_cynara, NULL);
 	if(ret != CYNARA_API_SUCCESS) { /* error */ }
+	cynara_configuration_destroy(p_conf);
 
 	// Get client peer credential
 	char *clientSmack;
