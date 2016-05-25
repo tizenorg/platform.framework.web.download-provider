@@ -169,8 +169,7 @@ typedef struct {
 	int update_time;
 } da_info_t;
 
-pthread_mutex_t *g_openssl_locks_list;
-da_info_t *da_info_list[DA_MAX_ID];
+extern da_info_t *da_info_list[DA_MAX_ID];
 
 #define GET_STATE_MUTEX(INFO) (INFO->mutex_state)
 #define GET_STATE(INFO) (INFO->state)

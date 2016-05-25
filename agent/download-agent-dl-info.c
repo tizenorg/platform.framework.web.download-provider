@@ -24,6 +24,8 @@
 #include "download-agent-http-msg-handler.h"
 
 static pthread_mutex_t mutex_da_info_list = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t *g_openssl_locks_list;
+da_info_t *da_info_list[DA_MAX_ID];
 
 
 /* locking mechnism for safe use of openssl context */
