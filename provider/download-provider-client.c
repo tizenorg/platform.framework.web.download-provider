@@ -2005,10 +2005,10 @@ void *dp_client_request_thread(void *arg)
 
 			CLIENT_MUTEX_LOCK(&slot->mutex);
 
-			errorcode = DP_ERROR_NONE;
-
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 			client->access_time = (int)time(NULL);
+
+			errorcode = DP_ERROR_NONE;
 
 			// read ipc_fmt first. below func will deal followed packets
 			dp_ipc_fmt *ipc_info = dp_ipc_get_fmt(client_sock);

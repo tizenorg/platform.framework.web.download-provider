@@ -392,11 +392,15 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 	int errorcode = DP_ERROR_NONE;
 	int i = 0;
 	int pkg_len = 0;
-	char pkgname[256] = { 0, };
+	char *pkgname = NULL;
+
+	char buffer[256] = { 0, };
 
 	// getting the package name via pid
-	if (aul_app_get_appid_bypid_for_uid(credential.pid, pkgname, 256, credential.uid) != AUL_R_OK)
+	if (aul_app_get_appid_bypid_for_uid(credential.pid, buffer, sizeof(buffer), credential.uid) != AUL_R_OK)
 		TRACE_ERROR("[CRITICAL] aul_app_get_appid_bypid_for_uid");
+
+	pkgname = strdup(buffer);
 /*
 	//// TEST CODE ... to allow sample client ( no package name ).
 	if (pkgname == NULL) {
@@ -417,6 +421,7 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 */
 	if ((pkg_len = strlen(pkgname)) <= 0) {
 		TRACE_ERROR("[CRITICAL] pkgname:%s", pkgname);
+		free(pkgname);
 		return DP_ERROR_INVALID_PARAMETER;
 	}
 
@@ -524,7 +529,7 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 					CLIENT_MUTEX_UNLOCK(&clients[i].mutex);
 					if (errorcode != DP_ERROR_NONE)
 						dp_mutex_destroy(&clients[i].mutex);
-//					free(pkgname);
+					free(pkgname);
 					return errorcode;
 				}
 			}
@@ -561,7 +566,7 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 
 	TRACE_SECURE_INFO("busy client[%s] pid:%d sock:%d", pkgname,
 		credential.pid, clientfd);
-
+	free(pkgname);
 	return DP_ERROR_TOO_MANY_DOWNLOADS;
 }
 
