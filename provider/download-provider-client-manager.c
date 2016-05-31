@@ -476,6 +476,7 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 		TRACE_DEBUG("CYNARA_API_ACCESS_ALLOWED");
 	} else {
 		TRACE_DEBUG("DP_ERROR_PERMISSION_DENIED");
+		free(pkgname);
 		return DP_ERROR_PERMISSION_DENIED;
 	}
 
