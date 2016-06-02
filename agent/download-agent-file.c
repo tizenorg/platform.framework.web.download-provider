@@ -30,6 +30,7 @@
 #include "download-agent-http-msg-handler.h"
 #include "download-agent-plugin-drm.h"
 #include "download-agent-plugin-conf.h"
+#include "download-provider-client-manager.h"
 #include <storage.h>
 
 
@@ -369,13 +370,14 @@ da_ret_t __decide_file_path(da_info_t *da_info)
 	char *extension = DA_NULL;
 	char *file_name = DA_NULL;
 	char *tmp_file_path = DA_NULL;
-	char *install_dir = DA_DEFAULT_INSTALL_PATH_FOR_PHONE;
+	char *install_dir = DA_NULL;
 	char *user_file_name = DA_NULL;
 	char *file_name_from_header = DA_NULL;
 	char *url = DA_NULL;
 	file_info_t *file_info = DA_NULL;
 	req_info_t *req_info = DA_NULL;
 	http_info_t *http_info = DA_NULL;
+	dp_client_slots_fmt *slot = DA_NULL;
 
 	DA_LOGV("");
 
@@ -386,9 +388,17 @@ da_ret_t __decide_file_path(da_info_t *da_info)
 	NULL_CHECK_RET(req_info);
 	http_info = da_info->http_info;
 	NULL_CHECK_RET(http_info);
+	slot  =  req_info->user_client_data;
+	NULL_CHECK_RET(slot);
 
 	if (req_info->install_path)
 		install_dir = req_info->install_path;
+	else
+	{
+		tzplatform_set_user(slot->credential.uid);
+		install_dir = DA_DEFAULT_INSTALL_PATH_FOR_PHONE;
+		tzplatform_reset_user();
+	}
 	user_file_name = req_info->file_name;
 	/* If there is location url from response header in case of redirection,
 	 * it try to parse the file name from the location url */

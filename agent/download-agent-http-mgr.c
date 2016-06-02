@@ -27,6 +27,7 @@
 #include "download-agent-plugin-conf.h"
 #include "download-agent-plugin-drm.h"
 #include "download-agent-plugin-libcurl.h"
+#include "download-provider-client-manager.h"
 
 void __http_update_cb(http_raw_data_t *data, void *user_param);
 
@@ -599,18 +600,30 @@ da_ret_t __handle_event_abort(http_info_t *http_info)
 	return ret;
 }
 
-da_ret_t __check_enough_memory(http_info_t *http_info, char *user_install_path)
+da_ret_t __check_enough_memory(http_info_t *http_info, req_info_t *req_info)
 {
 	da_ret_t ret = DA_RESULT_OK;
 	da_size_t cont_len = 0;
-	char *dir_path = DA_DEFAULT_INSTALL_PATH_FOR_PHONE;
+	char *dir_path = DA_NULL;
+	char *user_install_path = DA_NULL;
+	dp_client_slots_fmt *slot = DA_NULL;
 
 	DA_LOGV("");
 	NULL_CHECK_RET(http_info);
 	cont_len = http_info->content_len_from_header;
+	NULL_CHECK_RET(req_info);
+	user_install_path = req_info->install_path;
+	slot = req_info->user_client_data;
+	NULL_CHECK_RET(slot);
 	if (cont_len > 0) {
 		if (user_install_path)
 			dir_path = user_install_path;
+		else
+		{
+			tzplatform_set_user(slot->credential.uid);
+			dir_path = DA_DEFAULT_INSTALL_PATH_FOR_PHONE;
+			tzplatform_reset_user();
+		}
 		ret = get_available_memory(dir_path, cont_len);
 	}
 	return ret;
@@ -825,9 +838,13 @@ da_ret_t __check_resume_download_is_available(
 	char *value = NULL;
 	da_size_t size = 0;
 	char *temp_file_path = DA_NULL;
-	char *dir_path = DA_DEFAULT_INSTALL_PATH_FOR_PHONE;
+	char *dir_path = DA_NULL;
+	dp_client_slots_fmt *slot = DA_NULL;
 
 	DA_LOGV("");
+	NULL_CHECK_RET(req_info);
+	slot  =  req_info->user_client_data;
+	NULL_CHECK_RET(slot);
 
 	origin_ETag = req_info->etag;
 
@@ -860,6 +877,12 @@ da_ret_t __check_resume_download_is_available(
 	if (remained_content_len > 0) {
 		if (req_info->install_path)
 				dir_path = req_info->install_path;
+		else
+		{
+				tzplatform_set_user(slot->credential.uid);
+				dir_path = DA_DEFAULT_INSTALL_PATH_FOR_PHONE;
+				tzplatform_reset_user();
+		}
 		ret = get_available_memory(dir_path, remained_content_len);
 		if (ret != DA_RESULT_OK)
 			goto ERR;
@@ -948,7 +971,7 @@ da_ret_t __handle_http_status_code(http_info_t *http_info,
 		ret = __check_content_type_is_matched(http_info);
 		if (ret != DA_RESULT_OK)
 			goto ERR;
-		ret = __check_enough_memory(http_info, req_info->install_path);
+		ret = __check_enough_memory(http_info, req_info);
 		if (ret != DA_RESULT_OK)
 			goto ERR;
 		DA_MUTEX_LOCK(&(http_info->mutex_state));

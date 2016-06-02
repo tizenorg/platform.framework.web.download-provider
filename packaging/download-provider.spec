@@ -1,7 +1,7 @@
 %define _ux_define tizen2.3
 Name:       download-provider
 Summary:    Download the contents in background
-Version:    2.1.54
+Version:    2.1.55
 Release:    0
 Group:      Development/Libraries
 License:    Apache-2.0

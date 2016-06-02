@@ -10,7 +10,7 @@ IF("${ARCH}" MATCHES "^arm.*")
 ENDIF("${ARCH}" MATCHES "^arm.*")
 
 #DA Engine Include Directory
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/provider/include)
 
 SET(SRCS_PATH ".")
 SET(SRCS_DA
