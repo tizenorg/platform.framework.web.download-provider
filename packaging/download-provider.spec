@@ -1,7 +1,7 @@
 %define _ux_define tizen2.3
 Name:       download-provider
 Summary:    Download the contents in background
-Version:    2.1.55
+Version:    2.1.56
 Release:    0
 Group:      Development/Libraries
 License:    Apache-2.0
@@ -9,6 +9,7 @@ Source0:    %{name}-%{version}.tar.gz
 Requires(post): libdevice-node
 Requires(post): sqlite
 Requires(post): connman
+Requires: security-config
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(gobject-2.0)
@@ -195,12 +196,16 @@ ln -s ../download-provider.socket %{buildroot}/lib/systemd/system/sockets.target
 #make notify dir in post section for smack
 mkdir %{TZ_SYS_DATA}/download-provider
 mkdir -p %{_notifydir}
+chown -R web_fw:web_fw %{_notifydir}
 chsmack -a 'System::Shared' %{_notifydir}
 chsmack -t %{_notifydir}                                        
 mkdir -p --mode=0700 %{_databasedir}
+chown -R web_fw:web_fw %{_databasedir}
 #chsmack -a 'download-provider' %{_databasedir}
 mkdir -p --mode=0700 %{_database_client_dir}
 #chsmack -a 'download-provider' %{_database_client_dir}
+chown -R web_fw:web_fw %{_database_client_dir}	
+chown -R web_fw:web_fw %{_data_install_path}
 
 %files
 %defattr(-,root,root,-)
