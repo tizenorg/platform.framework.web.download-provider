@@ -216,9 +216,7 @@ static int __set_file_permission_to_client(dp_client_slots_fmt *slot, dp_request
 				if (lstat_info.st_mode == fstat_info.st_mode &&
 					lstat_info.st_ino == fstat_info.st_ino &&
 					lstat_info.st_dev == fstat_info.st_dev) {
-					if ((fchown(fd, cred.uid, cred.gid) != 0) ||
-						(fchmod(fd, S_IRUSR | S_IWUSR |
-							S_IRGRP | S_IROTH) != 0)) {
+					if (fchown(fd, cred.uid, cred.gid) != 0) {
 						TRACE_ERROR("[ERROR][%d] permission user:%d group:%d",
 							request->id, cred.uid, cred.gid);
 						errorcode = DP_ERROR_PERMISSION_DENIED;
@@ -239,26 +237,6 @@ static int __set_file_permission_to_client(dp_client_slots_fmt *slot, dp_request
 	} else {
 		TRACE_ERROR("lstat call failed");
 		errorcode = DP_ERROR_PERMISSION_DENIED;
-	}
-	if (errorcode == DP_ERROR_NONE && dp_smack_is_mounted() == 1) {
-		// get smack_label from sql
-		char *smack_label = dp_db_get_client_smack_label(slot->pkgname);
-		if (smack_label == NULL) {
-			TRACE_SECURE_ERROR("[SMACK][%d] no label", request->id);
-			errorcode = DP_ERROR_PERMISSION_DENIED;
-		} else {
-			size_t len = str - (saved_path);
-			char *dir_path = (char *)calloc(len + 1, sizeof(char));
-			if (dir_path != NULL) {
-				strncpy(dir_path, saved_path, len);
-				errorcode = dp_smack_set_label(smack_label, dir_path, saved_path);
-				free(dir_path);
-			} else {
-				TRACE_ERROR("[ERROR] calloc");
-				errorcode = DP_ERROR_OUT_OF_MEMORY;
-			}
-			free(smack_label);
-		}
 	}
 	return errorcode;
 }
