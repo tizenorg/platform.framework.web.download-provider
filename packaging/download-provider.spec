@@ -198,9 +198,9 @@ mkdir -p %{_notifydir}
 chsmack -a 'System::Shared' %{_notifydir}
 chsmack -t %{_notifydir}                                        
 mkdir -p --mode=0700 %{_databasedir}
-#chsmack -a 'download-provider' %{_databasedir}
+chsmack -a 'System' %{_databasedir}
 mkdir -p --mode=0700 %{_database_client_dir}
-#chsmack -a 'download-provider' %{_database_client_dir}
+chsmack -a 'System' %{_database_client_dir}
 
 %files
 %defattr(-,root,root,-)
