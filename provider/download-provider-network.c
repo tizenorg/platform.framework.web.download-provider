@@ -137,7 +137,12 @@ static int __dp_get_network_connection_status(connection_h connection, connectio
 		TRACE_INFO("DISCONNECTED");
 		network_type = DP_NETWORK_OFF;
 	}
-	g_network_status = network_type;
+    pthread_mutex_lock(&g_dp_network_mutex);
+
+    g_network_status = network_type;
+
+    pthread_mutex_unlock(&g_dp_network_mutex);
+
 	return network_type;
 }
 
