@@ -1486,7 +1486,7 @@ int dp_interface_get_http_header_field_list(const int id, char ***fields,
 		TRACE_ERROR("check ipc sock:%d", sock);
 	} else {
 
-		int array_size = 0;
+		size_t array_size = 0;
 		size_t extra_size = 0;
 		errorcode = __dp_ipc_response(sock, id, section, property, &extra_size);
 		if (errorcode == DP_ERROR_NONE) {
