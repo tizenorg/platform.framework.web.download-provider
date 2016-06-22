@@ -481,18 +481,19 @@ static int __dp_client_new(int clientfd, dp_client_slots_fmt *clients,
 	}
 
 	// Cleanup of cynara structure
+	/*
 	if(clientSmack) {
-		//free(clientSmack);
+		free(clientSmack);
 	}
 
 	if(client_session) {
-		//free(client_session);
+		free(client_session);
 	}
 
 	if(uid) {
-		//free(uid);
+		free(uid);
 	}
-
+	 */
 	cynara_finish(p_cynara);
 
 #endif
