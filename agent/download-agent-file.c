@@ -429,7 +429,9 @@ da_ret_t __decide_file_path(da_info_t *da_info)
 
 	DA_SECURE_LOGI("candidate file name [%s]", file_name);
 
-	if (!extension) {
+	if (!extension
+		&& strncmp(file_info->mime_type, "application/json", strlen("application/json"))
+		&& strncmp(file_info->mime_type, "application/x-xz", strlen("application/x-xz"))) {
 		extension = __get_extension_name(file_info->mime_type,
 				file_name_from_header, url);
 	}
