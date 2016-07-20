@@ -7,6 +7,7 @@ User=web_fw
 Group=web_fw
 SupplementaryGroups=priv_mediastorage
 Type=simple
+SmackProcessLabel=System
 ExecStart=/usr/bin/download-provider
 MemoryLimit=100M
 
