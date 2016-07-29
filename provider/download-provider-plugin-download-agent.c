@@ -216,10 +216,13 @@ static int __set_file_permission_to_client(dp_client_slots_fmt *slot, dp_request
 				if (lstat_info.st_mode == fstat_info.st_mode &&
 					lstat_info.st_ino == fstat_info.st_ino &&
 					lstat_info.st_dev == fstat_info.st_dev) {
-					if (fchown(fd, cred.uid, cred.gid) != 0) {
+
+				    if(strncmp(saved_path, "/opt/media/", 11) != 0){
+				       if(fchown(fd, cred.uid, cred.gid) != 0){
 						TRACE_ERROR("[ERROR][%d] permission user:%d group:%d",
 							request->id, cred.uid, cred.gid);
 						errorcode = DP_ERROR_PERMISSION_DENIED;
+				       }
 					}
 				} else {
 					TRACE_ERROR("fstat & lstat info have not matched");
